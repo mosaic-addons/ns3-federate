@@ -5,8 +5,6 @@ local install_prefix = "/usr/local"
 local ns3version = "3.28"
 local PROTO_PATH    = "."
 local PROTO_CC_PATH = "."
---local PROTO_PATH = "../ns3-ambassador/target/maven-shared-archive-resources/proto"
---local PROTO_CC_PATH = "../ns3-ambassador/target/maven-shared-archive-resources/cpp"
 
 --local pkgconfig = require 'pkgconfig'
 --print ( pkgconfig.load ( 'zlib' ) )
