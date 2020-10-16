@@ -1,0 +1,21 @@
+# IDE Stuffs
+## eclipse
+.classpath
+.project
+.settings
+.cproject
+## netbeans
+nb-configuration.xml
+nbactions*.xml
+## intellij files
+*.iml
+.idea
+.editorconfig
+
+out/
+obj/
+bin
+Makefile
+
+src/Mosaic/model/ClientServerChannel*
+ns3-federate.make
