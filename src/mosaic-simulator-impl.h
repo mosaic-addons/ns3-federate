@@ -67,6 +67,7 @@ namespace ns3 {
         virtual bool IsExpired(const EventId &ev) const;
         virtual void Run(void);
         virtual void RunOneEvent(void);
+        virtual uint64_t GetEventCount (void) const;
         virtual Time Now(void) const;
         virtual Time GetDelayLeft(const EventId &id) const;
         virtual Time GetMaximumSimulationTime(void) const;

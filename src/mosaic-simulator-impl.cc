@@ -135,6 +135,10 @@ namespace ns3 {
         ProcessOneEvent();
     }
 
+    uint64_t GetEventCount (void) {
+        return GetEventCount();
+    }
+
     void MosaicSimulatorImpl::Stop(void) {
         m_stop = true;
     }

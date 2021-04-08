@@ -30,6 +30,7 @@
 #include "ns3/wifi-80211p-helper.h"
 #include "ns3/wave-mac-helper.h"
 #include "ns3/vector.h"
+#include "ns3/yans-wifi-phy.h"
 #include "ns3/yans-wifi-channel.h"
 #include "ns3/yans-wifi-helper.h"
 
@@ -77,7 +78,7 @@ namespace ns3 {
         Ptr<YansWifiChannel> m_channel;
 
         //PHY
-        YansWifiPhyHelper m_wifiPhyHelper = YansWifiPhyHelper::Default();
+        YansWifiPhyHelper m_wifiPhyHelper;
 
         //MAC
         NqosWaveMacHelper m_waveMacHelper = NqosWaveMacHelper::Default();

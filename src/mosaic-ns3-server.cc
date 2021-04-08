@@ -179,7 +179,7 @@ namespace ns3 {
                 NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime);
                 //run the simulation (function RunSimStep) while the time of the next event is smaller than the next time step
                 m_eventSentUp = false;
-                while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= sim->Next().GetNanoSeconds()) {
+                while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= sim->Next()) {
                     sim->RunOneEvent();
                 }
 
