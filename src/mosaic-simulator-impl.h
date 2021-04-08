@@ -67,13 +67,13 @@ namespace ns3 {
         virtual bool IsExpired(const EventId &ev) const;
         virtual void Run(void);
         virtual void RunOneEvent(void);
-        virtual uint64_t GetEventCount (void) const;
         virtual Time Now(void) const;
         virtual Time GetDelayLeft(const EventId &id) const;
         virtual Time GetMaximumSimulationTime(void) const;
         virtual void SetScheduler(ObjectFactory schedulerFactory);
         virtual uint32_t GetSystemId(void) const;
         virtual uint32_t GetContext(void) const;
+        virtual uint64_t GetEventCount(void) const;
         virtual void SetCurrentTs(Time time);
 
     private:
@@ -89,6 +89,7 @@ namespace ns3 {
         uint32_t m_uid;
         uint32_t m_currentUid;
         uint64_t m_currentTs;
+        uint64_t m_eventCount;
         uint32_t m_currentContext;
         // number of events that have been inserted but not yet scheduled,
         // not counting the "destroy" events; this is used for validation

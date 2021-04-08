@@ -53,6 +53,7 @@ namespace ns3 {
         m_currentTs = 0;
         m_currentContext = 0xffffffff;
         m_unscheduledEvents = 0;
+        m_eventCount = 0;
     }
 
     void MosaicSimulatorImpl::DoDispose(void) {
@@ -97,6 +98,7 @@ namespace ns3 {
         Scheduler::Event next = m_events->RemoveNext();
         NS_ASSERT(next.key.m_ts >= m_currentTs);
         m_unscheduledEvents--;
+        m_eventCount++;
 
         NS_LOG_LOGIC("handle " << next.key.m_ts);
         m_currentTs = next.key.m_ts;
@@ -135,8 +137,8 @@ namespace ns3 {
         ProcessOneEvent();
     }
 
-    uint64_t GetEventCount (void) {
-        return GetEventCount();
+    uint64_t MosaicSimulatorImpl::GetEventCount(void) const {
+        return m_eventCount;
     }
 
     void MosaicSimulatorImpl::Stop(void) {
