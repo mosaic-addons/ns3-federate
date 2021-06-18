@@ -68,7 +68,9 @@ project "ns3-federate"
                      }
 
    filter "configurations:Debug"
-      defines { "DEBUG" }
+      defines { "DEBUG"
+              , "NS3_LOG_ENABLE"
+              , "NS3_ASSERT_ENABLE" }
       symbols "On"
       links { "ns" .. ns3version .. "-antenna-debug"
 --            , "ns" .. ns3version .. "-aodv-debug"
