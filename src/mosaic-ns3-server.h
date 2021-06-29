@@ -36,15 +36,21 @@ namespace ns3 {
     class MosaicNs3Server {
     public:
         MosaicNs3Server() = delete;
+
+        /**
+         * @brief initialize the MosaicNs3Server, listen on port and wait for CMD_INIT
+         *
+         * @param port    port for sending channel
+         * @param cmdPort port of command channel, for receiving the commands from MOSAIC
+         */
         MosaicNs3Server(int port, int cmdPort);        
 
         /**
-         * @brief NS3 Magic: a specialized entry-point is needed to create this class from a end-user script. The call of the constructor is forbidden by the NS3.
-         * @brief this function is called by the starter script and obtains the whole simulation
-         * @brief the function will call the dispatcher after the initialization of MosaicNs3Server and the creation of the first dummy event
+         * @brief main loop of simulation, call to start simulation
          *
-         * @param port   port for receiving the commands from MOSAIC
-         * @param MosaicNodeManger  MosaicNodeManger given from the NS3 starter script
+         * NS3 Magic: a specialized entry-point is needed to create this class from a end-user function. The call of the constructor is forbidden by the NS3.
+         * this function is called by the starter function and obtains the whole simulation
+         * the function will call the dispatcher after the initialization of MosaicNs3Server and the creation of the first dummy event
          */
         void processCommandsUntilSimStep();
 

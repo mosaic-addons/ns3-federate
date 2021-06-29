@@ -51,6 +51,11 @@ namespace ns3 {
 
         static TypeId GetTypeId(void);
 
+        /**
+         * @brief Attach the instance of the MOSAIC server to the object of this class
+         *
+         * @param instance the MOSAIC server instance
+         */
         void AttachNS3Server(MosaicNs3Server* instance);
         
         virtual EventId Schedule(Time const &time, EventImpl *event);
