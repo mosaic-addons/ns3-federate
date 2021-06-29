@@ -210,11 +210,13 @@ ClientServerChannel::~ClientServerChannel() {
  */
 std::string debug_byte_array ( const char* buffer, const size_t buffer_size ) {
   std::stringstream array;
-  array << std::dec << "size: " << buffer_size << std::endl;
+  array << std::dec << "size: " << buffer_size << ", bytes: ";
+  if(buffer_size > 16)
+    array << std::endl;  // begin multiline print in new line
   for ( size_t i=0; i < buffer_size; i++ ) {
     const char c = buffer[i];
     array << std::dec << static_cast<int>(c);
-        array << (((i + 1) % 16 == 0) ? '\n' : ' ');
+    array << (((i + 1) % 16 == 0) ? '\n' : ' ');
   }
   array << std::endl;
   return array.str();
@@ -267,7 +269,7 @@ CMD  ClientServerChannel::readCommand() {
     return CMD_UNDEF;
   }
   if ( *message_size > 0 ) {
-    NS_LOG_INFO("DEBUG: debug_byte_array: " << debug_byte_array ( message_buffer, *message_size ));
+    NS_LOG_INFO("message buffer as byte array: " << debug_byte_array ( message_buffer, *message_size ));
     //Create the streams that can parse the received data into the protobuf class
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
