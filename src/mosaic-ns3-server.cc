@@ -31,12 +31,6 @@ NS_LOG_COMPONENT_DEFINE("MosaicNs3Server");
 namespace ns3 {
     using namespace ClientServerChannelSpace;
 
-    /**
-     * @brief initialize the MosaicNs3Server with the given port and the given MosaicNodemanager
-     *
-     * @param port  port for receiving the commands from MOSAIC
-     * @param MosaicNodeManger MosaicNodeManger given from the NS3 starter script
-     */
     MosaicNs3Server::MosaicNs3Server(int port, int cmdPort) {
         std::cout << "Starting federate on port " << port << "\n";
 
@@ -77,14 +71,6 @@ namespace ns3 {
         std::cout << "ns3Server: created new connection to " << port << std::endl;
     }
 
-    /**
-     * @brief NS3 Magic: a specialized entry-point is needed to create this class from a end-user script. The call of the constructor is forbidden by the NS3.
-     * @brief this function is called by the starter script and obtains the whole simulation
-     * @brief the function will call the dispatcher after the initialization of MosaicNs3Server and the creation of the first dummy event
-     *
-     * @param port   port for receiving the commands from MOSAIC
-     * @param MosaicNodeManger  MosaicNodeManger given from the NS3 starter script
-     */
     void MosaicNs3Server::processCommandsUntilSimStep() {
         try {
             if (!m_closeConnection) {
@@ -114,11 +100,6 @@ namespace ns3 {
         m_closeConnection = true;
     }
 
-    /**
-     * @brief This function dispatch all commands from MOSAIC and sends the results back the the framework
-     *
-     * @return commandId the Id of the last command
-     */
     int MosaicNs3Server::dispatchCommand() {
         //gets the pointer of the simulator
         Ptr<MosaicSimulatorImpl> sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
