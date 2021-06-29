@@ -39,8 +39,6 @@
 
 NS_LOG_COMPONENT_DEFINE("ClientServerChannel");
 
-#define LOG_DEBUG std::cout
-
 namespace std {
   ostream& operator<< ( ostream& out, ClientServerChannelSpace::CMD cmd ) {
     switch ( cmd ) {
@@ -207,15 +205,19 @@ ClientServerChannel::~ClientServerChannel() {
 //  Public read-methods
 //#####################################################
 
-void debug_byte_array ( const char* buffer, const size_t buffer_size ) {
-  LOG_DEBUG << std::dec << "DEBUG: debug_byte_array buffer_size: " << buffer_size << std::endl;
+/**
+ * Formats buffer as string, each byte is formatted as decimal.
+ */
+std::string debug_byte_array ( const char* buffer, const size_t buffer_size ) {
+  std::stringstream array;
+  array << std::dec << "size: " << buffer_size << std::endl;
   for ( size_t i=0; i < buffer_size; i++ ) {
     const char c = buffer[i];
-    LOG_DEBUG << std::dec << static_cast<int>(c);
-        LOG_DEBUG << (((i + 1) % 16 == 0) ? '\n' : ' ');
+    array << std::dec << static_cast<int>(c);
+        array << (((i + 1) % 16 == 0) ? '\n' : ' ');
   }
-  LOG_DEBUG << std::endl;
-
+  array << std::endl;
+  return array.str();
 }
 
 /**
@@ -264,15 +266,8 @@ CMD  ClientServerChannel::readCommand() {
     std::cerr << "ERROR: reading of message body failed! Socket not ready." << std::endl;
     return CMD_UNDEF;
   }
-//  NS_LOG_INFO("readCommand message:");
-//  for (size_t i=0; i < *message_size; i++) {
-//    const char c = message_buffer[i];
-//    LOG_DEBUG << std::dec << static_cast<int>(c);
-//        LOG_DEBUG << (((i + 1) % 16 == 0) ? '\n' : ' ');
-//  }
-//  LOG_DEBUG << std::endl;
   if ( *message_size > 0 ) {
-    debug_byte_array ( message_buffer, *message_size );
+    NS_LOG_INFO("DEBUG: debug_byte_array: " << debug_byte_array ( message_buffer, *message_size ));
     //Create the streams that can parse the received data into the protobuf class
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
