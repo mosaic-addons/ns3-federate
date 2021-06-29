@@ -39,12 +39,7 @@
 
 NS_LOG_COMPONENT_DEFINE("ClientServerChannel");
 
-#ifdef USE_OMNET_CLOG_H
-#include <omnetpp/clog.h>
-#define LOG_DEBUG EV_DEBUG
-#else
 #define LOG_DEBUG std::cout
-#endif
 
 namespace std {
   ostream& operator<< ( ostream& out, ClientServerChannelSpace::CMD cmd ) {
@@ -213,9 +208,6 @@ ClientServerChannel::~ClientServerChannel() {
 //#####################################################
 
 void debug_byte_array ( const char* buffer, const size_t buffer_size ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   LOG_DEBUG << std::dec << "DEBUG: debug_byte_array buffer_size: " << buffer_size << std::endl;
   for ( size_t i=0; i < buffer_size; i++ ) {
     const char c = buffer[i];
@@ -234,9 +226,6 @@ void debug_byte_array ( const char* buffer, const size_t buffer_size ) {
  * TODO: return type should be maybe
  */
 CMD  ClientServerChannel::readCommand() {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("readCommand");
   //Read the mandatory prefixed size
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
@@ -305,9 +294,6 @@ CMD  ClientServerChannel::readCommand() {
  * @return 0 if successful
  */
 int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("readInit");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
@@ -338,9 +324,6 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
  * @return 0 if successful
  */
 int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("readUpdateNode");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
@@ -403,9 +386,6 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
  * @return the read time as an int64_t
  */
 int64_t ClientServerChannel::readTimeMessage() {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("readTimeMessage");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
@@ -433,9 +413,6 @@ int64_t ClientServerChannel::readTimeMessage() {
  * @return 0 if successful
  */
 int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_value) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("readConfigurationMessage");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
@@ -551,9 +528,6 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
  * @return 0 if successful
  */
 int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("readSendMessage");
   std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
@@ -615,9 +589,6 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
  * @param cmd command to be written to ambassador
  */
 void ClientServerChannel::writeCommand(CMD cmd) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("writeCommand");
   CommandMessage commandMessage;
   NS_LOG_INFO("DEBUG: write command: " << cmd);
@@ -647,9 +618,6 @@ void ClientServerChannel::writeCommand(CMD cmd) {
  * @param rssi the rssi during the receive event
  */
 void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("writeReceiveMessage");
   ReceiveMessage receive_message;
   receive_message.set_time(time);
@@ -678,9 +646,6 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
  * @param time the time to write
  */
 void ClientServerChannel::writeTimeMessage(int64_t time) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("DEBUG: write time message: " << time);
   TimeMessage time_message;
   time_message.set_time ( time );
@@ -705,9 +670,6 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
  * @param port port
  */
 void ClientServerChannel::writePort(uint32_t port) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   NS_LOG_INFO("writePort port: " << port);
   PortExchange port_exchange;
   port_exchange.set_port_number ( port );
@@ -740,9 +702,6 @@ void ClientServerChannel::writePort(uint32_t port) {
  *
  */
 std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
   int num_bytes=0;
   char current_byte;
 
