@@ -237,11 +237,11 @@ CMD  ClientServerChannel::readCommand() {
     std::cerr << "ERROR: reading of mandatory message size failed!" << std::endl;
     return CMD_UNDEF;
   }
-  NS_LOG_INFO("DEBUG: read command announced message size: " << *message_size);
+  NS_LOG_INFO("read command announced message size: " << *message_size);
   //Allocate a fitting buffer and read message from stream
   char message_buffer[*message_size];
   size_t res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("DEBUG: readCommand recv result: " << res);
+  NS_LOG_INFO("readCommand recv result: " << res);
   if ( *message_size > 0 && res != *message_size ) {
     std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << res << " bytes. poll ... " << std::endl;
     struct pollfd socks[1];
@@ -278,7 +278,7 @@ CMD  ClientServerChannel::readCommand() {
     commandMessage.ParseFromCodedStream(&codedIn);  //parse message
     //pick the needed data from the protobuf message class and return it
     const CMD cmd = protoCMDToCMD(commandMessage.command_type());
-    NS_LOG_INFO("DEBUG: read command: " << cmd);
+    NS_LOG_INFO("read command: " << cmd);
     return cmd;
   }
   return CMD_UNDEF;
@@ -294,10 +294,10 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
   NS_LOG_INFO("readInit");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("DEBUG: read init announced message size: " << *message_size);
+  NS_LOG_INFO("read init announced message size: " << *message_size);
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("DEBUG: read init received message size: " << count);
+  NS_LOG_INFO("read init received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn);
@@ -308,8 +308,8 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
   return_value.start_time = init_message.start_time();
   return_value.end_time = init_message.end_time();
 
-  NS_LOG_INFO("DEBUG: read init start time: " << return_value.start_time);
-  NS_LOG_INFO("DEBUG: read init end time: " << return_value.end_time);
+  NS_LOG_INFO("read init start time: " << return_value.start_time);
+  NS_LOG_INFO("read init end time: " << return_value.end_time);
 
   return 0;
 }
@@ -324,14 +324,14 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
   NS_LOG_INFO("readUpdateNode");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("DEBUG: read update note announced message size: " << *message_size);
+  NS_LOG_INFO("read update note announced message size: " << *message_size);
   if ( *message_size < 0 ) {
     return 0;
   }
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("DEBUG: read update node received message size: " << count);
+  NS_LOG_INFO("read update node received message size: " << count);
 
   if ( *message_size != count ) {
     std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << count << " bytes!" << std::endl;
@@ -353,10 +353,10 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
       std::cerr << "ERROR: update type unknown: " << update_message.update_type() << std::endl;
       return_value.type = (UPDATE_NODE_TYPE)0; return 1;     //1 signals an error
   }
-  NS_LOG_INFO("DEBUG: read update message update type " << return_value.type);
+  NS_LOG_INFO("read update message update type " << return_value.type);
 
   return_value.time = update_message.time();
-  NS_LOG_INFO("DEBUG: read update message update time " << return_value.time);
+  NS_LOG_INFO("read update message update time " << return_value.time);
 
   for ( size_t i = 0; i < update_message.properties_size(); i++ ) { //fill the update messages into our struct
     UpdateNode_NodeData node_data = update_message.properties(i);
@@ -366,10 +366,10 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
     returned_node_data.x = node_data.x();
     returned_node_data.y = node_data.y();
 
-    NS_LOG_INFO("DEBUG: read update message update node index " << i);
-    NS_LOG_INFO("DEBUG: read update message update node id " << returned_node_data.id);
-    NS_LOG_INFO("DEBUG: read update message update node x " << returned_node_data.x);
-    NS_LOG_INFO("DEBUG: read update message update node y " << returned_node_data.y);
+    NS_LOG_INFO("read update message update node index " << i);
+    NS_LOG_INFO("read update message update node id " << returned_node_data.id);
+    NS_LOG_INFO("read update message update node x " << returned_node_data.x);
+    NS_LOG_INFO("read update message update node y " << returned_node_data.y);
 
     return_value.properties.push_back(returned_node_data);
   }
@@ -386,11 +386,11 @@ int64_t ClientServerChannel::readTimeMessage() {
   NS_LOG_INFO("readTimeMessage");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("DEBUG: read time announced message size: " << *message_size);
+  NS_LOG_INFO("read time announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("DEBUG: read time received message size: " << count);
+  NS_LOG_INFO("read time received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -399,7 +399,7 @@ int64_t ClientServerChannel::readTimeMessage() {
   time_message.ParseFromCodedStream ( &codedIn );
 
   int64_t time = time_message.time();
-  NS_LOG_INFO("DEBUG: read time message: " << time);
+  NS_LOG_INFO("read time message: " << time);
   return time;
 }
 
@@ -413,11 +413,11 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
   NS_LOG_INFO("readConfigurationMessage");
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("DEBUG: read config announced message size: " << *message_size);
+  NS_LOG_INFO("read config announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("DEBUG: read config received message size: " << count);
+  NS_LOG_INFO("read config received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -429,9 +429,9 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
   return_value.msg_id = conf_message.message_id();
   return_value.node_id = conf_message.external_id();
 
-  NS_LOG_INFO("DEBUG: read config message time: " << return_value.time);
-  NS_LOG_INFO("DEBUG: read config message msg id: " << return_value.msg_id);
-  NS_LOG_INFO("DEBUG: read config message node id: " << return_value.node_id);
+  NS_LOG_INFO("read config message time: " << return_value.time);
+  NS_LOG_INFO("read config message msg id: " << return_value.msg_id);
+  NS_LOG_INFO("read config message node id: " << return_value.node_id);
 
   if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_SINGLE_RADIO ) {
     return_value.num_radios = SINGLE_RADIO;
@@ -440,7 +440,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
   } else if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_NO_RADIO ) {
     return_value.num_radios = NO_RADIO;
   }
-  NS_LOG_INFO("DEBUG: read config message num_radios: " << return_value.num_radios);
+  NS_LOG_INFO("read config message num_radios: " << return_value.num_radios);
 
   if ( return_value.num_radios == SINGLE_RADIO || return_value.num_radios == DUAL_RADIO ) {
     return_value.primary_radio.turnedOn = conf_message.primary_radio_configuration().receiving_messages();
@@ -449,15 +449,15 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
     return_value.primary_radio.tx_power = conf_message.primary_radio_configuration().transmission_power();
     return_value.primary_radio.primary_channel
       = protoChannelToChannel ( conf_message.primary_radio_configuration().primary_radio_channel() );
-    NS_LOG_INFO("DEBUG: read config message primary radio turned on: "
+    NS_LOG_INFO("read config message primary radio turned on: "
       << std::boolalpha << return_value.primary_radio.turnedOn);
-    NS_LOG_INFO("DEBUG: read config message primary radio ip address: "
+    NS_LOG_INFO("read config message primary radio ip address: "
       << uint32_to_ip ( return_value.primary_radio.ip_address ));
-    NS_LOG_INFO("DEBUG: read config message primary radio subnet: "
+    NS_LOG_INFO("read config message primary radio subnet: "
       << uint32_to_ip ( return_value.primary_radio.subnet ));
-    NS_LOG_INFO("DEBUG: read config message primary radio tx_power: "
+    NS_LOG_INFO("read config message primary radio tx_power: "
       << return_value.primary_radio.tx_power);
-    NS_LOG_INFO("DEBUG: read config message primary radio primary channel: "
+    NS_LOG_INFO("read config message primary radio primary channel: "
       << return_value.primary_radio.primary_channel);
 
     if ( conf_message.primary_radio_configuration().radio_mode()
@@ -469,11 +469,11 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
       return_value.primary_radio.secondary_channel
         = protoChannelToChannel ( conf_message.primary_radio_configuration().secondary_radio_channel() );
     }
-    NS_LOG_INFO("DEBUG: read config message primary radio channel mode: "
+    NS_LOG_INFO("read config message primary radio channel mode: "
       << return_value.primary_radio.channelmode);
     if ( conf_message.primary_radio_configuration().radio_mode()
           == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-      NS_LOG_INFO("DEBUG: read config message primary radio secondary channel: "
+      NS_LOG_INFO("read config message primary radio secondary channel: "
         << return_value.primary_radio.secondary_channel);
     }
   }
@@ -485,15 +485,15 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
     return_value.secondary_radio.tx_power = conf_message.secondary_radio_configuration().transmission_power();
     return_value.secondary_radio.primary_channel
       = protoChannelToChannel ( conf_message.secondary_radio_configuration().primary_radio_channel() );
-    NS_LOG_INFO("DEBUG: read config message secondary radio turned on: "
+    NS_LOG_INFO("read config message secondary radio turned on: "
       << std::boolalpha <<  return_value.secondary_radio.turnedOn);
-    NS_LOG_INFO("DEBUG: read config message secondary radio ip address: "
+    NS_LOG_INFO("read config message secondary radio ip address: "
       << uint32_to_ip ( return_value.secondary_radio.ip_address ));
-    NS_LOG_INFO("DEBUG: read config message secondary radio subnet: "
+    NS_LOG_INFO("read config message secondary radio subnet: "
       << uint32_to_ip ( return_value.secondary_radio.subnet ));
-    NS_LOG_INFO("DEBUG: read config message secondary radio tx_power: "
+    NS_LOG_INFO("read config message secondary radio tx_power: "
       << return_value.secondary_radio.tx_power);
-    NS_LOG_INFO("DEBUG: read config message secondary radio primary channel: "
+    NS_LOG_INFO("read config message secondary radio primary channel: "
       << return_value.secondary_radio.primary_channel);
 
     if ( conf_message.secondary_radio_configuration().radio_mode()
@@ -505,11 +505,11 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
       return_value.secondary_radio.secondary_channel
         = protoChannelToChannel(conf_message.secondary_radio_configuration().secondary_radio_channel());
     }
-    NS_LOG_INFO("DEBUG: read config message secondary radio channel mode: "
+    NS_LOG_INFO("read config message secondary radio channel mode: "
       << return_value.secondary_radio.channelmode);
     if ( conf_message.primary_radio_configuration().radio_mode()
           == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-      NS_LOG_INFO("DEBUG: read config message secondary radio secondary channel: "
+      NS_LOG_INFO("read config message secondary radio secondary channel: "
         << return_value.secondary_radio.secondary_channel);
     }
   }
@@ -528,11 +528,11 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
   NS_LOG_INFO("readSendMessage");
   std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("DEBUG: read send announced message size: " << *message_size);
+  NS_LOG_INFO("read send announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("DEBUG: read send received message size: " << count);
+  NS_LOG_INFO("read send received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -543,32 +543,32 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
   return_value.time = send_message.time();
   return_value.node_id = send_message.node_id();
 
-  NS_LOG_INFO("DEBUG: read send message time: " << return_value.time);
-  NS_LOG_INFO("DEBUG: read send message node id: " << return_value.node_id);
+  NS_LOG_INFO("read send message time: " << return_value.time);
+  NS_LOG_INFO("read send message node id: " << return_value.node_id);
 
   return_value.channel_id = protoChannelToChannel(send_message.channel_id());
   return_value.message_id = send_message.message_id();
   return_value.length = send_message.length();
 
-  NS_LOG_INFO("DEBUG: read send message channel id: " << return_value.channel_id);
-  NS_LOG_INFO("DEBUG: read send message message id: " << return_value.message_id);
-  NS_LOG_INFO("DEBUG: read send message length: " << return_value.length);
+  NS_LOG_INFO("read send message channel id: " << return_value.channel_id);
+  NS_LOG_INFO("read send message message id: " << return_value.message_id);
+  NS_LOG_INFO("read send message length: " << return_value.length);
 
   if (send_message.has_topo_address() ) {
     return_value.topo_address.ip_address = send_message.topo_address().ip_address();
     return_value.topo_address.ttl = send_message.topo_address().ttl();
-    NS_LOG_INFO("DEBUG: read send message topo address ip: " << return_value.topo_address.ip_address);
-    NS_LOG_INFO("DEBUG: read send message topo address ttl: " << return_value.topo_address.ttl);
+    NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
+    NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
   } else if (send_message.has_rectangle_address() ) {  //Not yet implemented
     return_value.topo_address.ip_address = send_message.rectangle_address().ip_address();
     return_value.topo_address.ttl = 10;
-    NS_LOG_INFO("DEBUG: read send message topo address ip: " << return_value.topo_address.ip_address);
-    NS_LOG_INFO("DEBUG: read send message topo address ttl: " << return_value.topo_address.ttl);
+    NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
+    NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
   } else if (send_message.has_circle_address() ) {  //Not yet implemented
     return_value.topo_address.ip_address = send_message.circle_address().ip_address();
     return_value.topo_address.ttl = 10;
-    NS_LOG_INFO("DEBUG: read send message topo address ip: " << return_value.topo_address.ip_address);
-    NS_LOG_INFO("DEBUG: read send message topo address ttl: " << return_value.topo_address.ttl);
+    NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
+    NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
   }
   writeCommand(CMD_SUCCESS);
 
@@ -588,12 +588,12 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
 void ClientServerChannel::writeCommand(CMD cmd) {
   NS_LOG_INFO("writeCommand");
   CommandMessage commandMessage;
-  NS_LOG_INFO("DEBUG: write command: " << cmd);
+  NS_LOG_INFO("write command: " << cmd);
   commandMessage.set_command_type(cmdToProtoCMD(cmd));
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(commandMessage.ByteSize());
-  NS_LOG_INFO("DEBUG: write command varint size: " << varintsize);
+  NS_LOG_INFO("write command varint size: " << varintsize);
   int buffer_size = varintsize+commandMessage.ByteSize();
-  NS_LOG_INFO("DEBUG: write command buffer size: " << buffer_size);
+  NS_LOG_INFO("write command buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -602,7 +602,7 @@ void ClientServerChannel::writeCommand(CMD cmd) {
   codedOut.WriteVarint32(commandMessage.ByteSize());
   commandMessage.SerializeToCodedStream(&codedOut);
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("DEBUG: write command send bytes: " << count);
+  NS_LOG_INFO("write command send bytes: " << count);
 }
 
 /**
@@ -623,9 +623,9 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
   receive_message.set_channel_id(channelToProtoChannel(channel));
   receive_message.set_rssi(rssi);
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(receive_message.ByteSize());
-  NS_LOG_INFO("DEBUG: write receive message varint size: " << varintsize);
+  NS_LOG_INFO("write receive message varint size: " << varintsize);
   int buffer_size = varintsize+receive_message.ByteSize();
-  NS_LOG_INFO("DEBUG: write receive message buffer size: " << buffer_size);
+  NS_LOG_INFO("write receive message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -634,7 +634,7 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
   codedOut.WriteVarint32 ( receive_message.ByteSize() );
   receive_message.SerializeToCodedStream ( &codedOut );
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("DEBUG: write receive message send bytes: " << count);
+  NS_LOG_INFO("write receive message send bytes: " << count);
 }
 
 /**
@@ -643,13 +643,13 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
  * @param time the time to write
  */
 void ClientServerChannel::writeTimeMessage(int64_t time) {
-  NS_LOG_INFO("DEBUG: write time message: " << time);
+  NS_LOG_INFO("write time message: " << time);
   TimeMessage time_message;
   time_message.set_time ( time );
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32 ( time_message.ByteSize() );
-  NS_LOG_INFO("DEBUG: write time message varint size: " << varintsize);
+  NS_LOG_INFO("write time message varint size: " << varintsize);
   int buffer_size = varintsize+time_message.ByteSize();
-  NS_LOG_INFO("DEBUG: write time message buffer size: " << buffer_size);
+  NS_LOG_INFO("write time message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -658,7 +658,7 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
   codedOut.WriteVarint32 ( time_message.ByteSize() );
   time_message.SerializeToCodedStream ( &codedOut );
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("DEBUG: write time message send bytes: " << count);
+  NS_LOG_INFO("write time message send bytes: " << count);
 }
 
 /**
@@ -670,11 +670,11 @@ void ClientServerChannel::writePort(uint32_t port) {
   NS_LOG_INFO("writePort port: " << port);
   PortExchange port_exchange;
   port_exchange.set_port_number ( port );
-  NS_LOG_INFO("DEBUG: write port exchange: " << port_exchange.port_number());
+  NS_LOG_INFO("write port exchange: " << port_exchange.port_number());
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(port_exchange.ByteSize());
-  NS_LOG_INFO("DEBUG: write port message varint size: " << varintsize);
+  NS_LOG_INFO("write port message varint size: " << varintsize);
   int buffer_size = varintsize+port_exchange.ByteSize();
-  NS_LOG_INFO("DEBUG: write port message buffer size: " << buffer_size);
+  NS_LOG_INFO("write port message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -683,7 +683,7 @@ void ClientServerChannel::writePort(uint32_t port) {
   codedOut.WriteVarint32(port_exchange.ByteSize());
   port_exchange.SerializeToCodedStream(&codedOut);
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("DEBUG: write port message send bytes: " << count);
+  NS_LOG_INFO("write port message send bytes: " << count);
 }
 
 //#####################################################
@@ -719,7 +719,7 @@ std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) 
     }
     return_value |= ( current_byte & 0x7F ) << ( 7 * (num_bytes - 1 ) );    //Add the next 7 bits
     }
-  NS_LOG_INFO("DEBUG: read VarintPrefix value: " << return_value);
+  NS_LOG_INFO("read VarintPrefix value: " << return_value);
   return std::make_shared < uint32_t > ( return_value );
 }
 
