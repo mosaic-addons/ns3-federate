@@ -237,11 +237,11 @@ CMD  ClientServerChannel::readCommand() {
     std::cerr << "ERROR: reading of mandatory message size failed!" << std::endl;
     return CMD_UNDEF;
   }
-  NS_LOG_INFO("read command announced message size: " << *message_size);
+  NS_LOG_LOGIC("read command announced message size: " << *message_size);
   //Allocate a fitting buffer and read message from stream
   char message_buffer[*message_size];
   size_t res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("readCommand recv result: " << res);
+  NS_LOG_LOGIC("readCommand recv result: " << res);
   if ( *message_size > 0 && res != *message_size ) {
     std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << res << " bytes. poll ... " << std::endl;
     struct pollfd socks[1];
@@ -252,11 +252,11 @@ CMD  ClientServerChannel::readCommand() {
     int retries = 3;
     do {
       poll_res = poll(socks, 1, 1000);
-      NS_LOG_INFO("poll res: " << poll_res);
+      NS_LOG_LOGIC("poll res: " << poll_res);
       retries--;
       if ( retries == 0) { break; }
       sleep(1);
-      NS_LOG_INFO("poll ...");
+      NS_LOG_LOGIC("poll ...");
     } while ( poll_res < 1 );
     res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
     if ( retries != 3 && res < 1 ) {
@@ -269,7 +269,7 @@ CMD  ClientServerChannel::readCommand() {
     return CMD_UNDEF;
   }
   if ( *message_size > 0 ) {
-    NS_LOG_INFO("message buffer as byte array: " << debug_byte_array ( message_buffer, *message_size ));
+    NS_LOG_LOGIC("message buffer as byte array: " << debug_byte_array ( message_buffer, *message_size ));
     //Create the streams that can parse the received data into the protobuf class
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -294,10 +294,10 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
   NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("read init announced message size: " << *message_size);
+  NS_LOG_LOGIC("read init announced message size: " << *message_size);
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("read init received message size: " << count);
+  NS_LOG_LOGIC("read init received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn);
@@ -324,14 +324,14 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
   NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("read update note announced message size: " << *message_size);
+  NS_LOG_LOGIC("read update note announced message size: " << *message_size);
   if ( *message_size < 0 ) {
     return 0;
   }
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("read update node received message size: " << count);
+  NS_LOG_LOGIC("read update node received message size: " << count);
 
   if ( *message_size != count ) {
     std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << count << " bytes!" << std::endl;
@@ -386,11 +386,11 @@ int64_t ClientServerChannel::readTimeMessage() {
   NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("read time announced message size: " << *message_size);
+  NS_LOG_LOGIC("read time announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("read time received message size: " << count);
+  NS_LOG_LOGIC("read time received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -413,11 +413,11 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
   NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("read config announced message size: " << *message_size);
+  NS_LOG_LOGIC("read config announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("read config received message size: " << count);
+  NS_LOG_LOGIC("read config received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -528,11 +528,11 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
   NS_LOG_FUNCTION(this);
   std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  NS_LOG_INFO("read send announced message size: " << *message_size);
+  NS_LOG_LOGIC("read send announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  NS_LOG_INFO("read send received message size: " << count);
+  NS_LOG_LOGIC("read send received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -590,9 +590,9 @@ void ClientServerChannel::writeCommand(CMD cmd) {
   CommandMessage commandMessage;
   commandMessage.set_command_type(cmdToProtoCMD(cmd));
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(commandMessage.ByteSize());
-  NS_LOG_INFO("write command varint size: " << varintsize);
+  NS_LOG_LOGIC("write command varint size: " << varintsize);
   int buffer_size = varintsize+commandMessage.ByteSize();
-  NS_LOG_INFO("write command buffer size: " << buffer_size);
+  NS_LOG_LOGIC("write command buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -601,7 +601,7 @@ void ClientServerChannel::writeCommand(CMD cmd) {
   codedOut.WriteVarint32(commandMessage.ByteSize());
   commandMessage.SerializeToCodedStream(&codedOut);
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("write command send bytes: " << count);
+  NS_LOG_LOGIC("write command send bytes: " << count);
 }
 
 /**
@@ -622,9 +622,9 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
   receive_message.set_channel_id(channelToProtoChannel(channel));
   receive_message.set_rssi(rssi);
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(receive_message.ByteSize());
-  NS_LOG_INFO("write receive message varint size: " << varintsize);
+  NS_LOG_LOGIC("write receive message varint size: " << varintsize);
   int buffer_size = varintsize+receive_message.ByteSize();
-  NS_LOG_INFO("write receive message buffer size: " << buffer_size);
+  NS_LOG_LOGIC("write receive message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -633,7 +633,7 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
   codedOut.WriteVarint32 ( receive_message.ByteSize() );
   receive_message.SerializeToCodedStream ( &codedOut );
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("write receive message send bytes: " << count);
+  NS_LOG_LOGIC("write receive message send bytes: " << count);
 }
 
 /**
@@ -646,9 +646,9 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
   TimeMessage time_message;
   time_message.set_time ( time );
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32 ( time_message.ByteSize() );
-  NS_LOG_INFO("write time message varint size: " << varintsize);
+  NS_LOG_LOGIC("write time message varint size: " << varintsize);
   int buffer_size = varintsize+time_message.ByteSize();
-  NS_LOG_INFO("write time message buffer size: " << buffer_size);
+  NS_LOG_LOGIC("write time message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -657,7 +657,7 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
   codedOut.WriteVarint32 ( time_message.ByteSize() );
   time_message.SerializeToCodedStream ( &codedOut );
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("write time message send bytes: " << count);
+  NS_LOG_LOGIC("write time message send bytes: " << count);
 }
 
 /**
@@ -669,11 +669,11 @@ void ClientServerChannel::writePort(uint32_t port) {
   NS_LOG_FUNCTION(this << port);
   PortExchange port_exchange;
   port_exchange.set_port_number ( port );
-  NS_LOG_INFO("write port exchange: " << port_exchange.port_number());
+  NS_LOG_LOGIC("write port exchange: " << port_exchange.port_number());
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(port_exchange.ByteSize());
-  NS_LOG_INFO("write port message varint size: " << varintsize);
+  NS_LOG_LOGIC("write port message varint size: " << varintsize);
   int buffer_size = varintsize+port_exchange.ByteSize();
-  NS_LOG_INFO("write port message buffer size: " << buffer_size);
+  NS_LOG_LOGIC("write port message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -682,7 +682,7 @@ void ClientServerChannel::writePort(uint32_t port) {
   codedOut.WriteVarint32(port_exchange.ByteSize());
   port_exchange.SerializeToCodedStream(&codedOut);
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  NS_LOG_INFO("write port message send bytes: " << count);
+  NS_LOG_LOGIC("write port message send bytes: " << count);
 }
 
 //#####################################################
