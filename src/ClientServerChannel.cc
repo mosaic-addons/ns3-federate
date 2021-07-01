@@ -230,7 +230,7 @@ std::string debug_byte_array ( const char* buffer, const size_t buffer_size ) {
  * TODO: return type should be maybe
  */
 CMD  ClientServerChannel::readCommand() {
-  NS_LOG_INFO("readCommand");
+  NS_LOG_FUNCTION(this);
   //Read the mandatory prefixed size
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
     if ( !message_size || *message_size < 0 ) {
@@ -291,7 +291,7 @@ CMD  ClientServerChannel::readCommand() {
  * @return 0 if successful
  */
 int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
-  NS_LOG_INFO("readInit");
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
   NS_LOG_INFO("read init announced message size: " << *message_size);
@@ -321,7 +321,7 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
  * @return 0 if successful
  */
 int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value ) {
-  NS_LOG_INFO("readUpdateNode");
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
   NS_LOG_INFO("read update note announced message size: " << *message_size);
@@ -383,7 +383,7 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
  * @return the read time as an int64_t
  */
 int64_t ClientServerChannel::readTimeMessage() {
-  NS_LOG_INFO("readTimeMessage");
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
   NS_LOG_INFO("read time announced message size: " << *message_size);
@@ -410,7 +410,7 @@ int64_t ClientServerChannel::readTimeMessage() {
  * @return 0 if successful
  */
 int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_value) {
-  NS_LOG_INFO("readConfigurationMessage");
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
   NS_LOG_INFO("read config announced message size: " << *message_size);
@@ -525,7 +525,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
  * @return 0 if successful
  */
 int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
-  NS_LOG_INFO("readSendMessage");
+  NS_LOG_FUNCTION(this);
   std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
   NS_LOG_INFO("read send announced message size: " << *message_size);
@@ -586,9 +586,8 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
  * @param cmd command to be written to ambassador
  */
 void ClientServerChannel::writeCommand(CMD cmd) {
-  NS_LOG_INFO("writeCommand");
+  NS_LOG_FUNCTION(this << cmd);
   CommandMessage commandMessage;
-  NS_LOG_INFO("write command: " << cmd);
   commandMessage.set_command_type(cmdToProtoCMD(cmd));
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(commandMessage.ByteSize());
   NS_LOG_INFO("write command varint size: " << varintsize);
@@ -615,7 +614,7 @@ void ClientServerChannel::writeCommand(CMD cmd) {
  * @param rssi the rssi during the receive event
  */
 void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi) {
-  NS_LOG_INFO("writeReceiveMessage");
+  NS_LOG_FUNCTION(this << time << node_id << message_id << channel << rssi);
   ReceiveMessage receive_message;
   receive_message.set_time(time);
   receive_message.set_node_id(node_id);
@@ -643,7 +642,7 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
  * @param time the time to write
  */
 void ClientServerChannel::writeTimeMessage(int64_t time) {
-  NS_LOG_INFO("write time message: " << time);
+  NS_LOG_FUNCTION(this << time);
   TimeMessage time_message;
   time_message.set_time ( time );
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32 ( time_message.ByteSize() );
@@ -667,7 +666,7 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
  * @param port port
  */
 void ClientServerChannel::writePort(uint32_t port) {
-  NS_LOG_INFO("writePort port: " << port);
+  NS_LOG_FUNCTION(this << port);
   PortExchange port_exchange;
   port_exchange.set_port_number ( port );
   NS_LOG_INFO("write port exchange: " << port_exchange.port_number());
@@ -699,6 +698,7 @@ void ClientServerChannel::writePort(uint32_t port) {
  *
  */
 std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) {
+  NS_LOG_FUNCTION(this << sock);
   int num_bytes=0;
   char current_byte;
 
@@ -719,7 +719,7 @@ std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) 
     }
     return_value |= ( current_byte & 0x7F ) << ( 7 * (num_bytes - 1 ) );    //Add the next 7 bits
     }
-  NS_LOG_INFO("read VarintPrefix value: " << return_value);
+  NS_LOG_LOGIC("readVarintPrefix return value: " << return_value);
   return std::make_shared < uint32_t > ( return_value );
 }
 
