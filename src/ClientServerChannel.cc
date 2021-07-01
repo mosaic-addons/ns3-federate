@@ -366,10 +366,10 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
     returned_node_data.x = node_data.x();
     returned_node_data.y = node_data.y();
 
-    NS_LOG_INFO("read update message update node index " << i);
-    NS_LOG_INFO("read update message update node id " << returned_node_data.id);
-    NS_LOG_INFO("read update message update node x " << returned_node_data.x);
-    NS_LOG_INFO("read update message update node y " << returned_node_data.y);
+    NS_LOG_INFO("read update message update node index=" << i
+                << " id=" << returned_node_data.id
+                << " x=" << returned_node_data.x
+                << " y=" << returned_node_data.y);
 
     return_value.properties.push_back(returned_node_data);
   }
