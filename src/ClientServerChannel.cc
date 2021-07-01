@@ -233,7 +233,7 @@ CMD  ClientServerChannel::readCommand() {
   NS_LOG_FUNCTION(this);
   //Read the mandatory prefixed size
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
-    if ( !message_size || *message_size < 0 ) {
+  if ( !message_size || *message_size < 0 ) {
     std::cerr << "ERROR: reading of mandatory message size failed!" << std::endl;
     return CMD_UNDEF;
   }
