@@ -291,11 +291,6 @@ namespace ns3 {
         return m_currentContext;
     }
 
-    /**
-     * @brief Attach the instance of the MOSAIC server to the object of this class
-     * 
-     * @param the MOSAIC server instance
-     */
     void MosaicSimulatorImpl::AttachNS3Server(MosaicNs3Server* server) {
         m_server = server;
     }

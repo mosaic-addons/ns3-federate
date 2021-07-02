@@ -155,9 +155,6 @@ namespace ns3 {
         m_isDeactivated[nodeId] = true;
     }
 
-    /**
-     * @brief Evaluates configuration message and applies it to the node
-     */
     void MosaicNodeManager::ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, int transmitPower) {
         if (m_isDeactivated[nodeId]) {
             return;
