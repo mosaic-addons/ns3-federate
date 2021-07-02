@@ -51,6 +51,11 @@ namespace ns3 {
 
         static TypeId GetTypeId(void);
 
+        /**
+         * @brief Attach the instance of the MOSAIC server to the object of this class
+         *
+         * @param instance the MOSAIC server instance
+         */
         void AttachNS3Server(MosaicNs3Server* instance);
         
         virtual EventId Schedule(Time const &time, EventImpl *event);
@@ -73,6 +78,7 @@ namespace ns3 {
         virtual void SetScheduler(ObjectFactory schedulerFactory);
         virtual uint32_t GetSystemId(void) const;
         virtual uint32_t GetContext(void) const;
+        virtual uint64_t GetEventCount(void) const;
         virtual void SetCurrentTs(Time time);
 
     private:
@@ -88,6 +94,7 @@ namespace ns3 {
         uint32_t m_uid;
         uint32_t m_currentUid;
         uint64_t m_currentTs;
+        uint64_t m_eventCount;
         uint32_t m_currentContext;
         // number of events that have been inserted but not yet scheduled,
         // not counting the "destroy" events; this is used for validation

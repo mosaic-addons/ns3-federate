@@ -35,13 +35,9 @@
 #include <errno.h>
 #include <iomanip>
 #include <poll.h>
+#include <ns3/log.h>
 
-#ifdef USE_OMNET_CLOG_H
-#include <omnetpp/clog.h>
-#define LOG_DEBUG EV_DEBUG
-#else
-#define LOG_DEBUG std::cout
-#endif
+NS_LOG_COMPONENT_DEFINE("ClientServerChannel");
 
 namespace std {
   ostream& operator<< ( ostream& out, ClientServerChannelSpace::CMD cmd ) {
@@ -209,18 +205,21 @@ ClientServerChannel::~ClientServerChannel() {
 //  Public read-methods
 //#####################################################
 
-void debug_byte_array ( const char* buffer, const size_t buffer_size ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << std::dec << "DEBUG: debug_byte_array buffer_size: " << buffer_size << std::endl;
+/**
+ * Formats buffer as string, each byte is formatted as decimal.
+ */
+std::string debug_byte_array ( const char* buffer, const size_t buffer_size ) {
+  std::stringstream array;
+  array << std::dec << "size: " << buffer_size << ", bytes: ";
+  if(buffer_size > 16)
+    array << std::endl;  // begin multiline print in new line
   for ( size_t i=0; i < buffer_size; i++ ) {
     const char c = buffer[i];
-    LOG_DEBUG << std::dec << static_cast<int>(c);
-        LOG_DEBUG << (((i + 1) % 16 == 0) ? '\n' : ' ');
+    array << std::dec << static_cast<int>(c);
+    array << (((i + 1) % 16 == 0) ? '\n' : ' ');
   }
-  LOG_DEBUG << std::endl;
-
+  array << std::endl;
+  return array.str();
 }
 
 /**
@@ -231,21 +230,18 @@ void debug_byte_array ( const char* buffer, const size_t buffer_size ) {
  * TODO: return type should be maybe
  */
 CMD  ClientServerChannel::readCommand() {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "readCommand" << std::endl;
+  NS_LOG_FUNCTION(this);
   //Read the mandatory prefixed size
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
-    if ( !message_size || *message_size < 0 ) {
+  if ( !message_size || *message_size < 0 ) {
     std::cerr << "ERROR: reading of mandatory message size failed!" << std::endl;
     return CMD_UNDEF;
   }
-  LOG_DEBUG << "DEBUG: read command announced message size: " << *message_size << std::endl;
+  NS_LOG_LOGIC("read command announced message size: " << *message_size);
   //Allocate a fitting buffer and read message from stream
   char message_buffer[*message_size];
   size_t res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  LOG_DEBUG << "DEBUG: readCommand recv result: " << res << std::endl;
+  NS_LOG_LOGIC("readCommand recv result: " << res);
   if ( *message_size > 0 && res != *message_size ) {
     std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << res << " bytes. poll ... " << std::endl;
     struct pollfd socks[1];
@@ -256,11 +252,11 @@ CMD  ClientServerChannel::readCommand() {
     int retries = 3;
     do {
       poll_res = poll(socks, 1, 1000);
-      LOG_DEBUG << "poll res: " << poll_res << std::endl;
+      NS_LOG_LOGIC("poll res: " << poll_res);
       retries--;
       if ( retries == 0) { break; }
       sleep(1);
-      LOG_DEBUG << "poll ..." << std::endl;
+      NS_LOG_LOGIC("poll ...");
     } while ( poll_res < 1 );
     res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
     if ( retries != 3 && res < 1 ) {
@@ -272,15 +268,8 @@ CMD  ClientServerChannel::readCommand() {
     std::cerr << "ERROR: reading of message body failed! Socket not ready." << std::endl;
     return CMD_UNDEF;
   }
-//  LOG_DEBUG << "readCommand message:" << std::endl;
-//  for (size_t i=0; i < *message_size; i++) {
-//    const char c = message_buffer[i];
-//    LOG_DEBUG << std::dec << static_cast<int>(c);
-//        LOG_DEBUG << (((i + 1) % 16 == 0) ? '\n' : ' ');
-//  }
-//  LOG_DEBUG << std::endl;
   if ( *message_size > 0 ) {
-    debug_byte_array ( message_buffer, *message_size );
+    NS_LOG_LOGIC("message buffer as byte array: " << debug_byte_array ( message_buffer, *message_size ));
     //Create the streams that can parse the received data into the protobuf class
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -289,7 +278,7 @@ CMD  ClientServerChannel::readCommand() {
     commandMessage.ParseFromCodedStream(&codedIn);  //parse message
     //pick the needed data from the protobuf message class and return it
     const CMD cmd = protoCMDToCMD(commandMessage.command_type());
-    LOG_DEBUG << "DEBUG: read command: " << cmd << std::endl;
+    NS_LOG_INFO("read command: " << cmd);
     return cmd;
   }
   return CMD_UNDEF;
@@ -302,16 +291,13 @@ CMD  ClientServerChannel::readCommand() {
  * @return 0 if successful
  */
 int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "readInit" << std::endl;
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
-  LOG_DEBUG << "DEBUG: read init announced message size: " << *message_size << std::endl;
+  NS_LOG_LOGIC("read init announced message size: " << *message_size);
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  LOG_DEBUG << "DEBUG: read init received message size: " << count << std::endl;
+  NS_LOG_LOGIC("read init received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn);
@@ -322,8 +308,8 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
   return_value.start_time = init_message.start_time();
   return_value.end_time = init_message.end_time();
 
-  LOG_DEBUG << "DEBUG: read init start time: " << return_value.start_time << std::endl;
-  LOG_DEBUG << "DEBUG: read init end time: " << return_value.end_time << std::endl;
+  NS_LOG_INFO("read init start time: " << return_value.start_time);
+  NS_LOG_INFO("read init end time: " << return_value.end_time);
 
   return 0;
 }
@@ -335,20 +321,17 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
  * @return 0 if successful
  */
 int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "readUpdateNode" << std::endl;
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  LOG_DEBUG << "DEBUG: read update note announced message size: " << *message_size << std::endl;
+  NS_LOG_LOGIC("read update note announced message size: " << *message_size);
   if ( *message_size < 0 ) {
     return 0;
   }
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  LOG_DEBUG << "DEBUG: read update node received message size: " << count << std::endl;
+  NS_LOG_LOGIC("read update node received message size: " << count);
 
   if ( *message_size != count ) {
     std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << count << " bytes!" << std::endl;
@@ -370,10 +353,10 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
       std::cerr << "ERROR: update type unknown: " << update_message.update_type() << std::endl;
       return_value.type = (UPDATE_NODE_TYPE)0; return 1;     //1 signals an error
   }
-  LOG_DEBUG << "DEBUG: read update message update type " << return_value.type << std::endl;
+  NS_LOG_INFO("read update message update type " << return_value.type);
 
   return_value.time = update_message.time();
-  LOG_DEBUG << "DEBUG: read update message update time " << return_value.time << std::endl;
+  NS_LOG_INFO("read update message update time " << return_value.time);
 
   for ( size_t i = 0; i < update_message.properties_size(); i++ ) { //fill the update messages into our struct
     UpdateNode_NodeData node_data = update_message.properties(i);
@@ -383,10 +366,10 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
     returned_node_data.x = node_data.x();
     returned_node_data.y = node_data.y();
 
-    LOG_DEBUG << "DEBUG: read update message update node index " << i << std::endl;
-    LOG_DEBUG << "DEBUG: read update message update node id " << returned_node_data.id << std::endl;
-    LOG_DEBUG << "DEBUG: read update message update node x " << returned_node_data.x << std::endl;
-    LOG_DEBUG << "DEBUG: read update message update node y " << returned_node_data.y << std::endl;
+    NS_LOG_INFO("read update message update node index=" << i
+                << " id=" << returned_node_data.id
+                << " x=" << returned_node_data.x
+                << " y=" << returned_node_data.y);
 
     return_value.properties.push_back(returned_node_data);
   }
@@ -400,17 +383,14 @@ int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value )
  * @return the read time as an int64_t
  */
 int64_t ClientServerChannel::readTimeMessage() {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "readTimeMessage" << std::endl;
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
   if ( !message_size ) { return -1; }
-  LOG_DEBUG << "DEBUG: read time announced message size: " << *message_size << std::endl;
+  NS_LOG_LOGIC("read time announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  LOG_DEBUG << "DEBUG: read time received message size: " << count << std::endl;
+  NS_LOG_LOGIC("read time received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -419,7 +399,7 @@ int64_t ClientServerChannel::readTimeMessage() {
   time_message.ParseFromCodedStream ( &codedIn );
 
   int64_t time = time_message.time();
-  LOG_DEBUG << "DEBUG: read time message: " << time << std::endl;
+  NS_LOG_INFO("read time message: " << time);
   return time;
 }
 
@@ -430,17 +410,14 @@ int64_t ClientServerChannel::readTimeMessage() {
  * @return 0 if successful
  */
 int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_value) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "readConfigurationMessage" << std::endl;
+  NS_LOG_FUNCTION(this);
   const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  LOG_DEBUG << "DEBUG: read config announced message size: " << *message_size << std::endl;
+  NS_LOG_LOGIC("read config announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  LOG_DEBUG << "DEBUG: read config received message size: " << count << std::endl;
+  NS_LOG_LOGIC("read config received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -452,9 +429,9 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
   return_value.msg_id = conf_message.message_id();
   return_value.node_id = conf_message.external_id();
 
-  LOG_DEBUG << "DEBUG: read config message time: " << return_value.time << std::endl;
-  LOG_DEBUG << "DEBUG: read config message msg id: " << return_value.msg_id << std::endl;
-  LOG_DEBUG << "DEBUG: read config message node id: " << return_value.node_id << std::endl;
+  NS_LOG_INFO("read config message time: " << return_value.time);
+  NS_LOG_INFO("read config message msg id: " << return_value.msg_id);
+  NS_LOG_INFO("read config message node id: " << return_value.node_id);
 
   if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_SINGLE_RADIO ) {
     return_value.num_radios = SINGLE_RADIO;
@@ -463,7 +440,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
   } else if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_NO_RADIO ) {
     return_value.num_radios = NO_RADIO;
   }
-  LOG_DEBUG << "DEBUG: read config message num_radios: " << return_value.num_radios << std::endl;
+  NS_LOG_INFO("read config message num_radios: " << return_value.num_radios);
 
   if ( return_value.num_radios == SINGLE_RADIO || return_value.num_radios == DUAL_RADIO ) {
     return_value.primary_radio.turnedOn = conf_message.primary_radio_configuration().receiving_messages();
@@ -472,16 +449,16 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
     return_value.primary_radio.tx_power = conf_message.primary_radio_configuration().transmission_power();
     return_value.primary_radio.primary_channel
       = protoChannelToChannel ( conf_message.primary_radio_configuration().primary_radio_channel() );
-    LOG_DEBUG << "DEBUG: read config message primary radio turned on: "
-      << std::boolalpha << return_value.primary_radio.turnedOn << std::endl;
-    LOG_DEBUG << "DEBUG: read config message primary radio ip address: "
-      << uint32_to_ip ( return_value.primary_radio.ip_address ) << std::endl;
-    LOG_DEBUG << "DEBUG: read config message primary radio subnet: "
-      << uint32_to_ip ( return_value.primary_radio.subnet ) << std::endl;
-    LOG_DEBUG << "DEBUG: read config message primary radio tx_power: "
-      << return_value.primary_radio.tx_power << std::endl;
-    LOG_DEBUG << "DEBUG: read config message primary radio primary channel: "
-      << return_value.primary_radio.primary_channel << std::endl;
+    NS_LOG_INFO("read config message primary radio turned on: "
+      << std::boolalpha << return_value.primary_radio.turnedOn);
+    NS_LOG_INFO("read config message primary radio ip address: "
+      << uint32_to_ip ( return_value.primary_radio.ip_address ));
+    NS_LOG_INFO("read config message primary radio subnet: "
+      << uint32_to_ip ( return_value.primary_radio.subnet ));
+    NS_LOG_INFO("read config message primary radio tx_power: "
+      << return_value.primary_radio.tx_power);
+    NS_LOG_INFO("read config message primary radio primary channel: "
+      << return_value.primary_radio.primary_channel);
 
     if ( conf_message.primary_radio_configuration().radio_mode()
           == ConfigureRadioMessage_RadioConfiguration_RadioMode_SINGLE_CHANNEL ) {
@@ -492,12 +469,12 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
       return_value.primary_radio.secondary_channel
         = protoChannelToChannel ( conf_message.primary_radio_configuration().secondary_radio_channel() );
     }
-    LOG_DEBUG << "DEBUG: read config message primary radio channel mode: "
-      << return_value.primary_radio.channelmode << std::endl;
+    NS_LOG_INFO("read config message primary radio channel mode: "
+      << return_value.primary_radio.channelmode);
     if ( conf_message.primary_radio_configuration().radio_mode()
           == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-      LOG_DEBUG << "DEBUG: read config message primary radio secondary channel: "
-        << return_value.primary_radio.secondary_channel << std::endl;
+      NS_LOG_INFO("read config message primary radio secondary channel: "
+        << return_value.primary_radio.secondary_channel);
     }
   }
 
@@ -508,16 +485,16 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
     return_value.secondary_radio.tx_power = conf_message.secondary_radio_configuration().transmission_power();
     return_value.secondary_radio.primary_channel
       = protoChannelToChannel ( conf_message.secondary_radio_configuration().primary_radio_channel() );
-    LOG_DEBUG << "DEBUG: read config message secondary radio turned on: "
-      << std::boolalpha <<  return_value.secondary_radio.turnedOn << std::endl;
-    LOG_DEBUG << "DEBUG: read config message secondary radio ip address: "
-      << uint32_to_ip ( return_value.secondary_radio.ip_address ) << std::endl;
-    LOG_DEBUG << "DEBUG: read config message secondary radio subnet: "
-      << uint32_to_ip ( return_value.secondary_radio.subnet ) << std::endl;
-    LOG_DEBUG << "DEBUG: read config message secondary radio tx_power: "
-      << return_value.secondary_radio.tx_power << std::endl;
-    LOG_DEBUG << "DEBUG: read config message secondary radio primary channel: "
-      << return_value.secondary_radio.primary_channel << std::endl;
+    NS_LOG_INFO("read config message secondary radio turned on: "
+      << std::boolalpha <<  return_value.secondary_radio.turnedOn);
+    NS_LOG_INFO("read config message secondary radio ip address: "
+      << uint32_to_ip ( return_value.secondary_radio.ip_address ));
+    NS_LOG_INFO("read config message secondary radio subnet: "
+      << uint32_to_ip ( return_value.secondary_radio.subnet ));
+    NS_LOG_INFO("read config message secondary radio tx_power: "
+      << return_value.secondary_radio.tx_power);
+    NS_LOG_INFO("read config message secondary radio primary channel: "
+      << return_value.secondary_radio.primary_channel);
 
     if ( conf_message.secondary_radio_configuration().radio_mode()
           == ConfigureRadioMessage_RadioConfiguration_RadioMode_SINGLE_CHANNEL) {
@@ -528,12 +505,12 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
       return_value.secondary_radio.secondary_channel
         = protoChannelToChannel(conf_message.secondary_radio_configuration().secondary_radio_channel());
     }
-    LOG_DEBUG << "DEBUG: read config message secondary radio channel mode: "
-      << return_value.secondary_radio.channelmode << std::endl;
+    NS_LOG_INFO("read config message secondary radio channel mode: "
+      << return_value.secondary_radio.channelmode);
     if ( conf_message.primary_radio_configuration().radio_mode()
           == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-      LOG_DEBUG << "DEBUG: read config message secondary radio secondary channel: "
-        << return_value.secondary_radio.secondary_channel << std::endl;
+      NS_LOG_INFO("read config message secondary radio secondary channel: "
+        << return_value.secondary_radio.secondary_channel);
     }
   }
   writeCommand(CMD_SUCCESS);
@@ -548,17 +525,14 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
  * @return 0 if successful
  */
 int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "readSendMessage" << std::endl;
+  NS_LOG_FUNCTION(this);
   std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
   if ( !message_size ) { return -1; }
-  LOG_DEBUG << "DEBUG: read send announced message size: " << *message_size << std::endl;
+  NS_LOG_LOGIC("read send announced message size: " << *message_size);
 
   char message_buffer[*message_size];
   const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-  LOG_DEBUG << "DEBUG: read send received message size: " << count << std::endl;
+  NS_LOG_LOGIC("read send received message size: " << count);
 
   google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
   google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
@@ -569,32 +543,32 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
   return_value.time = send_message.time();
   return_value.node_id = send_message.node_id();
 
-  LOG_DEBUG << "DEBUG: read send message time: " << return_value.time << std::endl;
-  LOG_DEBUG << "DEBUG: read send message node id: " << return_value.node_id << std::endl;
+  NS_LOG_INFO("read send message time: " << return_value.time);
+  NS_LOG_INFO("read send message node id: " << return_value.node_id);
 
   return_value.channel_id = protoChannelToChannel(send_message.channel_id());
   return_value.message_id = send_message.message_id();
   return_value.length = send_message.length();
 
-  LOG_DEBUG << "DEBUG: read send message channel id: " << return_value.channel_id << std::endl;
-  LOG_DEBUG << "DEBUG: read send message message id: " << return_value.message_id << std::endl;
-  LOG_DEBUG << "DEBUG: read send message length: " << return_value.length << std::endl;
+  NS_LOG_INFO("read send message channel id: " << return_value.channel_id);
+  NS_LOG_INFO("read send message message id: " << return_value.message_id);
+  NS_LOG_INFO("read send message length: " << return_value.length);
 
   if (send_message.has_topo_address() ) {
     return_value.topo_address.ip_address = send_message.topo_address().ip_address();
     return_value.topo_address.ttl = send_message.topo_address().ttl();
-    LOG_DEBUG << "DEBUG: read send message topo address ip: " << return_value.topo_address.ip_address << std::endl;
-    LOG_DEBUG << "DEBUG: read send message topo address ttl: " << return_value.topo_address.ttl << std::endl;
+    NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
+    NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
   } else if (send_message.has_rectangle_address() ) {  //Not yet implemented
     return_value.topo_address.ip_address = send_message.rectangle_address().ip_address();
     return_value.topo_address.ttl = 10;
-    LOG_DEBUG << "DEBUG: read send message topo address ip: " << return_value.topo_address.ip_address << std::endl;
-    LOG_DEBUG << "DEBUG: read send message topo address ttl: " << return_value.topo_address.ttl << std::endl;
+    NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
+    NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
   } else if (send_message.has_circle_address() ) {  //Not yet implemented
     return_value.topo_address.ip_address = send_message.circle_address().ip_address();
     return_value.topo_address.ttl = 10;
-    LOG_DEBUG << "DEBUG: read send message topo address ip: " << return_value.topo_address.ip_address << std::endl;
-    LOG_DEBUG << "DEBUG: read send message topo address ttl: " << return_value.topo_address.ttl << std::endl;
+    NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
+    NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
   }
   writeCommand(CMD_SUCCESS);
 
@@ -612,17 +586,13 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
  * @param cmd command to be written to ambassador
  */
 void ClientServerChannel::writeCommand(CMD cmd) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "writeCommand" << std::endl;
+  NS_LOG_FUNCTION(this << cmd);
   CommandMessage commandMessage;
-  LOG_DEBUG << "DEBUG: write command: " << cmd << std::endl;
   commandMessage.set_command_type(cmdToProtoCMD(cmd));
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(commandMessage.ByteSize());
-  LOG_DEBUG << "DEBUG: write command varint size: " << varintsize << std::endl;
+  NS_LOG_LOGIC("write command varint size: " << varintsize);
   int buffer_size = varintsize+commandMessage.ByteSize();
-  LOG_DEBUG << "DEBUG: write command buffer size: " << buffer_size << std::endl;
+  NS_LOG_LOGIC("write command buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -631,7 +601,7 @@ void ClientServerChannel::writeCommand(CMD cmd) {
   codedOut.WriteVarint32(commandMessage.ByteSize());
   commandMessage.SerializeToCodedStream(&codedOut);
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  LOG_DEBUG << "DEBUG: write command send bytes: " << count << std::endl;
+  NS_LOG_LOGIC("write command send bytes: " << count);
 }
 
 /**
@@ -644,10 +614,7 @@ void ClientServerChannel::writeCommand(CMD cmd) {
  * @param rssi the rssi during the receive event
  */
 void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "writeReceiveMessage" << std::endl;
+  NS_LOG_FUNCTION(this << time << node_id << message_id << channel << rssi);
   ReceiveMessage receive_message;
   receive_message.set_time(time);
   receive_message.set_node_id(node_id);
@@ -655,9 +622,9 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
   receive_message.set_channel_id(channelToProtoChannel(channel));
   receive_message.set_rssi(rssi);
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(receive_message.ByteSize());
-  LOG_DEBUG << "DEBUG: write receive message varint size: " << varintsize << std::endl;
+  NS_LOG_LOGIC("write receive message varint size: " << varintsize);
   int buffer_size = varintsize+receive_message.ByteSize();
-  LOG_DEBUG << "DEBUG: write receive message buffer size: " << buffer_size << std::endl;
+  NS_LOG_LOGIC("write receive message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -666,7 +633,7 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
   codedOut.WriteVarint32 ( receive_message.ByteSize() );
   receive_message.SerializeToCodedStream ( &codedOut );
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  LOG_DEBUG << "DEBUG: write receive message send bytes: " << count << std::endl;
+  NS_LOG_LOGIC("write receive message send bytes: " << count);
 }
 
 /**
@@ -675,16 +642,13 @@ void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int me
  * @param time the time to write
  */
 void ClientServerChannel::writeTimeMessage(int64_t time) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "DEBUG: write time message: " << time << std::endl;
+  NS_LOG_FUNCTION(this << time);
   TimeMessage time_message;
   time_message.set_time ( time );
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32 ( time_message.ByteSize() );
-  LOG_DEBUG << "DEBUG: write time message varint size: " << varintsize << std::endl;
+  NS_LOG_LOGIC("write time message varint size: " << varintsize);
   int buffer_size = varintsize+time_message.ByteSize();
-  LOG_DEBUG << "DEBUG: write time message buffer size: " << buffer_size << std::endl;
+  NS_LOG_LOGIC("write time message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -693,7 +657,7 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
   codedOut.WriteVarint32 ( time_message.ByteSize() );
   time_message.SerializeToCodedStream ( &codedOut );
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  LOG_DEBUG << "DEBUG: write time message send bytes: " << count << std::endl;
+  NS_LOG_LOGIC("write time message send bytes: " << count);
 }
 
 /**
@@ -702,17 +666,14 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
  * @param port port
  */
 void ClientServerChannel::writePort(uint32_t port) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
-  LOG_DEBUG << "writePort port: " << port << std::endl;
+  NS_LOG_FUNCTION(this << port);
   PortExchange port_exchange;
   port_exchange.set_port_number ( port );
-  LOG_DEBUG << "DEBUG: write port exchange: " << port_exchange.port_number() << std::endl;
+  NS_LOG_LOGIC("write port exchange: " << port_exchange.port_number());
   int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(port_exchange.ByteSize());
-  LOG_DEBUG << "DEBUG: write port message varint size: " << varintsize << std::endl;
+  NS_LOG_LOGIC("write port message varint size: " << varintsize);
   int buffer_size = varintsize+port_exchange.ByteSize();
-  LOG_DEBUG << "DEBUG: write port message buffer size: " << buffer_size << std::endl;
+  NS_LOG_LOGIC("write port message buffer size: " << buffer_size);
   char message_buffer[buffer_size];
 
   google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, buffer_size );
@@ -721,7 +682,7 @@ void ClientServerChannel::writePort(uint32_t port) {
   codedOut.WriteVarint32(port_exchange.ByteSize());
   port_exchange.SerializeToCodedStream(&codedOut);
   const size_t count = send ( sock, message_buffer, buffer_size, 0 );
-  LOG_DEBUG << "DEBUG: write port message send bytes: " << count << std::endl;
+  NS_LOG_LOGIC("write port message send bytes: " << count);
 }
 
 //#####################################################
@@ -737,9 +698,7 @@ void ClientServerChannel::writePort(uint32_t port) {
  *
  */
 std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) {
-#ifdef USE_OMNET_CLOG_H
-  using namespace omnetpp;
-#endif
+  NS_LOG_FUNCTION(this << sock);
   int num_bytes=0;
   char current_byte;
 
@@ -760,7 +719,7 @@ std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) 
     }
     return_value |= ( current_byte & 0x7F ) << ( 7 * (num_bytes - 1 ) );    //Add the next 7 bits
     }
-  LOG_DEBUG << "DEBUG: read VarintPrefix value: " << return_value << std::endl;
+  NS_LOG_LOGIC("readVarintPrefix return value: " << return_value);
   return std::make_shared < uint32_t > ( return_value );
 }
 
