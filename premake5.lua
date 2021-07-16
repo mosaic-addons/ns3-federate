@@ -2,7 +2,7 @@
 
 local tools = require ('tools')
 local install_prefix = "/usr/local"
-local ns3version = "3.33"
+local ns3version = "3.34"
 local PROTO_PATH    = "."
 local PROTO_CC_PATH = "."
 
