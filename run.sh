@@ -8,4 +8,4 @@ if [[ -z $cmdport ]]; then
 fi
 
 cd ns3
-LD_LIBRARY_PATH=../ns-allinone-3.28/ns-3.28/build ../ns-allinone-3.28/ns-3.28/build/scratch/mosaic_starter --port=$port --cmdPort=$cmdport --configFile=scratch/ns3_federate_config.xml
+LD_LIBRARY_PATH=../ns-allinone-3.34/ns-3.34/build ../ns-allinone-3.34/ns-3.34/build/scratch/mosaic_starter --port=$port --cmdPort=$cmdport --configFile=scratch/ns3_federate_config.xml

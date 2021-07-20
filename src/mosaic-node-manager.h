@@ -30,6 +30,7 @@
 #include "ns3/wifi-80211p-helper.h"
 #include "ns3/wave-mac-helper.h"
 #include "ns3/vector.h"
+#include "ns3/yans-wifi-phy.h"
 #include "ns3/yans-wifi-channel.h"
 #include "ns3/yans-wifi-helper.h"
 
@@ -53,10 +54,18 @@ namespace ns3 {
         void Configure(MosaicNs3Server* serverPtr);
 
         void CreateMosaicNode(int ID, Vector position);
+
         void UpdateNodePosition(uint32_t nodeId, Vector position);
+
+        /**
+         * @brief Evaluates configuration message and applies it to the node
+         */
         void ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, int transmitPower);
+
         void SendMsg(uint32_t nodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
+
         bool ActivateNode(uint32_t nodeId);
+
         void DeactivateNode(uint32_t nodeId);
 
         void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID);
@@ -77,7 +86,7 @@ namespace ns3 {
         Ptr<YansWifiChannel> m_channel;
 
         //PHY
-        YansWifiPhyHelper m_wifiPhyHelper = YansWifiPhyHelper::Default();
+        YansWifiPhyHelper m_wifiPhyHelper;
 
         //MAC
         NqosWaveMacHelper m_waveMacHelper = NqosWaveMacHelper::Default();

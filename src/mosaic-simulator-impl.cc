@@ -53,6 +53,7 @@ namespace ns3 {
         m_currentTs = 0;
         m_currentContext = 0xffffffff;
         m_unscheduledEvents = 0;
+        m_eventCount = 0;
     }
 
     void MosaicSimulatorImpl::DoDispose(void) {
@@ -97,6 +98,7 @@ namespace ns3 {
         Scheduler::Event next = m_events->RemoveNext();
         NS_ASSERT(next.key.m_ts >= m_currentTs);
         m_unscheduledEvents--;
+        m_eventCount++;
 
         NS_LOG_LOGIC("handle " << next.key.m_ts);
         m_currentTs = next.key.m_ts;
@@ -133,6 +135,10 @@ namespace ns3 {
 
     void MosaicSimulatorImpl::RunOneEvent(void) {
         ProcessOneEvent();
+    }
+
+    uint64_t MosaicSimulatorImpl::GetEventCount(void) const {
+        return m_eventCount;
     }
 
     void MosaicSimulatorImpl::Stop(void) {
@@ -285,11 +291,6 @@ namespace ns3 {
         return m_currentContext;
     }
 
-    /**
-     * @brief Attach the instance of the MOSAIC server to the object of this class
-     * 
-     * @param the MOSAIC server instance
-     */
     void MosaicSimulatorImpl::AttachNS3Server(MosaicNs3Server* server) {
         m_server = server;
     }

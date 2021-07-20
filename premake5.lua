@@ -2,7 +2,7 @@
 
 local tools = require ('tools')
 local install_prefix = "/usr/local"
-local ns3version = "3.28"
+local ns3version = "3.34"
 local PROTO_PATH    = "."
 local PROTO_CC_PATH = "."
 
@@ -68,7 +68,9 @@ project "ns3-federate"
                      }
 
    filter "configurations:Debug"
-      defines { "DEBUG" }
+      defines { "DEBUG"
+              , "NS3_LOG_ENABLE"
+              , "NS3_ASSERT_ENABLE" }
       symbols "On"
       links { "ns" .. ns3version .. "-antenna-debug"
 --            , "ns" .. ns3version .. "-aodv-debug"
@@ -90,7 +92,6 @@ project "ns3-federate"
 --            , "ns" .. ns3version .. "-lte-debug"
 --            , "ns" .. ns3version .. "-mesh-debug"
             , "ns" .. ns3version .. "-mobility-debug"
-            , "ns" .. ns3version .. "-mpi-debug"
 --            , "ns" .. ns3version .. "-netanim-debug"
             , "ns" .. ns3version .. "-network-debug"
 --            , "ns" .. ns3version .. "-nix-vector-routing-debug"
@@ -135,7 +136,6 @@ project "ns3-federate"
 --            , "ns3-dev-lte-optimized"
 --            , "ns3-dev-mesh-optimized"
             , "ns3-dev-mobility-optimized"
-            , "ns3-dev-mpi-optimized"
 --            , "ns3-dev-netanim-optimized"
             , "ns3-dev-network-optimized"
 --            , "ns3-dev-nix-vector-routing-optimized"

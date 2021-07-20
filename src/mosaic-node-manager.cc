@@ -147,17 +147,11 @@ namespace ns3 {
             NS_LOG_ERROR("Node " << nodeId << " has no WifiNetDevice");
             return;
         }
-        //Workaround: set a channel number, which no other phy uses. Channel will this way not let the phy
-        //receive. Unfortunately, phys cannot be removed from channel, once added.
-        netDev->GetPhy()->SetChannelNumber(0x0);
-        netDev->GetPhy()->SetSleepMode();
+        netDev->GetPhy()->SetOffMode();
         
         m_isDeactivated[nodeId] = true;
     }
 
-    /**
-     * @brief Evaluates configuration message and applies it to the node
-     */
     void MosaicNodeManager::ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, int transmitPower) {
         if (m_isDeactivated[nodeId]) {
             return;
