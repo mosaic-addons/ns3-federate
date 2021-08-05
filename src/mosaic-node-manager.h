@@ -60,7 +60,7 @@ namespace ns3 {
         /**
          * @brief Evaluates configuration message and applies it to the node
          */
-        void ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, int transmitPower);
+        void ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, double transmitPower);
 
         void SendMsg(uint32_t nodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
 

@@ -176,7 +176,7 @@ namespace ns3 {
                     ambassadorFederateChannel.readConfigurationMessage(config_message);
                     Time tNext = NanoSeconds(config_message.time);
                     Time tDelay = tNext - sim->Now();
-                    int transmitPower = -1;
+                    double transmitPower = -1;
                     bool radioTurnedOn = false;
                     if (config_message.num_radios == SINGLE_RADIO) {
                         radioTurnedOn = true; //other modes currently not supported, other modes turn off radio

@@ -101,7 +101,7 @@ struct CSC_radio_config{
 	bool turnedOn;
 	uint32_t ip_address;
 	uint32_t subnet;
-	int tx_power;
+	double tx_power;
 	CHANNEL_MODE channelmode;
 	RADIO_CHANNEL primary_channel;
 	RADIO_CHANNEL secondary_channel;

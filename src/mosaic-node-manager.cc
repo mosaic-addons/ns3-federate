@@ -152,7 +152,7 @@ namespace ns3 {
         m_isDeactivated[nodeId] = true;
     }
 
-    void MosaicNodeManager::ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, int transmitPower) {
+    void MosaicNodeManager::ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, double transmitPower) {
         if (m_isDeactivated[nodeId]) {
             return;
         }
@@ -175,7 +175,7 @@ namespace ns3 {
                 }                        
                 Ptr<YansWifiPhy> wavePhy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
                 if (wavePhy != 0) {
-                    double txDBm = 10 * log10((double) transmitPower);
+                    double txDBm = 10 * log10(transmitPower);
                     wavePhy->SetTxPowerStart(txDBm);
                     wavePhy->SetTxPowerEnd(txDBm);
                 }
