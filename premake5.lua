@@ -39,6 +39,7 @@ project "ns3-federate"
    kind "ConsoleApp"
    language "C++"
    targetdir "bin/%{cfg.buildcfg}"
+   buildoptions { "-std=c++17" }
 
    files { "src/**.h"
          , "src/**.cc" 
