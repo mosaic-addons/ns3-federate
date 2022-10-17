@@ -12,8 +12,8 @@ The subsequent instructions therefore adresses advanced users who want to alter 
 The ns3-federate has the following dependencies:
 
 * `protobuf`
-* `gtest` 
-* `ns3` (tested with version `3.34`)
+* `gtest`
+* `ns3` (tested with version `3.36.1`)
 
 Building ns3-federate requires further dependencies:
 
