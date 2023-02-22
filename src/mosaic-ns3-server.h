@@ -121,6 +121,8 @@ namespace ns3 {
          */
         void CreateNode(int ID, int posx, int posy);
 
+        void Init();
+
         void Close();
 
         void DeactivateNode(uint32_t nodeId);

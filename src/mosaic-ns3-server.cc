@@ -71,6 +71,10 @@ namespace ns3 {
         std::cout << "ns3Server: created new connection to " << port << std::endl;
     }
 
+    void MosaicNs3Server::Init() {
+        NS_LOG_INFO("ns-3 server --> Starting event handling .... ");
+    }
+
     void MosaicNs3Server::processCommandsUntilSimStep() {
         try {
             if (!m_closeConnection) {
@@ -78,10 +82,10 @@ namespace ns3 {
                 Ptr<MosaicSimulatorImpl> Sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
                 Sim->AttachNS3Server(this);
 
-                //create the dummy event (end of the simulation) to avoid a empty event-list
+                //create the dummy event (start of the simulation) to avoid an empty event-list
                 //NS3 will throw an exception if the event-list is empty
-                Time tNext = NanoSeconds(m_endTime);
-                Simulator::Schedule(tNext, &MosaicNs3Server::Close, this);
+                Time tNext = NanoSeconds(m_startTime);
+                Simulator::Schedule(tNext, &MosaicNs3Server::Init, this);
             } else {
                 return;
             }
