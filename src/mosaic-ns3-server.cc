@@ -71,10 +71,6 @@ namespace ns3 {
         std::cout << "ns3Server: created new connection to " << port << std::endl;
     }
 
-    void MosaicNs3Server::Init() {
-        NS_LOG_INFO("ns-3 server --> Starting event handling .... ");
-    }
-
     void MosaicNs3Server::processCommandsUntilSimStep() {
         try {
             if (m_closeConnection) {
