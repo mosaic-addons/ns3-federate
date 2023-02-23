@@ -77,18 +77,12 @@ namespace ns3 {
 
     void MosaicNs3Server::processCommandsUntilSimStep() {
         try {
-            if (!m_closeConnection) {
-
-                Ptr<MosaicSimulatorImpl> Sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
-                Sim->AttachNS3Server(this);
-
-                //create the dummy event (start of the simulation) to avoid an empty event-list
-                //NS3 will throw an exception if the event-list is empty
-                Time tNext = NanoSeconds(m_startTime);
-                Simulator::Schedule(tNext, &MosaicNs3Server::Init, this);
-            } else {
-                return;
+            if (m_closeConnection) {
+                return;                
             }
+
+            Ptr<MosaicSimulatorImpl> sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
+            sim->AttachNS3Server(this);
 
             while (!m_closeConnection) {
                 NS_LOG_INFO("NumberOfNodes= " << ns3::NodeList::GetNNodes());
