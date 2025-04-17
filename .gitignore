@@ -11,6 +11,9 @@ nbactions*.xml
 *.iml
 .idea
 .editorconfig
+## premake
+premake5
+.modules
 
 out/
 obj/
