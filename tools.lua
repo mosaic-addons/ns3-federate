@@ -15,7 +15,7 @@ end
 
 function tools.check_bin ( bin )
     local found_bin = tools.find_bin ( bin )
-    if ( found_bin == nil ) then
+    if ( found_bin == nil or found_bin == "" ) then
         print ( "ERROR: " .. bin .. " not found in PATH!" )
         os.exit ( 1 ) -- return nil
     end
