@@ -10,7 +10,9 @@ local PROTO_CC_PATH = "."
 --print ( pkgconfig.load ( 'zlib' ) )
 --print ( pkgconfig.load ( 'glib-2.0' ) )
 
-local autoconf = require 'autoconf'
+premake.path = path.appendExtension( premake.path, ';.modules/autoconf/premake-autoconf-master' )
+print ( premake.path )
+local autoconf = require ( 'autoconf' )
 
 autoconfigure {
 ['config.h'] = function (cfg)
