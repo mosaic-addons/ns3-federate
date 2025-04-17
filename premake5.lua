@@ -64,7 +64,7 @@ project "ns3-federate"
           , "xml2"
           }
 
-    configuration "generate-protobuf"
+    filter "options:generate-protobuf"
         prebuildcommands { PROTOC .. " --cpp_out=" .. PROTO_CC_PATH
                                   .. " --proto_path=" .. PROTO_PATH
                                   .. " ClientServerChannelMessages.proto"
@@ -75,6 +75,7 @@ project "ns3-federate"
                 , "NS3_LOG_ENABLE"
                 , "NS3_ASSERT_ENABLE" }
         symbols "On"
+        libdirs { "bin/Debug" }
         links { "ns" .. ns3version .. "-antenna-default"
             -- , "ns" .. ns3version .. "-aodv-default"
             , "ns" .. ns3version .. "-applications-default"
@@ -119,6 +120,7 @@ project "ns3-federate"
     filter "configurations:Release"
         defines { "NDEBUG" }
         optimize "On"
+        libdirs { "bin/Release" }
         links { "ns3-dev-antenna-optimized"
               -- , "ns3-dev-aodv-optimized"
               , "ns3-dev-applications-optimized"
@@ -160,13 +162,7 @@ project "ns3-federate"
               -- , "ns3-dev-wimax-optimized"
               }
 
-    configuration "Debug"
-        libdirs { "bin/Debug" }
-
-    configuration "Release"
-        libdirs { "bin/Release" }
-
-    configuration "install"
+    filter "options:install"
         postbuildcommands { "mkdir -p " .. install_prefix .. "/bin"
                           , "cp bin/%{cfg.buildcfg}/ns3-federate " .. install_prefix .. "/bin"
                           }
