@@ -1,7 +1,6 @@
 -- premake5.lua
 
 local tools = require ('tools')
-local install_prefix = "/usr/local"
 local ns3version = "3.36.1"
 local PROTO_PATH    = "."
 local PROTO_CC_PATH = "."
@@ -16,12 +15,6 @@ newoption {
     trigger     = "generate-protobuf",
     description = "Generate/Regenerate protocol buffers with protobuf compiler"
 }
-
-newoption {
-    trigger     = "install",
-    description = "install target into '" .. install_prefix .. "'"
-}
-
 
 workspace "ns3-federate"
     configurations { "Debug", "Release" }
@@ -150,8 +143,3 @@ project "ns3-federate"
               , "ns3-dev-wifi-optimized"
               -- , "ns3-dev-wimax-optimized"
               }
-
-    filter "options:install"
-        postbuildcommands { "mkdir -p " .. install_prefix .. "/bin"
-                          , "cp bin/%{cfg.buildcfg}/ns3-federate " .. install_prefix .. "/bin"
-                          }
