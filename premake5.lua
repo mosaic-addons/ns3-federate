@@ -10,17 +10,6 @@ local PROTO_CC_PATH = "."
 --print ( pkgconfig.load ( 'zlib' ) )
 --print ( pkgconfig.load ( 'glib-2.0' ) )
 
-premake.path = path.appendExtension( premake.path, ';.modules/autoconf/premake-autoconf-master' )
-print ( premake.path )
-local autoconf = require ( 'autoconf' )
-
-autoconfigure {
-['config.h'] = function (cfg)
-                   check_include(cfg, 'HAVE_PTHREAD_H', 'pthread.h')
-                   check_include(cfg, 'HAVE_NS3_APPLICATION_H', 'ns3/application.h')
-               end
-}
-
 local PROTOC = tools.check_bin ( 'protoc' )
 
 newoption {
