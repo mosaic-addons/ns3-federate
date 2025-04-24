@@ -27,8 +27,6 @@ project "ns3-federate"
 
     files { "src/**.h"
           , "src/**.cc" 
-          , PROTO_CC_PATH .. "/ClientServerChannel.h"
-          , PROTO_CC_PATH .. "/ClientServerChannel.cc"
           , PROTO_CC_PATH .. "/ClientServerChannelMessages.pb.h"
           , PROTO_CC_PATH .. "/ClientServerChannelMessages.pb.cc"
           }
