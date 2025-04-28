@@ -155,7 +155,7 @@ int main(int argc, char *argv[]) {
     //default values
     int port = 0;
     int cmdPort = 0;
-    std::string configFile = "scratch/ns3_federate_config.xml";
+    std::string configFile = "ns3_federate_config.xml";
 
     GlobalValue::Bind("SchedulerType", StringValue("ns3::ListScheduler"));
     GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
