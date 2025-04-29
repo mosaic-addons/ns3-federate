@@ -161,11 +161,11 @@ int main(int argc, char *argv[]) {
     GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
 
     MosaicNodeManager::GetTypeId();
-    CommandLine cmd;
-    cmd.Usage("Mosaic ns-3 federate.\n\tcmdPort - command port");
+    CommandLine cmd("ns3-federate");
+    cmd.Usage("Mosaic ns-3 federate.");
     cmd.AddValue("cmdPort", "the command port", cmdPort);
     cmd.AddValue("port", "the port", port);
-    cmd.AddValue("configFile", "the configuration file to evaluate", configFile);
+    cmd.AddValue("configFile", "the configuration file", configFile);
     cmd.Parse(argc, argv);
 
     if (access(configFile.c_str(), F_OK) == -1) {
