@@ -34,12 +34,12 @@ project "ns3-federate"
     includedirs { "/usr/include"
                 , "/usr/include/libxml2"
                 , "src"
-                , "../ns-allinone-" .. ns3version .. "/ns-" .. ns3version .. "/build/include"
+                , "/home/georg/ns-allinone-" .. ns3version .. "/ns-" .. ns3version .. "/build/include"
                 , PROTO_CC_PATH
                 }
 
     libdirs { "/usr/lib"
-            , "../ns-allinone-" .. ns3version .. "/ns-" .. ns3version .. "/build/lib"
+            , "/home/georg/ns-allinone-" .. ns3version .. "/ns-" .. ns3version .. "/build/lib"
             }
 
     links { "pthread"
