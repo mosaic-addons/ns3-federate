@@ -21,14 +21,15 @@
  */
 
 #include "mosaic-simulator-impl.h"
+
+#include <math.h>
+
 #include "ns3/simulator.h"
 #include "ns3/event-impl.h"
 #include "ns3/ptr.h"
 #include "ns3/pointer.h"
 #include "ns3/assert.h"
 #include "ns3/log.h"
-
-#include <math.h>
 
 NS_LOG_COMPONENT_DEFINE("MosaicSimulatorImpl");
 

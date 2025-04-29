@@ -23,15 +23,15 @@
 #include <exception>
 #include <string>
 #include <unistd.h>
-
-#include "ns3/log.h"
-#include "ns3/core-module.h"
-#include "mosaic-ns3-server.h"
-#include "ns3/config-store.h"
-
 #include <algorithm>
 #include <libxml2/libxml/xpath.h>
 #include <libxml2/libxml/tree.h>
+
+#include "ns3/log.h"
+#include "ns3/core-module.h"
+#include "ns3/config-store.h"
+
+#include "mosaic-ns3-server.h"
 
 using namespace ns3;
 

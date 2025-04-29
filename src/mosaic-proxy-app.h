@@ -24,8 +24,9 @@
 #define MOSAIC_PROXY_APP_H
 
 #include "ns3/application.h"
-#include "mosaic-node-manager.h"
 #include "ns3/data-rate.h"
+
+#include "mosaic-node-manager.h"
 
 namespace ns3 {
 

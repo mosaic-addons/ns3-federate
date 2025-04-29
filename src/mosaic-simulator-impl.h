@@ -23,13 +23,14 @@
 #ifndef MOSAIC_SIMULATOR_IMPL_H
 #define MOSAIC_SIMULATOR_IMPL_H
 
+#include <list>
+
 #include "ns3/simulator-impl.h"
-#include "mosaic-ns3-server.h"
 #include "ns3/scheduler.h"
 #include "ns3/event-impl.h"
 #include "ns3/ptr.h"
 
-#include <list>
+#include "mosaic-ns3-server.h"
 
 namespace ns3 {
 

@@ -22,10 +22,9 @@
 
 #include "mosaic-node-manager.h"
 
-#include "mosaic-ns3-server.h"
+#include "ClientServerChannel.h" // early import required for wave-net-device.h
 
 #include "ns3/wave-net-device.h"
-#include "mosaic-proxy-app.h"
 #include "ns3/string.h"
 #include "ns3/internet-stack-helper.h"
 #include "ns3/log.h"
@@ -33,6 +32,9 @@
 #include "ns3/log.h"
 #include "ns3/wifi-net-device.h"
 #include "ns3/node-list.h"
+
+#include "mosaic-ns3-server.h" 
+#include "mosaic-proxy-app.h"
 
 NS_LOG_COMPONENT_DEFINE("MosaicNodeManager");
 
