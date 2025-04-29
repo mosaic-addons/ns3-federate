@@ -139,26 +139,17 @@ void SetLogLevels(const std::string & configFile) {
     xmlXPathFreeObject(result);
 }
 
-void redirectClogToCout() {
-    // std::clog should print to standard output (std::cout)
-    // change stream buffer of std::clog
-    auto destination = std::cout.rdbuf();
-    std::clog.rdbuf(destination);
-}
-
 int main(int argc, char *argv[]) {
     using namespace std;
 
     // ns3 logs to std::clog, redirect to std::cout
-    redirectClogToCout();
+    auto destination = std::cout.rdbuf();
+    std::clog.rdbuf(destination);
 
     //default values
     int port = 0;
     int cmdPort = 0;
     std::string configFile = "ns3_federate_config.xml";
-
-    GlobalValue::Bind("SchedulerType", StringValue("ns3::ListScheduler"));
-    GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
 
     MosaicNodeManager::GetTypeId();
     CommandLine cmd("ns3-federate");
@@ -168,19 +159,18 @@ int main(int argc, char *argv[]) {
     cmd.AddValue("configFile", "the configuration file", configFile);
     cmd.Parse(argc, argv);
 
+    GlobalValue::Bind("SchedulerType", StringValue("ns3::ListScheduler"));
+    GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
     if (access(configFile.c_str(), F_OK) == -1) {
         cerr << "Could not open configuration file \"" << configFile << "\"" << endl;
         return -1;
     }
-
     Config::SetDefault("ns3::ConfigStore::Filename", StringValue(configFile.c_str()));
     Config::SetDefault("ns3::ConfigStore::FileFormat", StringValue("Xml"));
     Config::SetDefault("ns3::ConfigStore::Mode", StringValue("Load"));
     ConfigStore xmlConfig;
-
     xmlConfig.ConfigureDefaults();
     xmlConfig.ConfigureAttributes();
-
     SetLogLevels(configFile);
 
     try {
