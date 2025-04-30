@@ -73,11 +73,9 @@ namespace ns3 {
     private:
 
         /**
-         * @brief This function dispatch all commands from MOSAIC and sends the results back the the framework
-         *
-         * @return commandId the Id of the last command
+         * @brief This function dispatch all commands from MOSAIC and sends the results back to the framework
          */
-        int dispatchCommand();
+        void dispatchCommand();
 
         /**
          * @brief control the simulator and run all simulation steps to the next simulation step

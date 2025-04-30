@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
     GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
     if (access(configFile.c_str(), F_OK) == -1) {
         cerr << "Could not open configuration file \"" << configFile << "\"" << endl;
-        return -1;
+        return 1;
     }
     Config::SetDefault("ns3::ConfigStore::Filename", StringValue(configFile.c_str()));
     Config::SetDefault("ns3::ConfigStore::FileFormat", StringValue("Xml"));
@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
         server.processCommandsUntilSimStep();
     } catch (int e) {
         NS_LOG_ERROR("Caught exception [" << e << "]. Exiting ns-3 federate ");
-        return -1;
+        return 1;
     }
 
     Simulator::Destroy();

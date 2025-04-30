@@ -51,7 +51,7 @@ namespace ns3 {
         actPort = ambassadorFederateChannel.prepareConnection("0.0.0.0", cmdPort);
         if (actPort < 1) {
             std::cout << "Could not prepare port for Command Channel" << std::endl;
-            exit(-1);
+            exit(1);
         }
         federateAmbassadorChannel.writePort(actPort);
         ambassadorFederateChannel.connect();
@@ -67,7 +67,8 @@ namespace ns3 {
                 ambassadorFederateChannel.writeCommand(CMD_END);
             }
         } else {
-            NS_LOG_INFO("ERROR command port not found");
+            NS_LOG_ERROR("Command port not found");
+            exit(1);
         }
         std::cout << "ns3Server: created new connection to " << port << std::endl;
     }
@@ -87,29 +88,28 @@ namespace ns3 {
             }
 
         } catch (std::invalid_argument &e) {
-            NS_LOG_INFO("ns-3 server --> Invalid argument in Mosaic-ns3-server.cc, processCommandsUntilSimStep() " << e.what());
+            NS_LOG_ERROR("ns-3 server --> Invalid argument in Mosaic-ns3-server.cc:processCommandsUntilSimStep() " << e.what());
+            m_closeConnection = true;
         }
         //write the message that the server is finished
         NS_LOG_INFO("ns-3 server --> Finishing server.... ");
-
-        m_closeConnection = true;
     }
 
-    int MosaicNs3Server::dispatchCommand() {
+    void MosaicNs3Server::dispatchCommand() {
         //gets the pointer of the simulator
         Ptr<MosaicSimulatorImpl> sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
         if (nullptr == sim) {
-            NS_LOG_INFO("Could not find Mosaic simulator implementation \n");
+            NS_LOG_ERROR("Could not find Mosaic simulator implementation \n");
             m_closeConnection = true;
-            return 0;
+            return;
         }
 
         //read the commandId from the channel
         CMD commandId = ambassadorFederateChannel.readCommand();
         switch (commandId) {
             case CMD_INIT:
-                //the CMD:INIT is not permitted after the initialization the the MosaicNs3Servers
-                NS_LOG_INFO("ERROR dispatchCommand gets a INIT");
+                //CMD_INIT is not permitted after the initialization of the MosaicNs3Server
+                NS_LOG_ERROR("dispatchCommand received INIT");
                 break;
             case CMD_UPDATE_NODE:
             {
@@ -181,7 +181,7 @@ namespace ns3 {
                     sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureNodeRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower));
 
                 } catch (int e) {
-                    NS_LOG_INFO("Error while reading configuration message \n");
+                    NS_LOG_ERROR("Error while reading configuration message \n");
                     m_closeConnection = true;
                 }
                 break;
@@ -215,11 +215,10 @@ namespace ns3 {
                 break;
 
             default:
-                NS_LOG_INFO("Command not implemented in ns3 " << commandId << "\n");
+                NS_LOG_ERROR("Command not implemented in ns3 " << commandId << "\n");
                 m_closeConnection = true;
+                return;
         }
-
-        return commandId;
     }
 
     void MosaicNs3Server::writeNextTime(unsigned long long nextTime) {
