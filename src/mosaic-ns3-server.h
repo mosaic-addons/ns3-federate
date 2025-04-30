@@ -77,59 +77,12 @@ namespace ns3 {
          */
         void dispatchCommand();
 
-        /**
-         * @brief control the simulator and run all simulation steps to the next simulation step
-         *
-         * @param time (end-) time of this simulation step
-         */
-        bool RunSimStep(unsigned long long time);
-
-        /**
-         * @brief update the node position by calling the node manager
-         *
-         * @param ID id of the node
-         * @param position the new node position as a Vector
-         */
-        bool UpdateNodePosition(int ID, Vector position);
-
-        /**
-         * @brief start the sending of a message on a node
-         *
-         * @param ID id of the node
-         * @param msgID the msgID of the message
-         * @param payLenght the lenght of the message
-         * @param pay the payload
-         * @param add the IPv4 destination address
-         */
-        void SendMsg(int nodeID, int msgID, int payLenght, Ipv4Address add);
-
-        /**
-         * @brief configure a nodes radio (On/Off)
-         *
-         * @param nodeId id of the node
-         */
-        void ConfigureRadio(int nodeId, bool radioTurnedOn, int transmitPower);
-
-        /**
-         * @brief create a new node by calling the node manager
-         *
-         * @param ID id of the node
-         * @param posx the x-position of the node
-         * @param posy the y-position of the node
-         */
-        void CreateNode(int ID, int posx, int posy);
-
         void Close();
-
-        void DeactivateNode(uint32_t nodeId);
-        
-        std::string Int2String(int n);
 
         ClientServerChannelSpace::ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
         unsigned long long m_startTime, m_endTime;
         std::vector<int> m_deactivatedNodes;        
         std::atomic_bool m_closeConnection;
-        bool m_eventSentUp = false;
         Ptr<MosaicNodeManager> m_nodeManager;
     };
 }

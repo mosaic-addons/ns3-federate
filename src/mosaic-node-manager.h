@@ -53,8 +53,20 @@ namespace ns3 {
 
         void Configure(MosaicNs3Server* serverPtr);
 
+        /**
+         * @brief create a new node
+         *
+         * @param ID id of the node
+         * @param position the new node position as a Vector
+         */
         void CreateMosaicNode(int ID, Vector position);
 
+        /**
+         * @brief update the node position
+         *
+         * @param nodeId id of the node
+         * @param position the new node position as a Vector
+         */
         void UpdateNodePosition(uint32_t nodeId, Vector position);
 
         /**
@@ -62,6 +74,15 @@ namespace ns3 {
          */
         void ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, double transmitPower);
 
+        /**
+         * @brief start the sending of a message on a node
+         *
+         * @param nodeId id of the node
+         * @param msgID the msgID of the message
+         * @param payLenght the lenght of the message
+         * @param pay the payload
+         * @param add the IPv4 destination address
+         */
         void SendMsg(uint32_t nodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
 
         bool ActivateNode(uint32_t nodeId);

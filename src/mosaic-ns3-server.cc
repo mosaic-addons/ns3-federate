@@ -153,8 +153,7 @@ namespace ns3 {
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
 
                 NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime);
-                //run the simulation (function RunSimStep) while the time of the next event is smaller than the next time step
-                m_eventSentUp = false;
+                //run the simulation while the time of the next event is smaller than the next time step
                 while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= sim->Next()) {
                     sim->RunOneEvent();
                 }
@@ -229,7 +228,6 @@ namespace ns3 {
     bool MosaicNs3Server::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID) {
         federateAmbassadorChannel.writeCommand(CMD_MSG_RECV);
         federateAmbassadorChannel.writeReceiveMessage(recvTime, nodeID, msgID, CCH, 0);
-        m_eventSentUp = true;
         return true;
     }
 
