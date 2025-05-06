@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 
     try {
         MosaicNs3Server server(port, cmdPort);
-        server.processCommandsUntilSimStep();
+        server.run();
     } catch (int e) {
         NS_LOG_ERROR("Caught exception [" << e << "]. Exiting ns-3 federate ");
         return 1;

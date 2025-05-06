@@ -57,85 +57,85 @@ namespace ns3 {
         if (ambassadorFederateChannel.readCommand() == CMD_INIT) {
             CSC_init_return init_message;
             ambassadorFederateChannel.readInit(init_message);
-            m_startTime = init_message.start_time;
-            m_endTime = init_message.end_time;
-            if (m_startTime >= 0 && m_endTime >= 0 && m_endTime >= m_startTime) {
+            unsigned long long startTime = init_message.start_time;
+            unsigned long long endTime = init_message.end_time;
+            if (startTime >= 0 && endTime >= 0 && endTime >= startTime) {
                 ambassadorFederateChannel.writeCommand(CMD_SUCCESS);
             } else {
                 ambassadorFederateChannel.writeCommand(CMD_END);
             }
         } else {
-            NS_LOG_ERROR("Did not receive CMD_INIT as first message.");
+            NS_LOG_ERROR("Did not receive CMD_INIT as first message");
             exit(1);
         }
         NS_LOG_INFO("Created new connection on port " << port);
     }
 
-    void MosaicNs3Server::processCommandsUntilSimStep() {
+    MosaicNs3Server::~MosaicNs3Server() {
+        m_closeConnection = true;
+    }
+
+    void MosaicNs3Server::run() {
         try {
             if (m_closeConnection) {
                 return;                
             }
 
-            Ptr<MosaicSimulatorImpl> sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
-            sim->AttachNS3Server(this);
+            m_sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
+            if (nullptr == m_sim) {
+                NS_LOG_ERROR("Could not find MosaicSimulatorImpl");
+                m_closeConnection = true;
+                return;
+            }
+            m_sim->AttachNS3Server(this);
 
+            NS_LOG_INFO("Now enter the infinite simulation loop...");
             while (!m_closeConnection) {
-                NS_LOG_INFO("NumberOfNodes= " << ns3::NodeList::GetNNodes());
                 dispatchCommand();
             }
 
         } catch (std::invalid_argument &e) {
-            NS_LOG_ERROR("ns-3 server --> Invalid argument in Mosaic-ns3-server.cc:processCommandsUntilSimStep() " << e.what());
+            NS_LOG_ERROR("Invalid argument in run() " << e.what());
             m_closeConnection = true;
         }
-        //write the message that the server is finished
-        NS_LOG_INFO("ns-3 server --> Finishing server.... ");
+        NS_LOG_INFO("Finishing server.... ");
     }
 
     void MosaicNs3Server::dispatchCommand() {
-        //gets the pointer of the simulator
-        Ptr<MosaicSimulatorImpl> sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
-        if (nullptr == sim) {
-            NS_LOG_ERROR("Could not find Mosaic simulator implementation \n");
-            m_closeConnection = true;
-            return;
-        }
-
         //read the commandId from the channel
         CMD commandId = ambassadorFederateChannel.readCommand();
         switch (commandId) {
             case CMD_INIT:
                 //CMD_INIT is not permitted after the initialization of the MosaicNs3Server
-                NS_LOG_ERROR("dispatchCommand received INIT");
+                NS_LOG_ERROR("Received CMD_INIT");
                 break;
             case CMD_UPDATE_NODE:
             {
                 CSC_update_node_return update_node_message;
                 ambassadorFederateChannel.readUpdateNode(update_node_message);
                 Time tNext = NanoSeconds(update_node_message.time);
-                Time tDelay = tNext - sim->Now();
+                Time tDelay = tNext - m_sim->Now();
                 for (std::vector<CSC_node_data>::iterator it = update_node_message.properties.begin(); it != update_node_message.properties.end(); ++it) {
 
                     if (update_node_message.type == UPDATE_ADD_RSU) {
 
-                        sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
+                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
                         NS_LOG_DEBUG("Received ADD_RSU: ID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
 
                     } else if (update_node_message.type == UPDATE_ADD_VEHICLE) {
 
-                        sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
+                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
                         NS_LOG_DEBUG("Received ADD_VEHICLE: ID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
 
                     } else if (update_node_message.type == UPDATE_MOVE_NODE) {
 
-                        sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
+                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
                         NS_LOG_DEBUG("Received MOVE_NODES: ID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
 
                     } else if (update_node_message.type == UPDATE_REMOVE_NODE) {
 
                         //It is not allowed to delete a node during the simulation step -> the node will be deactivated
-                        sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::DeactivateNode, m_nodeManager, it->id));
+                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::DeactivateNode, m_nodeManager, it->id));
                         NS_LOG_DEBUG("Received REMOVE_NODES: ID=" << it->id << " tNext=" << tNext);
                     }
                 }
@@ -143,15 +143,15 @@ namespace ns3 {
                 break;
             }
 
-                // advance the next time step and run the simulation read the next time step
+            // advance the next time step and run the simulation read the next time step
             case CMD_ADVANCE_TIME:
                 uint64_t advancedTime;
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
 
                 NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime);
                 //run the simulation while the time of the next event is smaller than the next time step
-                while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= sim->Next()) {
-                    sim->RunOneEvent();
+                while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= m_sim->Next()) {
+                    m_sim->RunOneEvent();
                 }
 
                 //write the confirmation at the end of the sequence
@@ -165,7 +165,7 @@ namespace ns3 {
                     CSC_config_message config_message;
                     ambassadorFederateChannel.readConfigurationMessage(config_message);
                     Time tNext = NanoSeconds(config_message.time);
-                    Time tDelay = tNext - sim->Now();
+                    Time tDelay = tNext - m_sim->Now();
                     double transmitPower = -1;
                     bool radioTurnedOn = false;
                     if (config_message.num_radios == SINGLE_RADIO) {
@@ -173,10 +173,10 @@ namespace ns3 {
                         transmitPower = config_message.primary_radio.tx_power;
                     }
 
-                    sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureNodeRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureNodeRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower));
 
                 } catch (int e) {
-                    NS_LOG_ERROR("Error while reading configuration message \n");
+                    NS_LOG_ERROR("Error while reading configuration message");
                     m_closeConnection = true;
                 }
                 break;
@@ -197,20 +197,22 @@ namespace ns3 {
                     unsigned long long sendTime;
                     sendTime = send_message.time + rando;
                     Time tNext = NanoSeconds(sendTime);
-                    Time tDelay = tNext - sim->Now();
+                    Time tDelay = tNext - m_sim->Now();
 
-                    sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendMsg, m_nodeManager, send_message.node_id, 0, send_message.message_id, send_message.length, ip));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendMsg, m_nodeManager, send_message.node_id, 0, send_message.message_id, send_message.length, ip));
                 } catch (int e) {
+                    NS_LOG_ERROR("Error while sending message");
                 }
                 break;
             }
+
             case CMD_SHUT_DOWN:
                 m_closeConnection = true;
                 Simulator::Destroy();
                 break;
 
             default:
-                NS_LOG_ERROR("Command not implemented in ns3 " << commandId << "\n");
+                NS_LOG_ERROR("Command " << commandId << " not implemented");
                 m_closeConnection = true;
                 return;
         }
@@ -226,7 +228,4 @@ namespace ns3 {
         federateAmbassadorChannel.writeReceiveMessage(recvTime, nodeID, msgID, CCH, 0);
     }
 
-    void MosaicNs3Server::Close() {
-        m_closeConnection = true;
-    }
 } //END Namespace

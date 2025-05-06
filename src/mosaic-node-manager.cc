@@ -29,7 +29,6 @@
 #include "ns3/internet-stack-helper.h"
 #include "ns3/log.h"
 #include "ns3/constant-velocity-mobility-model.h"
-#include "ns3/log.h"
 #include "ns3/wifi-net-device.h"
 #include "ns3/node-list.h"
 
@@ -72,30 +71,30 @@ namespace ns3 {
         if (m_isDeactivated[ID]) {
             return;
         }
-        Ptr<Node> singleNode = CreateObject<Node>();
+        Ptr<Node> node = CreateObject<Node>();
         
-        NS_LOG_INFO("Created node " << singleNode->GetId());
-        m_mosaic2ns3ID[ID] = singleNode->GetId();
+        NS_LOG_INFO("Created node " << node->GetId());
+        m_mosaic2ns3ID[ID] = node->GetId();
 
         //Install Wave device
-        NS_LOG_INFO("Install WAVE on node " << singleNode->GetId());
+        NS_LOG_INFO("[node=" << node->GetId() << "] Install WAVE");
         InternetStackHelper internet;   
-        internet.Install(singleNode);
-        NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, singleNode);
+        internet.Install(node);
+        NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, node);
         m_ipAddressHelper.Assign(netDevices);
 
         //Install app
-        NS_LOG_INFO("Install MosaicProxyApp application on node " << singleNode->GetId());
+        NS_LOG_INFO("[node=" << node->GetId() << "] Install MosaicProxyApp application");
         Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
         app->SetNodeManager(this);
-        singleNode->AddApplication(app);
+        node->AddApplication(app);
         app->SetSockets();
 
         //Install mobility model
-        NS_LOG_INFO("Install MosaicMobilityModel on node " << singleNode->GetId());
+        NS_LOG_INFO("[node=" << node->GetId() << "] Install ConstantVelocityMobilityModel");
         Ptr<ConstantVelocityMobilityModel> mobModel = CreateObject<ConstantVelocityMobilityModel>();
         mobModel->SetPosition(position);
-        singleNode->AggregateObject(mobModel);
+        node->AggregateObject(mobModel);
 
         return;
     }
@@ -108,7 +107,7 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("Mosaic MosaicNodeManager::SendMsg " << nodeId);
+        NS_LOG_INFO("[node=" << nodeId << "] MosaicNodeManager::SendMsg");
 
         Ptr<Node> node = NodeList::GetNode(m_mosaic2ns3ID[nodeId]);
         Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
