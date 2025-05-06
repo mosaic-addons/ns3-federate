@@ -96,7 +96,7 @@ namespace ns3 {
         packet->AddByteTag(msgIDTag);
 
         m_sendCount++;
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Sending packet no. " << m_sendCount << " PacketID=" << packet->GetUid() << " at " << Simulator::Now().GetNanoSeconds() << " seconds | packet size = " << packet->GetSize());
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Sending packet no. " << m_sendCount << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns size=" << packet->GetSize());
 
         //call the socket of this node to send the packet
         InetSocketAddress ipSA = InetSocketAddress(address, m_port);
@@ -133,6 +133,6 @@ namespace ns3 {
 
         //report the received messages to the MosaicNs3Server instance
         m_nodeManager->AddRecvPacket(Simulator::Now().GetNanoSeconds(), packet, GetNode()->GetId(), msgID);
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Received message no. " << m_recvCount << " PacketID=" << packet->GetUid() << " at " << Simulator::Now().GetNanoSeconds() << " seconds | message size  = " << packet->GetSize() << " Bytes");
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Received message no. " << m_recvCount << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns size=" << packet->GetSize());
     }
 } // namespace ns3
