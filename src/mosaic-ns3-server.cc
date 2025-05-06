@@ -35,6 +35,14 @@ namespace ns3 {
     MosaicNs3Server::MosaicNs3Server(int port, int cmdPort) {
         std::cout << "Starting ns3 federate on port=" << port << " cmdPort=" << cmdPort << std::endl;
 
+        m_sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
+        if (nullptr == m_sim) {
+            NS_LOG_ERROR("Could not find MosaicSimulatorImpl");
+            m_closeConnection = true;
+            return;
+        }
+        m_sim->AttachNS3Server(this);
+
         m_nodeManager = CreateObject<MosaicNodeManager>();
         m_nodeManager->Configure(this);
         m_closeConnection = false;
@@ -80,14 +88,6 @@ namespace ns3 {
             if (m_closeConnection) {
                 return;                
             }
-
-            m_sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
-            if (nullptr == m_sim) {
-                NS_LOG_ERROR("Could not find MosaicSimulatorImpl");
-                m_closeConnection = true;
-                return;
-            }
-            m_sim->AttachNS3Server(this);
 
             NS_LOG_INFO("Now enter the infinite simulation loop...");
             while (!m_closeConnection) {
