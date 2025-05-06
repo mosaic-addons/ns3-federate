@@ -132,7 +132,7 @@ int ClientServerChannel::prepareConnection ( std::string host, uint32_t port ) {
         addr = *( ( struct in_addr* ) host_ent->h_addr_list[0] );
     } else {
         std::cerr << "Error: ClientServerChannel got invalid host address: " << host.c_str() << std::endl;
-        return 0;
+        exit(1);
     }
 
     // assemble servaddr
@@ -147,6 +147,7 @@ int ClientServerChannel::prepareConnection ( std::string host, uint32_t port ) {
     servsock = socket(AF_INET, SOCK_STREAM, 0);
     if (servsock < 0) {
         std::cerr << "Error: ClientServerChannel could not create socket to connect - " << strerror(errno) << std::endl;
+        exit(1);
     }
     NS_LOG_DEBUG("servsock=" << servsock);
 
@@ -154,11 +155,13 @@ int ClientServerChannel::prepareConnection ( std::string host, uint32_t port ) {
     int reuseYes = 1;
     if ( setsockopt ( servsock, SOL_SOCKET, SO_REUSEADDR, &reuseYes, sizeof(int) ) < 0) {
         std::cerr << "Error: ClientServerChannel could not use SO_REUSEADDR on socket - " << strerror(errno) << std::endl;
+        exit(1);
     }
 
     // bind
     if ( bind ( servsock, (struct sockaddr*) &servaddr, sizeof(servaddr) ) < 0) {
         std::cerr << "Error: ClientServerChannel could not bind socket - " << strerror(errno) << std::endl;
+        exit(1);
     }
 
     // listen
