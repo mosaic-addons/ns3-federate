@@ -33,29 +33,27 @@ namespace ns3 {
     using namespace ClientServerChannelSpace;
 
     MosaicNs3Server::MosaicNs3Server(int port, int cmdPort) {
-        std::cout << "Starting federate on port " << port << "\n";
+        std::cout << "Starting ns3 federate on port=" << port << " cmdPort=" << cmdPort << std::endl;
 
-        if (cmdPort > 0) {
-            std::cout << "Once connected, federate will listen to commands on port " << cmdPort << "\n";
-        }
         m_nodeManager = CreateObject<MosaicNodeManager>();
         m_nodeManager->Configure(this);
         m_closeConnection = false;
 
-        std::cout << "Trying to prepare federateAmbassadorChannel on port " << port << " " << std::endl;
-        uint16_t actPort = federateAmbassadorChannel.prepareConnection("0.0.0.0", port);
-        std::cout << "Mosaic-NS3-Server connecting on OutPort=" << actPort << std::endl;
+        /* Initialize federateAmbassadorChannel (mostly for SENDING) */
+        NS_LOG_INFO("Initialize federateAmbassadorChannel");
+        federateAmbassadorChannel.prepareConnection("0.0.0.0", port);
         federateAmbassadorChannel.connect();
         federateAmbassadorChannel.writeCommand(CMD_INIT);
 
-        actPort = ambassadorFederateChannel.prepareConnection("0.0.0.0", cmdPort);
-        if (actPort < 1) {
+        /* Initialize ambassadorFederateChannel (mostly for RECEIVING) */
+        NS_LOG_INFO("Initialize ambassadorFederateChannel");
+        uint16_t assignedPort = ambassadorFederateChannel.prepareConnection("0.0.0.0", cmdPort);
+        if (assignedPort < 1) {
             std::cout << "Could not prepare port for Command Channel" << std::endl;
             exit(1);
         }
-        federateAmbassadorChannel.writePort(actPort);
+        federateAmbassadorChannel.writePort(assignedPort);
         ambassadorFederateChannel.connect();
-
         if (ambassadorFederateChannel.readCommand() == CMD_INIT) {
             CSC_init_return init_message;
             ambassadorFederateChannel.readInit(init_message);
@@ -67,10 +65,10 @@ namespace ns3 {
                 ambassadorFederateChannel.writeCommand(CMD_END);
             }
         } else {
-            NS_LOG_ERROR("Command port not found");
+            NS_LOG_ERROR("Did not receive CMD_INIT as first message.");
             exit(1);
         }
-        std::cout << "ns3Server: created new connection to " << port << std::endl;
+        NS_LOG_INFO("Created new connection on port " << port);
     }
 
     void MosaicNs3Server::processCommandsUntilSimStep() {

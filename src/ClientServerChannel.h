@@ -139,16 +139,31 @@ struct CSC_send_message{
 class ClientServerChannel {
 
 	public:
-		/** Constructor. */
+		/** 
+		 * @brief Constructor
+		 */
 		ClientServerChannel();
 
-		/** Destructor. */
+		/**
+		 * @brief Destructor
+		 *
+		 * Closes existing network connections.
+		 */
 		virtual ~ClientServerChannel();
 
-		/** Prepares connection with a socket bound to the given port on host. */
+		/**
+		 * Provides server socket to listen for incoming connections from ns3 Ambassador
+		 *
+		 * @param host own hostname (hostaddress)
+		 * @param port port to listen on for incoming connections. If no port is given, a random port is assigned.
+		 * @return assigned port number
+		 */
 		virtual int	prepareConnection(std::string host, uint32_t port);
 
-		/** Accepts connection to socket */
+		/**
+		 * @brief Accepts a connection (blocking)
+		 * The resulting connection is stored in the working socket
+		 */
 		virtual void connect();
 
 		/*################## READING ####################*/
@@ -186,14 +201,14 @@ class ClientServerChannel {
 		virtual void writeReceiveMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi);
 
 	private:
-		/** Initial server sock, which accepts connection of Ambassador. */
+		/** Initial server socket
+		 * always on the lookout for new connections on that port
+		 * accepts connection from Ambassador
+		 */
 		SOCKET servsock;
 
 		/** Working sock for communication. */
 		SOCKET sock;
-
-		/** Socket name **/
-		std::string channel_name;
 
 		/** Converts commands to protobuf-internal commands */
 		virtual CommandMessage_CommandType cmdToProtoCMD(CMD cmd);

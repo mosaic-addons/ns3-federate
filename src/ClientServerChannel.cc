@@ -112,26 +112,19 @@ std::string uint32_to_ip ( const unsigned int ip ) {
     return out;
 }
 
-/**
- * Constructor.
- */
 ClientServerChannel::ClientServerChannel() {
     servsock = INVALID_SOCKET;
     sock = INVALID_SOCKET;
 }
 
-/**
- * Provides server socket for incoming messages from ns3 Ambassador using given port on host.
- *
- * @param host own hostname (hostaddress)
- * @param port port to listen on for incoming connections
- * @return assigned port number
- */
 int ClientServerChannel::prepareConnection ( std::string host, uint32_t port ) {
+    NS_LOG_FUNCTION(this << host.c_str() << port);
+
     in_addr addr;
     struct hostent* host_ent;
     struct in_addr saddr;
 
+    // assemble saddr
     saddr.s_addr = inet_addr ( host.c_str() );
     if ( saddr.s_addr != static_cast < unsigned int > ( -1 ) ) {
         addr = saddr;
@@ -142,56 +135,61 @@ int ClientServerChannel::prepareConnection ( std::string host, uint32_t port ) {
         return 0;
     }
 
+    // assemble servaddr
     sockaddr_in servaddr;
     memset( (char*)&servaddr, 0, sizeof(servaddr) );
     servaddr.sin_family = AF_INET;
     servaddr.sin_port = htons(port);
     servaddr.sin_addr.s_addr = addr.s_addr;
+    NS_LOG_DEBUG("servaddr: " << uint32_to_ip(servaddr.sin_addr.s_addr) << ":" << ntohs(servaddr.sin_port));
 
-    servsock = socket(AF_INET,SOCK_STREAM, 0 );
+    // create socket
+    servsock = socket(AF_INET, SOCK_STREAM, 0);
     if (servsock < 0) {
-            std::cerr << "Error: ClientServerChannel could not create socket to connect to Ambassador - " << strerror(errno) << std::endl;
+        std::cerr << "Error: ClientServerChannel could not create socket to connect - " << strerror(errno) << std::endl;
     }
+    NS_LOG_DEBUG("servsock=" << servsock);
 
+    // set socket options
     int reuseYes = 1;
     if ( setsockopt ( servsock, SOL_SOCKET, SO_REUSEADDR, &reuseYes, sizeof(int) ) < 0) {
-        std::cerr << "Error: ClientServerChannel could not use SO_REUSEADDR on socket to Ambassador - " << strerror(errno) << std::endl;
+        std::cerr << "Error: ClientServerChannel could not use SO_REUSEADDR on socket - " << strerror(errno) << std::endl;
     }
 
+    // bind
     if ( bind ( servsock, (struct sockaddr*) &servaddr, sizeof(servaddr) ) < 0) {
-        std::cerr << "Warn: ClientServerChannel could not bind socket to Ambassador - " << strerror(errno) << std::endl;
+        std::cerr << "Error: ClientServerChannel could not bind socket - " << strerror(errno) << std::endl;
     }
 
+    // listen
     listen(servsock, 3);
+
+    // get assigned_port
     int len = sizeof(servaddr);
     getsockname ( servsock, (struct sockaddr*) &servaddr,(socklen_t*) &len);
+    int assigned_port = ntohs(servaddr.sin_port);
+    NS_LOG_DEBUG("assigned_port=" << assigned_port);
 
-    return ntohs(servaddr.sin_port);
+    return assigned_port;
 }
 
-/**
- * Accepts connection to socket (blocking)
- *
- */
 void ClientServerChannel::connect(void) {
-    sockaddr_in address;
-    size_t len = sizeof(address);
-    sock = accept ( servsock, (struct sockaddr*) &address, (socklen_t*) &len );
+    NS_LOG_FUNCTION(this);
+    sockaddr_in clientaddr;
+    size_t len = sizeof(clientaddr);
+    sock = accept ( servsock, (struct sockaddr*) &clientaddr, (socklen_t*) &len ); 
 
     if (sock < 0) {
         std::cerr << "Error: ClientServerChannel could not accept connection from Ambassador - " << strerror(errno) << std::endl;
     }
+    NS_LOG_DEBUG("sock=" << sock);
+    NS_LOG_DEBUG("clientaddr: " << uint32_to_ip(clientaddr.sin_addr.s_addr) << ":" << ntohs(clientaddr.sin_port));
 
     int x = 1;
     setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&x, sizeof(x));
 }
 
-/**
- * Closes existing network connections.
- *
- */
 ClientServerChannel::~ClientServerChannel() {
-
     if (sock >= 0) {
         close(sock);
         sock = INVALID_SOCKET;

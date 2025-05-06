@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
     GlobalValue::Bind("SchedulerType", StringValue("ns3::ListScheduler"));
     GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
     if (access(configFile.c_str(), F_OK) == -1) {
-        cerr << "Could not open configuration file \"" << configFile << "\"" << endl;
+        std::cerr << "Could not open configuration file \"" << configFile << "\"" << std::endl;
         return 1;
     }
     Config::SetDefault("ns3::ConfigStore::Filename", StringValue(configFile.c_str()));
