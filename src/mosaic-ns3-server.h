@@ -62,7 +62,7 @@ namespace ns3 {
          * @param nodeID    id of the node
          * @param msgID the id of the message
          */
-        bool AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID);
+        void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID);
 
         /**
          * @brief write the next Time to the channel
@@ -81,7 +81,6 @@ namespace ns3 {
 
         ClientServerChannelSpace::ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
         unsigned long long m_startTime, m_endTime;
-        std::vector<int> m_deactivatedNodes;        
         std::atomic_bool m_closeConnection;
         Ptr<MosaicNodeManager> m_nodeManager;
     };

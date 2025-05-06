@@ -135,8 +135,6 @@ namespace ns3 {
                     } else if (update_node_message.type == UPDATE_REMOVE_NODE) {
 
                         //It is not allowed to delete a node during the simulation step -> the node will be deactivated
-                        //void (std::vector<int>::*fctptr)(const int&) = &std::vector<int>::push_back;
-                        //sim->ScheduleAtTime(tNext, MakeEvent(fctptr, &m_deactivatedNodes, it->id));
                         sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::DeactivateNode, m_nodeManager, it->id));
                         NS_LOG_DEBUG("Received REMOVE_NODES: ID=" << it->id << " tNext=" << tNext);
                     }
@@ -223,10 +221,9 @@ namespace ns3 {
         federateAmbassadorChannel.writeTimeMessage(nextTime);
     }
 
-    bool MosaicNs3Server::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID) {
+    void MosaicNs3Server::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID) {
         federateAmbassadorChannel.writeCommand(CMD_MSG_RECV);
         federateAmbassadorChannel.writeReceiveMessage(recvTime, nodeID, msgID, CCH, 0);
-        return true;
     }
 
     void MosaicNs3Server::Close() {
