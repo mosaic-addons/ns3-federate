@@ -169,11 +169,15 @@ namespace ns3 {
                     double transmitPower = -1;
                     bool radioTurnedOn = false;
                     if (config_message.num_radios == SINGLE_RADIO) {
-                        radioTurnedOn = true; //other modes currently not supported, other modes turn off radio
+                        radioTurnedOn = true; 
                         transmitPower = config_message.primary_radio.tx_power;
+                    } else {
+                        NS_LOG_ERROR("Currently only SINGLE_RADIO is supported");
+                        // other modes currently not supported, other modes turn off radio
                     }
 
                     m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureNodeRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower));
+                    NS_LOG_DEBUG("Received CMD_CONF_RADIO: ID=" << config_message.node_id << " tNext=" << tNext);
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");

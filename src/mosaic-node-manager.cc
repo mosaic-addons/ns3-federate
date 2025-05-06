@@ -157,6 +157,7 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
+        NS_LOG_INFO("[node=" << nodeId << "] MosaicNodeManager::ConfigureNodeRadio");
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
 
