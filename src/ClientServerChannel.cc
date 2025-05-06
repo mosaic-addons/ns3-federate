@@ -194,11 +194,11 @@ ClientServerChannel::~ClientServerChannel() {
 
     if (sock >= 0) {
         close(sock);
-        sock = -1;
+        sock = INVALID_SOCKET;
     }
     if (servsock >= 0) {
         close(servsock);
-        servsock = -1;
+        servsock = INVALID_SOCKET;
     }
 }
 
