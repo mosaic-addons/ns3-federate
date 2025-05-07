@@ -67,14 +67,46 @@ namespace ns3 {
         m_wifiPhyHelper.SetChannel(m_channel);
     }
 
-    void MosaicNodeManager::CreateMosaicNode(int ID, Vector position) {
-        if (m_isDeactivated[ID]) {
-            return;
+    uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
+        if (m_mosaic2nsdrei.find(mosaicNodeId) == m_mosaic2nsdrei.end()){
+            NS_LOG_ERROR("Node ID " << mosaicNodeId << " not found in m_mosaic2nsdrei");
+            NS_LOG_INFO("Have m_mosaic2nsdrei");
+            for(const auto& elem : m_mosaic2nsdrei)
+            {
+               NS_LOG_INFO(elem.first << " : " << elem.second);
+            }
+            NS_LOG_INFO("END m_mosaic2nsdrei");
+            exit(1);
+        } 
+        uint32_t res = m_mosaic2nsdrei[mosaicNodeId];
+        return res;
+    }
+
+    uint32_t MosaicNodeManager::GetMosaicNodeId(uint32_t ns3NodeId) {
+        if (m_nsdrei2mosaic.find(ns3NodeId) == m_nsdrei2mosaic.end()){
+            NS_LOG_ERROR("Node ID " << ns3NodeId << " not found in m_nsdrei2mosaic");
+            NS_LOG_INFO("Have m_nsdrei2mosaic");
+            for(const auto& elem : m_nsdrei2mosaic)
+            {
+               NS_LOG_INFO(elem.first << " : " << elem.second);
+            }
+            NS_LOG_INFO("END m_nsdrei2mosaic");
+            exit(1);
+        } 
+        uint32_t res = m_nsdrei2mosaic[ns3NodeId];
+        return res;
+    }
+
+    void MosaicNodeManager::CreateMosaicNode(uint32_t mosaicNodeId, Vector position) {
+        if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
+            NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
+            exit(1);
         }
         Ptr<Node> node = CreateObject<Node>();
         
-        NS_LOG_INFO("Created node " << node->GetId());
-        m_mosaic2ns3ID[ID] = node->GetId();
+        NS_LOG_INFO("Created node " << mosaicNodeId << "->" << node->GetId());
+        m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
+        m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
 
         //Install Wave device
         NS_LOG_INFO("[node=" << node->GetId() << "] Install WAVE");
@@ -99,17 +131,14 @@ namespace ns3 {
         return;
     }
 
-    uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t nodeId) {
-        return m_mosaic2ns3ID[nodeId];
-    }
-
-    void MosaicNodeManager::SendMsg(uint32_t nodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address ipv4Add) {
+    void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address ipv4Add) {
+        uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }
         NS_LOG_INFO("[node=" << nodeId << "] MosaicNodeManager::SendMsg");
 
-        Ptr<Node> node = NodeList::GetNode(m_mosaic2ns3ID[nodeId]);
+        Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
         if (app == nullptr) {
             NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, MosaicProxyApp is missing");
@@ -118,15 +147,17 @@ namespace ns3 {
         app->TransmitPacket(protocolID, msgID, payLength, ipv4Add);
     }
 
-    void MosaicNodeManager::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID) {
-        if (m_isDeactivated[nodeID]) {
+    void MosaicNodeManager::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID) {
+        if (m_isDeactivated[ns3NodeId]) {
             return;
         }
+        uint32_t nodeId = GetMosaicNodeId(ns3NodeId);
         
-        m_serverPtr->AddRecvPacket(recvTime, pack, nodeID, msgID);
+        m_serverPtr->AddRecvPacket(recvTime, pack, nodeId, msgID);
     }
 
-    void MosaicNodeManager::UpdateNodePosition(uint32_t nodeId, Vector position) {
+    void MosaicNodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {
+        uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }
@@ -136,7 +167,8 @@ namespace ns3 {
         mobModel->SetPosition(position);
     }
 
-    void MosaicNodeManager::DeactivateNode(uint32_t nodeId) {
+    void MosaicNodeManager::DeactivateNode(uint32_t mosaicNodeId) {
+        uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }
@@ -153,7 +185,8 @@ namespace ns3 {
         m_isDeactivated[nodeId] = true;
     }
 
-    void MosaicNodeManager::ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, double transmitPower) {
+    void MosaicNodeManager::ConfigureNodeRadio(uint32_t mosaicNodeId, bool radioTurnedOn, double transmitPower) {
+        uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }

@@ -42,7 +42,8 @@ namespace ns3 {
     /**
      * @class MosaicNodeManager
      * @brief The class MosaicNodeManager manages the creation, the initial 
-     * placement, and the position updates of ns3 nodes.
+     * placement, and the position updates of ns3 nodes. It also manages the
+     * node ID translation between MOSAIC and NS3 domain.
      */
     class MosaicNodeManager : public Object {
     public:
@@ -56,10 +57,10 @@ namespace ns3 {
         /**
          * @brief create a new node
          *
-         * @param ID id of the node
+         * @param mosaicNodeId id of the node
          * @param position the new node position as a Vector
          */
-        void CreateMosaicNode(int ID, Vector position);
+        void CreateMosaicNode(uint32_t mosaicNodeId, Vector position);
 
         /**
          * @brief update the node position
@@ -67,39 +68,49 @@ namespace ns3 {
          * @param nodeId id of the node
          * @param position the new node position as a Vector
          */
-        void UpdateNodePosition(uint32_t nodeId, Vector position);
+        void UpdateNodePosition(uint32_t mosaicNodeId, Vector position);
 
         /**
          * @brief Evaluates configuration message and applies it to the node
          */
-        void ConfigureNodeRadio(uint32_t nodeId, bool radioTurnedOn, double transmitPower);
+        void ConfigureNodeRadio(uint32_t mosaicNodeId, bool radioTurnedOn, double transmitPower);
 
         /**
          * @brief start the sending of a message on a node
          *
-         * @param nodeId id of the node
+         * @param mosaicNodeId id of the node
          * @param msgID the msgID of the message
          * @param payLenght the lenght of the message
          * @param pay the payload
          * @param add the IPv4 destination address
          */
-        void SendMsg(uint32_t nodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
+        void SendMsg(uint32_t mosaicNodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
 
-        bool ActivateNode(uint32_t nodeId);
+        bool ActivateNode(uint32_t mosaicNodeId);
 
-        void DeactivateNode(uint32_t nodeId);
+        void DeactivateNode(uint32_t mosaicNodeId);
 
-        void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID);
-
-        uint32_t GetNs3NodeId(uint32_t nodeId);
+        void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID);
 
         //Must be public to be accessible by ns-3 object creation routine
         std::string m_lossModel;
         std::string m_delayModel;
 
     private:
+
+        /**
+         * @brief translate the MOSAIC node IDs to Ns3 node IDs
+         */
+        uint32_t GetNs3NodeId(uint32_t mosaicNodeId);
+
+        /**
+         * @brief translate the Ns3 node IDs to MOSAIC node IDs
+         */
+        uint32_t GetMosaicNodeId(uint32_t ns3NodeId);
+
         MosaicNs3Server *m_serverPtr;
-        std::map<uint32_t, uint32_t> m_mosaic2ns3ID;
+        std::map<uint32_t, uint32_t> m_mosaic2nsdrei;
+        std::map<uint32_t, uint32_t> m_nsdrei2mosaic;
         std::unordered_map<uint32_t, bool> m_isDeactivated;
 
         //Channel

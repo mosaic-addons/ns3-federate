@@ -120,23 +120,23 @@ namespace ns3 {
                     if (update_node_message.type == UPDATE_ADD_RSU) {
 
                         m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
-                        NS_LOG_DEBUG("Received ADD_RSU: ID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
+                        NS_LOG_DEBUG("Received ADD_RSU: mosNID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
 
                     } else if (update_node_message.type == UPDATE_ADD_VEHICLE) {
 
                         m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
-                        NS_LOG_DEBUG("Received ADD_VEHICLE: ID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
+                        NS_LOG_DEBUG("Received ADD_VEHICLE: mosNID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
 
                     } else if (update_node_message.type == UPDATE_MOVE_NODE) {
 
                         m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
-                        NS_LOG_DEBUG("Received MOVE_NODES: ID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
+                        NS_LOG_DEBUG("Received MOVE_NODES: mosNID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
 
                     } else if (update_node_message.type == UPDATE_REMOVE_NODE) {
 
                         //It is not allowed to delete a node during the simulation step -> the node will be deactivated
                         m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::DeactivateNode, m_nodeManager, it->id));
-                        NS_LOG_DEBUG("Received REMOVE_NODES: ID=" << it->id << " tNext=" << tNext);
+                        NS_LOG_DEBUG("Received REMOVE_NODES: mosNID=" << it->id << " tNext=" << tNext);
                     }
                 }
                 ambassadorFederateChannel.writeCommand(CMD_SUCCESS);
@@ -177,7 +177,7 @@ namespace ns3 {
                     }
 
                     m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureNodeRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower));
-                    NS_LOG_DEBUG("Received CMD_CONF_RADIO: ID=" << config_message.node_id << " tNext=" << tNext);
+                    NS_LOG_DEBUG("Received CMD_CONF_RADIO: mosNID=" << config_message.node_id << " tNext=" << tNext);
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");
@@ -192,8 +192,7 @@ namespace ns3 {
                     ambassadorFederateChannel.readSendMessage(send_message);
                     //Convert the IP address
                     Ipv4Address ip(send_message.topo_address.ip_address);
-                    int id = m_nodeManager->GetNs3NodeId(send_message.node_id);
-                    NS_LOG_DEBUG("Received V2X_MESSAGE_TRANSMISSION id: " << id << " sendTime: " << send_message.time << " length: " << send_message.length);
+                    NS_LOG_DEBUG("Received CMD_MSG_SEND: mosNID=" << send_message.node_id << " id=" << send_message.message_id << " sendTime=" << send_message.time << " length=" << send_message.length);
 
                     // ns3 does not like to send packets at time zero, use 1ns instead
                     if (send_message.time == 0) {
