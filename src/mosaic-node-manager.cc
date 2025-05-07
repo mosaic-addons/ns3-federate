@@ -60,11 +60,23 @@ namespace ns3 {
     }
 
     void MosaicNodeManager::Configure(MosaicNs3Server* serverPtr) {
+        NS_LOG_INFO("Initialize MosaicNodeManager...");
         m_serverPtr = serverPtr;
+
         m_wifiChannelHelper.AddPropagationLoss(m_lossModel);
         m_wifiChannelHelper.SetPropagationDelay(m_delayModel);
         m_channel = m_wifiChannelHelper.Create();
         m_wifiPhyHelper.SetChannel(m_channel);
+
+        m_lteHelper = CreateObject<LteHelper> ();
+
+        // TODO: this has to come from RTI interaction or configuration file
+        NS_LOG_INFO("Setup eNodeB's");
+        m_enbNodes.Create (1);
+        MobilityHelper mobility;
+        mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+        mobility.Install (m_enbNodes);
+        m_enbDevs = m_lteHelper->InstallEnbDevice (m_enbNodes);
     }
 
     uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
@@ -108,6 +120,12 @@ namespace ns3 {
         m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
         m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
 
+        //Install mobility model
+        NS_LOG_INFO("[node=" << node->GetId() << "] Install ConstantVelocityMobilityModel");
+        Ptr<ConstantVelocityMobilityModel> mobModel = CreateObject<ConstantVelocityMobilityModel>();
+        mobModel->SetPosition(position);
+        node->AggregateObject(mobModel);
+
         //Install Wave device
         NS_LOG_INFO("[node=" << node->GetId() << "] Install WAVE");
         InternetStackHelper internet;   
@@ -115,18 +133,21 @@ namespace ns3 {
         NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, node);
         m_ipAddressHelper.Assign(netDevices);
 
+        //Install LTE device
+        NetDeviceContainer ueDevs;
+        NodeContainer ueNode(node);
+        ueDevs = m_lteHelper->InstallUeDevice (ueNode);
+        m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
+        enum EpsBearer::Qci q = EpsBearer::GBR_CONV_VOICE;
+        EpsBearer bearer (q);
+        m_lteHelper->ActivateDataRadioBearer (ueDevs, bearer);
+
         //Install app
         NS_LOG_INFO("[node=" << node->GetId() << "] Install MosaicProxyApp application");
         Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
         app->SetNodeManager(this);
         node->AddApplication(app);
         app->SetSockets();
-
-        //Install mobility model
-        NS_LOG_INFO("[node=" << node->GetId() << "] Install ConstantVelocityMobilityModel");
-        Ptr<ConstantVelocityMobilityModel> mobModel = CreateObject<ConstantVelocityMobilityModel>();
-        mobModel->SetPosition(position);
-        node->AggregateObject(mobModel);
 
         return;
     }

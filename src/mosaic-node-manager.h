@@ -34,6 +34,12 @@
 #include "ns3/yans-wifi-channel.h"
 #include "ns3/yans-wifi-helper.h"
 
+// TODO: use more specific classes and not the whole core?
+#include "ns3/core-module.h"
+#include "ns3/network-module.h"
+#include "ns3/mobility-module.h"
+#include "ns3/lte-module.h"
+
 namespace ns3 {
 
     //Forward declaration to prevent circular dependency
@@ -127,6 +133,11 @@ namespace ns3 {
         Wifi80211pHelper m_wifi80211pHelper = Wifi80211pHelper::Default();
 
         Ipv4AddressHelper m_ipAddressHelper;
+
+        // LTE 
+        Ptr<LteHelper> m_lteHelper;
+        NodeContainer m_enbNodes;
+        NetDeviceContainer m_enbDevs;
     };
 }
 #endif
