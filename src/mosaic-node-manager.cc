@@ -70,10 +70,18 @@ namespace ns3 {
 
         m_lteHelper = CreateObject<LteHelper> ();
 
+        // EPC Helper
+        // Ptr<NoBackhaulEpcHelper> epcHelper = CreateObject<NoBackhaulEpcHelper> (); // EPC without connecting the eNBs with the core network. It just creates the network elements of the core network
+        Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); // This EpcHelper creates point-to-point links between the eNBs and the SGW = 3 extra nodes
+        m_lteHelper->SetEpcHelper (epcHelper);
+        
+        InternetStackHelper internet;   
+        Ipv4StaticRoutingHelper ipv4RoutingHelper;
+        MobilityHelper mobility;
+
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
         m_enbNodes.Create (1);
-        MobilityHelper mobility;
         mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
         mobility.Install (m_enbNodes);
         m_enbDevs = m_lteHelper->InstallEnbDevice (m_enbNodes);
@@ -86,7 +94,6 @@ namespace ns3 {
         mobility.Install (m_mobileNodes);
 
         NS_LOG_INFO("Install WAVE devices");
-        InternetStackHelper internet;   
         internet.Install(m_mobileNodes);
         NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
         m_ipAddressHelper.Assign(netDevices);
@@ -94,9 +101,19 @@ namespace ns3 {
         NS_LOG_INFO("Install LTE devices");
         NetDeviceContainer ueDevs = m_lteHelper->InstallUeDevice (m_mobileNodes);
         m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
-        enum EpsBearer::Qci q = EpsBearer::GBR_CONV_VOICE;
-        EpsBearer bearer (q);
-        m_lteHelper->ActivateDataRadioBearer (ueDevs, bearer);
+
+        // assign IP address to UEs
+        for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
+        {
+            Ptr<Node> ue = m_mobileNodes.Get (u);
+            Ptr<NetDevice> ueLteDevice = ueDevs.Get (u);
+            Ipv4InterfaceContainer ueIpIface;
+            ueIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (ueLteDevice));
+            // set the default gateway for the UE
+            Ptr<Ipv4StaticRouting> ueStaticRouting;
+            ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ue->GetObject<Ipv4> ());
+            ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), 1);
+        }
 
         NS_LOG_INFO("Install MosaicProxyApp application");
         for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)
