@@ -136,7 +136,7 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] MosaicNodeManager::SendMsg");
+        NS_LOG_INFO("[node=" << nodeId << "] msgID=" << msgID << " size=" << payLength << " adr=" << ipv4Add);
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
