@@ -71,12 +71,42 @@ namespace ns3 {
         m_lteHelper = CreateObject<LteHelper> ();
 
         // TODO: this has to come from RTI interaction or configuration file
-        NS_LOG_INFO("Setup eNodeB's");
+        NS_LOG_INFO("Setup eNodeB's...");
         m_enbNodes.Create (1);
         MobilityHelper mobility;
         mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
         mobility.Install (m_enbNodes);
         m_enbDevs = m_lteHelper->InstallEnbDevice (m_enbNodes);
+
+        NS_LOG_INFO("Setup mobileNode's...");
+        m_mobileNodes.Create (5);
+
+        NS_LOG_INFO("Install ConstantVelocityMobilityModel");
+        mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
+        mobility.Install (m_mobileNodes);
+
+        NS_LOG_INFO("Install WAVE devices");
+        InternetStackHelper internet;   
+        internet.Install(m_mobileNodes);
+        NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
+        m_ipAddressHelper.Assign(netDevices);
+
+        NS_LOG_INFO("Install LTE devices");
+        NetDeviceContainer ueDevs = m_lteHelper->InstallUeDevice (m_mobileNodes);
+        m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
+        enum EpsBearer::Qci q = EpsBearer::GBR_CONV_VOICE;
+        EpsBearer bearer (q);
+        m_lteHelper->ActivateDataRadioBearer (ueDevs, bearer);
+
+        NS_LOG_INFO("Install MosaicProxyApp application");
+        for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)
+        {
+            Ptr<Node> node = m_mobileNodes.Get(i);
+            Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
+            app->SetNodeManager(this);
+            node->AddApplication(app);
+            app->SetSockets();
+        }
     }
 
     uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
@@ -114,42 +144,20 @@ namespace ns3 {
             NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
             exit(1);
         }
-        Ptr<Node> node = CreateObject<Node>();
-        
-        NS_LOG_INFO("Created node " << mosaicNodeId << "->" << node->GetId());
-        m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
-        m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
 
-        //Install mobility model
-        NS_LOG_INFO("[node=" << node->GetId() << "] Install ConstantVelocityMobilityModel");
-        Ptr<ConstantVelocityMobilityModel> mobModel = CreateObject<ConstantVelocityMobilityModel>();
-        mobModel->SetPosition(position);
-        node->AggregateObject(mobModel);
-
-        //Install Wave device
-        NS_LOG_INFO("[node=" << node->GetId() << "] Install WAVE");
-        InternetStackHelper internet;   
-        internet.Install(node);
-        NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, node);
-        m_ipAddressHelper.Assign(netDevices);
-
-        //Install LTE device
-        NetDeviceContainer ueDevs;
-        NodeContainer ueNode(node);
-        ueDevs = m_lteHelper->InstallUeDevice (ueNode);
-        m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
-        enum EpsBearer::Qci q = EpsBearer::GBR_CONV_VOICE;
-        EpsBearer bearer (q);
-        m_lteHelper->ActivateDataRadioBearer (ueDevs, bearer);
-
-        //Install app
-        NS_LOG_INFO("[node=" << node->GetId() << "] Install MosaicProxyApp application");
-        Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
-        app->SetNodeManager(this);
-        node->AddApplication(app);
-        app->SetSockets();
-
-        return;
+        for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)
+        {
+            Ptr<Node> node = m_mobileNodes.Get(i);
+            if (m_nsdrei2mosaic.find(node->GetId()) == m_nsdrei2mosaic.end()){
+                // the node is not used yet, add it to the lookup tables
+                NS_LOG_INFO("Activate node " << mosaicNodeId << "->" << node->GetId());
+                m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
+                m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
+                return;
+            }
+        }
+        NS_LOG_ERROR("No available node found. Increase mobile number of nodes!");
+        exit(1);
     }
 
     void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address ipv4Add) {

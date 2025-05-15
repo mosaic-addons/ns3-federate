@@ -138,6 +138,8 @@ namespace ns3 {
         Ptr<LteHelper> m_lteHelper;
         NodeContainer m_enbNodes;
         NetDeviceContainer m_enbDevs;
+
+        NodeContainer m_mobileNodes;
     };
 }
 #endif
