@@ -63,22 +63,22 @@ namespace ns3 {
         NS_LOG_INFO("Initialize MosaicNodeManager...");
         m_serverPtr = serverPtr;
 
+        // init m_helpers
         m_wifiChannelHelper.AddPropagationLoss(m_lossModel);
         m_wifiChannelHelper.SetPropagationDelay(m_delayModel);
-        m_channel = m_wifiChannelHelper.Create();
-        m_wifiPhyHelper.SetChannel(m_channel);
-
+        Ptr<YansWifiChannel> channel = m_wifiChannelHelper.Create();
+        m_wifiPhyHelper.SetChannel(channel);
         m_lteHelper = CreateObject<LteHelper> ();
+        // init helpers
+        InternetStackHelper internet;   
+        Ipv4StaticRoutingHelper ipv4RoutingHelper;
+        MobilityHelper mobility;
 
         // EPC Helper
         // Ptr<NoBackhaulEpcHelper> epcHelper = CreateObject<NoBackhaulEpcHelper> (); // EPC without connecting the eNBs with the core network. It just creates the network elements of the core network
         Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); // This EpcHelper creates point-to-point links between the eNBs and the SGW = 3 extra nodes
         m_lteHelper->SetEpcHelper (epcHelper);
         
-        InternetStackHelper internet;   
-        Ipv4StaticRoutingHelper ipv4RoutingHelper;
-        MobilityHelper mobility;
-
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
         m_enbNodes.Create (1);

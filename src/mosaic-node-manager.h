@@ -25,13 +25,15 @@
 
 #include <unordered_map>
 
-#include "ns3/ipv4-address-helper.h"
 #include "ns3/node-container.h"
-#include "ns3/wifi-80211p-helper.h"
-#include "ns3/wave-mac-helper.h"
 #include "ns3/vector.h"
 #include "ns3/yans-wifi-phy.h"
 #include "ns3/yans-wifi-channel.h"
+
+#include "ns3/ipv4-address-helper.h"
+#include "ns3/ipv4-static-routing-helper.h"
+#include "ns3/wifi-80211p-helper.h"
+#include "ns3/wave-mac-helper.h"
 #include "ns3/yans-wifi-helper.h"
 
 // TODO: use more specific classes and not the whole core?
@@ -39,7 +41,6 @@
 #include "ns3/network-module.h"
 #include "ns3/mobility-module.h"
 #include "ns3/lte-module.h"
-#include "ns3/ipv4-static-routing-helper.h"
 
 namespace ns3 {
 
@@ -120,23 +121,15 @@ namespace ns3 {
         std::map<uint32_t, uint32_t> m_nsdrei2mosaic;
         std::unordered_map<uint32_t, bool> m_isDeactivated;
 
-        //Channel
+        // Helpers
         YansWifiChannelHelper m_wifiChannelHelper;
-        Ptr<YansWifiChannel> m_channel;
-
-        //PHY
         YansWifiPhyHelper m_wifiPhyHelper;
-
-        //MAC
         NqosWaveMacHelper m_waveMacHelper = NqosWaveMacHelper::Default();
-
-        //Assembler
         Wifi80211pHelper m_wifi80211pHelper = Wifi80211pHelper::Default();
-
         Ipv4AddressHelper m_ipAddressHelper;
+        Ptr<LteHelper> m_lteHelper;
 
         // LTE 
-        Ptr<LteHelper> m_lteHelper;
         NodeContainer m_enbNodes;
         NetDeviceContainer m_enbDevs;
 
