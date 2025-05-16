@@ -148,7 +148,7 @@ namespace ns3 {
                 uint64_t advancedTime;
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
 
-                NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime);
+                // NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime); // LTE schedules events every 1ms
                 //run the simulation while the time of the next event is smaller than the next time step
                 while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= m_sim->Next()) {
                     m_sim->RunOneEvent();
