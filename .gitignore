@@ -19,6 +19,8 @@ out/
 obj/
 bin
 Makefile
+ns3-federate.make
 
 src/Mosaic/model/ClientServerChannel*
-ns3-federate.make
+ClientServerChannelMessages.pb.*
+ns3_federate_config*.xml
