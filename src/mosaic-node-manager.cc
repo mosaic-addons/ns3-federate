@@ -170,11 +170,16 @@ namespace ns3 {
                 NS_LOG_INFO("Activate node " << mosaicNodeId << "->" << node->GetId());
                 m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
                 m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
-                return;
+                break;
             }
         }
-        NS_LOG_ERROR("No available node found. Increase mobile number of nodes!");
-        exit(1);
+        
+        if (m_mosaic2nsdrei.find(mosaicNodeId) == m_mosaic2nsdrei.end()){
+            NS_LOG_ERROR("No available node found. Increase mobile number of nodes!");
+            exit(1);
+        }
+
+        UpdateNodePosition(mosaicNodeId, position);
     }
 
     void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address ipv4Add) {
