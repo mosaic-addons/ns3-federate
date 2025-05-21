@@ -39,22 +39,17 @@ namespace ClientServerChannelSpace {
 
 enum CMD {
 	CMD_UNDEF=-1,
-//--> Federation management
     CMD_INIT = 1,
 	CMD_SHUT_DOWN = 2,
-//--> Update messages
-	CMD_UPDATE_NODE = 10,
-	CMD_REMOVE_NODE = 11,
-//--> Advance Time
-    CMD_ADVANCE_TIME = 20,
+	CMD_SUCCESS = 41,
     CMD_NEXT_EVENT = 21,
-	CMD_MSG_RECV = 22,
-//--> Communication
-    CMD_MSG_SEND = 30,
-    CMD_CONF_RADIO = 31,
-//--> General
+    CMD_ADVANCE_TIME = 20,
 	CMD_END = 40,
-	CMD_SUCCESS = 41
+	CMD_UPDATE_NODE = 10,
+    CMD_CONF_RADIO = 31,
+    CMD_MSG_SEND = 30,
+	CMD_MSG_RECV = 22,
+	DEPRECATED_CMD_REMOVE_NODE = 11,
 };
 
 enum RADIO_NUMBER {

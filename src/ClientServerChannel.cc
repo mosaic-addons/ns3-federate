@@ -46,15 +46,15 @@ namespace std {
             case ClientServerChannelSpace::CMD::CMD_UNDEF: out << "CMD undefined"; break;
             case ClientServerChannelSpace::CMD::CMD_INIT: out << "CMD init"; break;
             case ClientServerChannelSpace::CMD::CMD_SHUT_DOWN: out << "CMD shut down"; break;
-            case ClientServerChannelSpace::CMD::CMD_UPDATE_NODE: out << "CMD update node"; break;
-            case ClientServerChannelSpace::CMD::CMD_REMOVE_NODE: out << "CMD remove node"; break;
-            case ClientServerChannelSpace::CMD::CMD_ADVANCE_TIME: out << "CMD advance time"; break;
-            case ClientServerChannelSpace::CMD::CMD_NEXT_EVENT: out << "CMD next event"; break;
-            case ClientServerChannelSpace::CMD::CMD_MSG_RECV: out << "CMD message receive"; break;
-            case ClientServerChannelSpace::CMD::CMD_MSG_SEND: out << "CMD message send"; break;
-            case ClientServerChannelSpace::CMD::CMD_CONF_RADIO: out << "CMD conf radio"; break;
-            case ClientServerChannelSpace::CMD::CMD_END: out << "CMD end"; break;
             case ClientServerChannelSpace::CMD::CMD_SUCCESS: out << "CMD success"; break;
+            case ClientServerChannelSpace::CMD::CMD_NEXT_EVENT: out << "CMD next event"; break;
+            case ClientServerChannelSpace::CMD::CMD_ADVANCE_TIME: out << "CMD advance time"; break;
+            case ClientServerChannelSpace::CMD::CMD_END: out << "CMD end"; break;
+            case ClientServerChannelSpace::CMD::CMD_UPDATE_NODE: out << "CMD update node"; break;
+            case ClientServerChannelSpace::CMD::CMD_CONF_RADIO: out << "CMD conf radio"; break;
+            case ClientServerChannelSpace::CMD::CMD_MSG_SEND: out << "CMD message send"; break;
+            case ClientServerChannelSpace::CMD::CMD_MSG_RECV: out << "CMD message receive"; break;
+            case ClientServerChannelSpace::CMD::DEPRECATED_CMD_REMOVE_NODE: out << "DEPRECATED CMD remove node"; break;
         }
         return out;
     }
@@ -728,22 +728,17 @@ std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) 
 CommandMessage_CommandType ClientServerChannel::cmdToProtoCMD(CMD cmd) {
     switch(cmd) {
         case CMD_UNDEF: return CommandMessage_CommandType_UNDEF;
-        case CMD_SUCCESS: return CommandMessage_CommandType_SUCCESS;
         case CMD_INIT: return CommandMessage_CommandType_INIT;
         case CMD_SHUT_DOWN: return CommandMessage_CommandType_SHUT_DOWN;
-
-        case CMD_UPDATE_NODE: return CommandMessage_CommandType_UPDATE_NODE;
-        case CMD_REMOVE_NODE: return CommandMessage_CommandType_REMOVE_NODE;
-
-        case CMD_ADVANCE_TIME: return CommandMessage_CommandType_ADVANCE_TIME;
+        case CMD_SUCCESS: return CommandMessage_CommandType_SUCCESS;
         case CMD_NEXT_EVENT: return CommandMessage_CommandType_NEXT_EVENT;
-        case CMD_MSG_RECV: return CommandMessage_CommandType_MSG_RECV;
-
-        case CMD_MSG_SEND: return CommandMessage_CommandType_MSG_SEND;
-        case CMD_CONF_RADIO: return CommandMessage_CommandType_CONF_RADIO;
-
+        case CMD_ADVANCE_TIME: return CommandMessage_CommandType_ADVANCE_TIME;
         case CMD_END: return CommandMessage_CommandType_END;
-
+        case CMD_UPDATE_NODE: return CommandMessage_CommandType_UPDATE_NODE;
+        case CMD_CONF_RADIO: return CommandMessage_CommandType_CONF_RADIO;
+        case CMD_MSG_SEND: return CommandMessage_CommandType_MSG_SEND;
+        case CMD_MSG_RECV: return CommandMessage_CommandType_MSG_RECV;
+        case DEPRECATED_CMD_REMOVE_NODE: return CommandMessage_CommandType_DEPRECATED_REMOVE_NODE;
         default: return CommandMessage_CommandType_UNDEF;
     }
 }
@@ -751,22 +746,17 @@ CommandMessage_CommandType ClientServerChannel::cmdToProtoCMD(CMD cmd) {
 CMD ClientServerChannel::protoCMDToCMD(CommandMessage_CommandType cmd) {
     switch(cmd) {
         case CommandMessage_CommandType_UNDEF: return CMD_UNDEF;
-        case CommandMessage_CommandType_SUCCESS: return CMD_SUCCESS;
         case CommandMessage_CommandType_INIT: return CMD_INIT;
         case CommandMessage_CommandType_SHUT_DOWN: return CMD_SHUT_DOWN;
-
-        case CommandMessage_CommandType_UPDATE_NODE: return CMD_UPDATE_NODE;
-        case CommandMessage_CommandType_REMOVE_NODE: return CMD_REMOVE_NODE;
-
-        case CommandMessage_CommandType_ADVANCE_TIME: return CMD_ADVANCE_TIME;
+        case CommandMessage_CommandType_SUCCESS: return CMD_SUCCESS;
         case CommandMessage_CommandType_NEXT_EVENT: return CMD_NEXT_EVENT;
-        case CommandMessage_CommandType_MSG_RECV: return CMD_MSG_RECV;
-
-        case CommandMessage_CommandType_MSG_SEND: return CMD_MSG_SEND;
-        case CommandMessage_CommandType_CONF_RADIO: return CMD_CONF_RADIO;
-
+        case CommandMessage_CommandType_ADVANCE_TIME: return CMD_ADVANCE_TIME;
         case CommandMessage_CommandType_END: return  CMD_END;
-
+        case CommandMessage_CommandType_UPDATE_NODE: return CMD_UPDATE_NODE;
+        case CommandMessage_CommandType_CONF_RADIO: return CMD_CONF_RADIO;
+        case CommandMessage_CommandType_MSG_SEND: return CMD_MSG_SEND;
+        case CommandMessage_CommandType_MSG_RECV: return CMD_MSG_RECV;
+        case CommandMessage_CommandType_DEPRECATED_REMOVE_NODE: return DEPRECATED_CMD_REMOVE_NODE;
         default: return CMD_UNDEF;
     }
 }
