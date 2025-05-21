@@ -442,6 +442,9 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
         return_value.num_radios = DUAL_RADIO;
     } else if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_NO_RADIO ) {
         return_value.num_radios = NO_RADIO;
+    } else {
+        NS_LOG_ERROR("Unexpected State.");
+        exit(1);
     }
     NS_LOG_INFO("read config message num_radios: " << return_value.num_radios);
 
@@ -471,6 +474,9 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
             return_value.primary_radio.channelmode = DUAL_CHANNEL;
             return_value.primary_radio.secondary_channel
                 = protoChannelToChannel ( conf_message.primary_radio_configuration().secondary_radio_channel() );
+        } else {
+            NS_LOG_ERROR("Unexpected State.");
+            exit(1);
         }
         NS_LOG_INFO("read config message primary radio channel mode: "
             << return_value.primary_radio.channelmode);
@@ -507,6 +513,9 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
             return_value.secondary_radio.channelmode = DUAL_CHANNEL;
             return_value.secondary_radio.secondary_channel
                 = protoChannelToChannel(conf_message.secondary_radio_configuration().secondary_radio_channel());
+        } else {
+            NS_LOG_ERROR("Unexpected State.");
+            exit(1);
         }
         NS_LOG_INFO("read config message secondary radio channel mode: "
             << return_value.secondary_radio.channelmode);
@@ -562,16 +571,15 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
         return_value.topo_address.ttl = send_message.topo_address().ttl();
         NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
         NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
-    } else if (send_message.has_rectangle_address() ) {  //Not yet implemented
-        return_value.topo_address.ip_address = send_message.rectangle_address().ip_address();
-        return_value.topo_address.ttl = 10;
-        NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
-        NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
-    } else if (send_message.has_circle_address() ) {  //Not yet implemented
-        return_value.topo_address.ip_address = send_message.circle_address().ip_address();
-        return_value.topo_address.ttl = 10;
-        NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
-        NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
+    } else if (send_message.has_rectangle_address() ) {
+        NS_LOG_ERROR("Not yet implemented.");
+        exit(1);
+    } else if (send_message.has_circle_address() ) {
+        NS_LOG_ERROR("Not yet implemented.");
+        exit(1);
+    } else {
+        NS_LOG_ERROR("Address is missing.");
+        exit(1);
     }
     writeCommand(CMD_SUCCESS);
 
