@@ -70,7 +70,10 @@ namespace ns3 {
             if (startTime >= 0 && endTime >= 0 && endTime >= startTime) {
                 ambassadorFederateChannel.writeCommand(CMD_SUCCESS);
             } else {
-                ambassadorFederateChannel.writeCommand(CMD_END);
+                // AbstractNetworkAmbassador.java only checks if (CMD.SUCCESS != ...
+                ambassadorFederateChannel.writeCommand(CMD_SHUT_DOWN);
+                NS_LOG_ERROR("Did not receive meaningful times in first CMD_INIT");
+                exit(1);
             }
         } else {
             NS_LOG_ERROR("Did not receive CMD_INIT as first message");
@@ -208,6 +211,7 @@ namespace ns3 {
             }
 
             case CMD_SHUT_DOWN:
+                NS_LOG_INFO("Received CMD_SHUT_DOWN");
                 m_closeConnection = true;
                 Simulator::Destroy();
                 break;

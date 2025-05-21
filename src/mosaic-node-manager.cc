@@ -60,7 +60,7 @@ namespace ns3 {
     }
 
     void MosaicNodeManager::Configure(MosaicNs3Server* serverPtr) {
-        NS_LOG_INFO("Initialize MosaicNodeManager...");
+        NS_LOG_INFO("Initialize Node Infrastructure...");
         m_serverPtr = serverPtr;
 
         // init m_helpers
@@ -212,7 +212,9 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        
+
+        NS_LOG_INFO("[node=" << nodeId << "] x=" << position.x << " y=" << position.y);
+
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<MobilityModel> mobModel = node->GetObject<MobilityModel> ();
         mobModel->SetPosition(position);
@@ -241,7 +243,7 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] MosaicNodeManager::ConfigureNodeRadio");
+        NS_LOG_INFO("[node=" << nodeId << "] radioTurnedOn="<< radioTurnedOn << " txPow=" << transmitPower);
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
 
@@ -260,6 +262,7 @@ namespace ns3 {
                     return;
                 }                        
                 Ptr<YansWifiPhy> wavePhy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
+                NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << wavePhy);
                 if (wavePhy != 0) {
                     double txDBm = 10 * log10(transmitPower);
                     wavePhy->SetTxPowerStart(txDBm);
