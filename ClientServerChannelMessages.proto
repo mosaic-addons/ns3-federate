@@ -91,6 +91,7 @@ enum RadioChannel {
     PROTO_SCH5 = 5;
     PROTO_SCH6 = 6;
     PROTO_UNDEF = 7;
+    PROTO_CELL = 8;
 }
 
 /*

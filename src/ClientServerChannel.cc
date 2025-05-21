@@ -91,6 +91,7 @@ namespace std {
             case ClientServerChannelSpace::RADIO_CHANNEL::SCH5: out << "RADIO_CHANNEL sch5"; break;
             case ClientServerChannelSpace::RADIO_CHANNEL::SCH6: out << "RADIO_CHANNEL sch6"; break;
             case ClientServerChannelSpace::RADIO_CHANNEL::CCH: out << "RADIO_CHANNEL cch"; break;
+            case ClientServerChannelSpace::RADIO_CHANNEL::CELL: out << "RADIO_CHANNEL cell"; break;
             case ClientServerChannelSpace::RADIO_CHANNEL::UNDEF_CHANNEL: out << "RADIO_CHANNEL undef"; break;
         }
         return out;
@@ -770,6 +771,7 @@ RADIO_CHANNEL ClientServerChannel::protoChannelToChannel(RadioChannel protoChann
         case PROTO_SCH4: return SCH4;
         case PROTO_SCH5: return SCH5;
         case PROTO_SCH6: return SCH6;
+        case PROTO_CELL: return CELL;
         default: return UNDEF_CHANNEL;
     }
 }
@@ -783,6 +785,7 @@ RadioChannel ClientServerChannel::channelToProtoChannel(RADIO_CHANNEL channel) {
         case SCH4: return PROTO_SCH4;
         case SCH5: return PROTO_SCH5;
         case SCH6: return PROTO_SCH6;
+        case CELL: return PROTO_CELL;
         default: return PROTO_UNDEF;
     }
 }

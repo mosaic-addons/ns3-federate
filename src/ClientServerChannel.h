@@ -78,7 +78,8 @@ enum RADIO_CHANNEL {
 	SCH4 = 4,
 	SCH5 = 5,
 	SCH6 = 6,
-	UNDEF_CHANNEL = 7
+	UNDEF_CHANNEL = 7,
+	CELL = 8,
 };
 
 struct CSC_init_return{
