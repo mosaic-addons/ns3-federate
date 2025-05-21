@@ -133,7 +133,7 @@ message SendMessageMessage {
     
     message TopoAddress {
         required uint32 ip_address = 1;
-        required uint32 ttl = 2;
+        optional uint32 ttl = 2;
     }
     message GeoRectangleAddress {
         required uint32 ip_address = 1;
