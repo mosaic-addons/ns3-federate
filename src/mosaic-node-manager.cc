@@ -86,6 +86,17 @@ namespace ns3 {
         remoteHostContainer.Create (1);
         internet.Install (remoteHostContainer);
 
+        NS_LOG_INFO("Install MosaicProxyApp application");
+        for (uint32_t i = 0; i < remoteHostContainer.GetN(); ++i)
+        {
+            Ptr<Node> node = remoteHostContainer.Get(i);
+            Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
+            // app->SetNodeManager(this);
+            node->AddApplication(app);
+            app->SetSockets();
+            app->Enable();
+        }
+
         NS_LOG_INFO("Setup backbone...");
         PointToPointHelper p2ph;
         p2ph.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
