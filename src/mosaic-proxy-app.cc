@@ -73,6 +73,11 @@ namespace ns3 {
             m_socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
             InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
             m_socket->Bind(local);
+            // HACK: always use LTE interface for outgoing messages
+            if(GetNode()->GetNDevices() == 3) {
+                // if multiple netDevices: bind socket to last device
+                m_socket->BindToNetDevice (GetNode()->GetDevice(2));
+            }
             m_socket->SetAllowBroadcast(true);
 
             m_socket->SetRecvCallback(MakeCallback(&MosaicProxyApp::Receive, this));
