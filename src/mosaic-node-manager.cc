@@ -26,11 +26,13 @@
 
 #include "ns3/wave-net-device.h"
 #include "ns3/string.h"
-#include "ns3/internet-stack-helper.h"
 #include "ns3/log.h"
 #include "ns3/constant-velocity-mobility-model.h"
 #include "ns3/wifi-net-device.h"
 #include "ns3/node-list.h"
+
+#include "ns3/internet-stack-helper.h"
+#include "ns3/point-to-point-helper.h"
 
 #include "mosaic-ns3-server.h" 
 #include "mosaic-proxy-app.h"
@@ -78,6 +80,26 @@ namespace ns3 {
         // Ptr<NoBackhaulEpcHelper> epcHelper = CreateObject<NoBackhaulEpcHelper> (); // EPC without connecting the eNBs with the core network. It just creates the network elements of the core network
         Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); // This EpcHelper creates point-to-point links between the eNBs and the SGW = 3 extra nodes
         m_lteHelper->SetEpcHelper (epcHelper);
+
+        NS_LOG_INFO("Setup server...");
+        NodeContainer remoteHostContainer;
+        remoteHostContainer.Create (1);
+        internet.Install (remoteHostContainer);
+
+        NS_LOG_INFO("Setup backbone...");
+        PointToPointHelper p2ph;
+        p2ph.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
+        p2ph.SetDeviceAttribute ("Mtu", UintegerValue (1500));
+        p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.010)));
+        Ptr<Node> remoteHost = remoteHostContainer.Get (0);
+        Ptr<Node> pgw = epcHelper->GetPgwNode ();
+        NetDeviceContainer p2pDevices = p2ph.Install (remoteHost, pgw);
+
+        // assign IP address to backbone
+        m_ipAddressHelper.SetBase ("10.5.0.0", "255.255.0.0");
+        Ipv4InterfaceContainer p2pIpIfaces = m_ipAddressHelper.Assign (p2pDevices);
+        Ipv4Address remoteHostAddr = p2pIpIfaces.GetAddress (0);
+        NS_LOG_INFO("serverAddr=" << remoteHostAddr);
         
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
