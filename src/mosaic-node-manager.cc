@@ -131,6 +131,7 @@ namespace ns3 {
         NS_LOG_INFO("Install WAVE devices");
         internet.Install(m_mobileNodes);
         NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
+        m_ipAddressHelper.SetBase ("10.1.0.0", "255.255.0.0");
         Ipv4InterfaceContainer waveIpIface = m_ipAddressHelper.Assign(netDevices);
         for (uint32_t i = 0; i < waveIpIface.GetN (); ++i)
         {
@@ -152,7 +153,7 @@ namespace ns3 {
             // set the default gateway for the UE
             Ptr<Ipv4StaticRouting> ueStaticRouting;
             ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ue->GetObject<Ipv4> ());
-            ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), 1);
+            ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), ueLteDevice->GetIfIndex ());
         }
         m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&std::cout));
 
