@@ -182,7 +182,7 @@ namespace ns3 {
         UpdateNodePosition(mosaicNodeId, position);
     }
 
-    void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address ipv4Add) {
+    void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, uint32_t msgID, uint32_t payLength, Ipv4Address ipv4Add) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -195,7 +195,7 @@ namespace ns3 {
             NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, MosaicProxyApp is missing");
             return;
         }
-        app->TransmitPacket(protocolID, msgID, payLength, ipv4Add);
+        app->TransmitPacket(msgID, payLength, ipv4Add);
     }
 
     void MosaicNodeManager::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID) {

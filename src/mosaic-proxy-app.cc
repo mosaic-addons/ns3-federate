@@ -82,8 +82,8 @@ namespace ns3 {
         }
     }
 
-    void MosaicProxyApp::TransmitPacket(uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address address) {
-        NS_LOG_FUNCTION(GetNode()->GetId() << protocolID << msgID << payLength << address);
+    void MosaicProxyApp::TransmitPacket(uint32_t msgID, uint32_t payLength, Ipv4Address address) {
+        NS_LOG_FUNCTION(GetNode()->GetId() << msgID << payLength << address);
 
         if (!m_active) {
             return;

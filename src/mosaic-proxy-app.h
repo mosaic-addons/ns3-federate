@@ -43,7 +43,7 @@ namespace ns3 {
 
         void SetSockets(void);
         
-        void TransmitPacket(uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address address);
+        void TransmitPacket(uint32_t msgID, uint32_t payLength, Ipv4Address address);
         
         void Enable();
         

@@ -89,10 +89,9 @@ namespace ns3 {
          * @param mosaicNodeId id of the node
          * @param msgID the msgID of the message
          * @param payLenght the lenght of the message
-         * @param pay the payload
          * @param add the IPv4 destination address
          */
-        void SendMsg(uint32_t mosaicNodeId, uint32_t protocolID, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
+        void SendMsg(uint32_t mosaicNodeId, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
 
         bool ActivateNode(uint32_t mosaicNodeId);
 
