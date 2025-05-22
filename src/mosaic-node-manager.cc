@@ -110,7 +110,8 @@ namespace ns3 {
         m_ipAddressHelper.SetBase ("10.5.0.0", "255.255.0.0");
         Ipv4InterfaceContainer p2pIpIfaces = m_ipAddressHelper.Assign (p2pDevices);
         Ipv4Address remoteHostAddr = p2pIpIfaces.GetAddress (0);
-        NS_LOG_INFO("serverAddr=" << remoteHostAddr);
+        NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] dev=" << p2pDevices.Get(0) << " serverAddr=" << p2pIpIfaces.GetAddress (0));
+        NS_LOG_DEBUG("[node=" << pgw->GetId() << "] dev=" << p2pDevices.Get(1) << " pgwAddr=" << p2pIpIfaces.GetAddress (1));
         
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
@@ -118,6 +119,7 @@ namespace ns3 {
         mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
         mobility.Install (m_enbNodes);
         m_enbDevs = m_lteHelper->InstallEnbDevice (m_enbNodes);
+        NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevs.Get(0));
 
         NS_LOG_INFO("Setup mobileNode's...");
         m_mobileNodes.Create (5);
@@ -129,24 +131,30 @@ namespace ns3 {
         NS_LOG_INFO("Install WAVE devices");
         internet.Install(m_mobileNodes);
         NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
-        m_ipAddressHelper.Assign(netDevices);
+        Ipv4InterfaceContainer waveIpIface = m_ipAddressHelper.Assign(netDevices);
+        for (uint32_t i = 0; i < waveIpIface.GetN (); ++i)
+        {
+            NS_LOG_DEBUG("[node=" << netDevices.Get(i)->GetNode()->GetId() << "] dev=" << netDevices.Get(i) << " wifiAddr=" << waveIpIface.GetAddress(i));
+        }
 
         NS_LOG_INFO("Install LTE devices");
         NetDeviceContainer ueDevs = m_lteHelper->InstallUeDevice (m_mobileNodes);
         m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
 
         // assign IP address to UEs
+        NS_LOG_DEBUG("[LTE GW] addr=" << epcHelper->GetUeDefaultGatewayAddress ());
         for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
             Ptr<Node> ue = m_mobileNodes.Get (u);
             Ptr<NetDevice> ueLteDevice = ueDevs.Get (u);
-            Ipv4InterfaceContainer ueIpIface;
-            ueIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (ueLteDevice));
+            Ipv4InterfaceContainer ueIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (ueLteDevice));
+            NS_LOG_DEBUG("[node=" << ue->GetId() << "] dev=" << ueLteDevice << " lteAddr=" << ueIpIface.GetAddress(0));
             // set the default gateway for the UE
             Ptr<Ipv4StaticRouting> ueStaticRouting;
             ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ue->GetObject<Ipv4> ());
             ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), 1);
         }
+        m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&std::cout));
 
         NS_LOG_INFO("Install MosaicProxyApp application");
         for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)

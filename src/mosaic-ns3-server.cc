@@ -212,6 +212,8 @@ namespace ns3 {
 
             case CMD_SHUT_DOWN:
                 NS_LOG_INFO("Received CMD_SHUT_DOWN");
+                NS_LOG_INFO("Disable log...");
+                LogComponentDisableAll(LOG_LEVEL_ALL);
                 m_closeConnection = true;
                 Simulator::Destroy();
                 break;
