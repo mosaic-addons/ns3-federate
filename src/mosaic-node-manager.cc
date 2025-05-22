@@ -76,11 +76,6 @@ namespace ns3 {
         Ipv4StaticRoutingHelper ipv4RoutingHelper;
         MobilityHelper mobility;
 
-        // EPC Helper
-        // Ptr<NoBackhaulEpcHelper> epcHelper = CreateObject<NoBackhaulEpcHelper> (); // EPC without connecting the eNBs with the core network. It just creates the network elements of the core network
-        Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); // This EpcHelper creates point-to-point links between the eNBs and the SGW = 3 extra nodes
-        m_lteHelper->SetEpcHelper (epcHelper);
-
         NS_LOG_INFO("Setup server...");
         NodeContainer remoteHostContainer;
         remoteHostContainer.Create (1);
@@ -96,6 +91,11 @@ namespace ns3 {
             app->SetSockets();
             app->Enable();
         }
+
+        // EPC Helper
+        // Ptr<NoBackhaulEpcHelper> epcHelper = CreateObject<NoBackhaulEpcHelper> (); // EPC without connecting the eNBs with the core network. It just creates the network elements of the core network
+        Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); // This EpcHelper creates point-to-point links between the eNBs and the SGW = 3 extra nodes
+        m_lteHelper->SetEpcHelper (epcHelper);
 
         NS_LOG_INFO("Setup backbone...");
         PointToPointHelper p2ph;
