@@ -27,6 +27,7 @@
 #include "ns3/data-rate.h"
 
 #include "mosaic-node-manager.h"
+#include "ClientServerChannel.h"
 
 namespace ns3 {
 
@@ -43,7 +44,7 @@ namespace ns3 {
 
         void SetSockets(void);
         
-        void TransmitPacket(uint32_t msgID, uint32_t payLength, Ipv4Address address);
+        void TransmitPacket(Ipv4Address dstAddr, ClientServerChannelSpace::RADIO_CHANNEL channel, uint32_t msgID, uint32_t payLength);
         
         void Enable();
         

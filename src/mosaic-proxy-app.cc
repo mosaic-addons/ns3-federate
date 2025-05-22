@@ -82,8 +82,8 @@ namespace ns3 {
         }
     }
 
-    void MosaicProxyApp::TransmitPacket(uint32_t msgID, uint32_t payLength, Ipv4Address address) {
-        NS_LOG_FUNCTION(GetNode()->GetId() << msgID << payLength << address);
+    void MosaicProxyApp::TransmitPacket(Ipv4Address dstAddr, ClientServerChannelSpace::RADIO_CHANNEL channel, uint32_t msgID, uint32_t payLength) {
+        NS_LOG_FUNCTION(GetNode()->GetId() << dstAddr << channel << msgID << payLength);
 
         if (!m_active) {
             return;
@@ -96,10 +96,13 @@ namespace ns3 {
         packet->AddByteTag(msgIDTag);
 
         m_sendCount++;
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns size=" << packet->GetSize());
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength << " PacketID=" << packet->GetUid() << " PacketCount=" << m_sendCount);
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid());
+
+        // TODO: use channel 
 
         //call the socket of this node to send the packet
-        InetSocketAddress ipSA = InetSocketAddress(address, m_port);
+        InetSocketAddress ipSA = InetSocketAddress(dstAddr, m_port);
         m_socket->SendTo(packet, 0, ipSA);
     }
 
@@ -133,6 +136,6 @@ namespace ns3 {
 
         //report the received messages to the MosaicNs3Server instance
         m_nodeManager->AddRecvPacket(Simulator::Now().GetNanoSeconds(), packet, GetNode()->GetId(), msgID);
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns size=" << packet->GetSize());
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
     }
 } // namespace ns3

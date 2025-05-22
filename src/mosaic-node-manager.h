@@ -42,6 +42,8 @@
 #include "ns3/mobility-module.h"
 #include "ns3/lte-module.h"
 
+#include "ClientServerChannel.h"
+
 namespace ns3 {
 
     //Forward declaration to prevent circular dependency
@@ -87,11 +89,12 @@ namespace ns3 {
          * @brief start the sending of a message on a node
          *
          * @param mosaicNodeId id of the node
+         * @param dstAddr the IPv4 destination address
+         * @param channel the channel where to send the message on
          * @param msgID the msgID of the message
          * @param payLenght the lenght of the message
-         * @param add the IPv4 destination address
          */
-        void SendMsg(uint32_t mosaicNodeId, uint32_t msgID, uint32_t payLenght, Ipv4Address ipv4Add);
+        void SendMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RADIO_CHANNEL channel, uint32_t msgID, uint32_t payLenght);
 
         bool ActivateNode(uint32_t mosaicNodeId);
 

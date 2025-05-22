@@ -203,7 +203,7 @@ namespace ns3 {
                     }
                     Time tNext = NanoSeconds(send_message.time);
                     Time tDelay = tNext - m_sim->Now();
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendMsg, m_nodeManager, send_message.node_id, send_message.message_id, send_message.length, ip));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendMsg, m_nodeManager, send_message.node_id, ip, send_message.channel_id, send_message.message_id, send_message.length));
                 } catch (int e) {
                     NS_LOG_ERROR("Error while sending message");
                 }

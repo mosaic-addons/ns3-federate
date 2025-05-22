@@ -182,12 +182,12 @@ namespace ns3 {
         UpdateNodePosition(mosaicNodeId, position);
     }
 
-    void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, uint32_t msgID, uint32_t payLength, Ipv4Address ipv4Add) {
+    void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RADIO_CHANNEL channel, uint32_t msgID, uint32_t payLength) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] msgID=" << msgID << " size=" << payLength << " adr=" << ipv4Add);
+        NS_LOG_INFO("[node=" << nodeId << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength);
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
@@ -195,7 +195,7 @@ namespace ns3 {
             NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, MosaicProxyApp is missing");
             return;
         }
-        app->TransmitPacket(msgID, payLength, ipv4Add);
+        app->TransmitPacket(dstAddr, channel, msgID, payLength);
     }
 
     void MosaicNodeManager::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID) {
