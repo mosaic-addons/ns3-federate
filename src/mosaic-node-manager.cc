@@ -110,6 +110,10 @@ namespace ns3 {
         Ipv4InterfaceContainer p2pIpIfaces = m_ipAddressHelper.Assign (p2pDevices);
         Ipv4Address remoteHostAddr = p2pIpIfaces.GetAddress (0);
 
+        // add routing
+        Ptr<Ipv4StaticRouting> remoteHostStaticRouting = ipv4RoutingHelper.GetStaticRouting (remoteHost->GetObject<Ipv4> ());
+        remoteHostStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), p2pDevices.Get(0)->GetIfIndex());
+
         // logging for remoteHost
         NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] SERVER");
         NS_LOG_DEBUG("Server interfaces:");
