@@ -113,6 +113,10 @@ namespace ns3 {
         NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] dev=" << p2pDevices.Get(0) << " serverAddr=" << p2pIpIfaces.GetAddress (0));
         NS_LOG_DEBUG("[node=" << pgw->GetId() << "] dev=" << p2pDevices.Get(1) << " pgwAddr=" << p2pIpIfaces.GetAddress (1));
         
+        std::stringstream remoteHostRouting;
+        remoteHost->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&remoteHostRouting));
+        NS_LOG_DEBUG(remoteHostRouting.str());
+
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
         m_enbNodes.Create (1);
@@ -155,7 +159,9 @@ namespace ns3 {
             ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ue->GetObject<Ipv4> ());
             ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), ueLteDevice->GetIfIndex ());
         }
-        m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&std::cout));
+        std::stringstream ss;
+        m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
+        NS_LOG_DEBUG(ss.str());
 
         NS_LOG_INFO("Install MosaicProxyApp application");
         for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)
