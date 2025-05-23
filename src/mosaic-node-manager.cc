@@ -92,12 +92,11 @@ namespace ns3 {
             app->Enable();
         }
 
-        // EPC Helper
-        // Ptr<NoBackhaulEpcHelper> epcHelper = CreateObject<NoBackhaulEpcHelper> (); // EPC without connecting the eNBs with the core network. It just creates the network elements of the core network
-        Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); // This EpcHelper creates point-to-point links between the eNBs and the SGW = 3 extra nodes
+        NS_LOG_INFO("Setup core...");
+        // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
+        Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); 
         m_lteHelper->SetEpcHelper (epcHelper);
 
-        NS_LOG_INFO("Setup backbone...");
         PointToPointHelper p2ph;
         p2ph.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
         p2ph.SetDeviceAttribute ("Mtu", UintegerValue (1500));
@@ -106,17 +105,53 @@ namespace ns3 {
         Ptr<Node> pgw = epcHelper->GetPgwNode ();
         NetDeviceContainer p2pDevices = p2ph.Install (remoteHost, pgw);
 
-        // assign IP address to backbone
+        NS_LOG_INFO("Assign IPs (for both server and core) and add routing...");
         m_ipAddressHelper.SetBase ("10.5.0.0", "255.255.0.0");
         Ipv4InterfaceContainer p2pIpIfaces = m_ipAddressHelper.Assign (p2pDevices);
         Ipv4Address remoteHostAddr = p2pIpIfaces.GetAddress (0);
-        NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] dev=" << p2pDevices.Get(0) << " serverAddr=" << p2pIpIfaces.GetAddress (0));
-        NS_LOG_DEBUG("[node=" << pgw->GetId() << "] dev=" << p2pDevices.Get(1) << " pgwAddr=" << p2pIpIfaces.GetAddress (1));
-        
-        std::stringstream remoteHostRouting;
-        remoteHost->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&remoteHostRouting));
-        NS_LOG_DEBUG(remoteHostRouting.str());
 
+        // logging for remoteHost
+        NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] SERVER");
+        NS_LOG_DEBUG("Server interfaces:");
+        for (uint32_t i = 0; i < remoteHost->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
+        {
+            Ipv4InterfaceAddress iaddr = remoteHost->GetObject<Ipv4> ()->GetAddress (i, 0);
+            NS_LOG_DEBUG("  if_" << i << " dev=" << remoteHost->GetDevice(i) << " iaddr=" << iaddr);
+        }
+        std::stringstream remoteHostRouting;
+        remoteHostRouting << "Server routing:" << std::endl;
+        remoteHost->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&remoteHostRouting));
+        NS_LOG_LOGIC(remoteHostRouting.str());
+
+        // logging for PGW
+        NS_LOG_DEBUG("[node=" << pgw->GetId() << "] PGW");
+        NS_LOG_DEBUG("PGW interfaces:");
+        for (uint32_t i = 0; i < pgw->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
+        {
+            Ipv4InterfaceAddress iaddr = pgw->GetObject<Ipv4> ()->GetAddress (i, 0);
+            NS_LOG_DEBUG("  if_" << i << " dev=" << pgw->GetDevice(i) << " iaddr=" << iaddr);
+        }
+        std::stringstream pgwRouting;
+        pgwRouting << "PGW routing:" << std::endl;
+        pgw->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&pgwRouting));
+        NS_LOG_LOGIC(pgwRouting.str());
+
+        // logging for SGW
+        Ptr<Node> sgw = epcHelper->GetSgwNode ();
+        NS_LOG_DEBUG("[node=" << sgw->GetId() << "] SGW");
+        NS_LOG_DEBUG("SGW interfaces:");
+        for (uint32_t i = 0; i < sgw->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
+        {
+            Ipv4InterfaceAddress iaddr = sgw->GetObject<Ipv4> ()->GetAddress (i, 0);
+            NS_LOG_DEBUG("  if_" << i << " dev=" << sgw->GetDevice(i) << " iaddr=" << iaddr);
+        }
+        std::stringstream sgwRouting;
+        sgwRouting << "SGW routing:" << std::endl;
+        sgw->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&pgwRouting));
+        NS_LOG_LOGIC(sgwRouting.str());
+
+        // [node=3] see no-backhaul-epc-helper:m_mme ... MME network element
+        
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
         m_enbNodes.Create (1);
@@ -161,7 +196,7 @@ namespace ns3 {
         }
         std::stringstream ss;
         m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
-        NS_LOG_DEBUG(ss.str());
+        NS_LOG_LOGIC(ss.str());
 
         NS_LOG_INFO("Install MosaicProxyApp application");
         for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)
