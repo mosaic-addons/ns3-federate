@@ -108,7 +108,11 @@ namespace ns3 {
 
         //call the socket of this node to send the packet
         InetSocketAddress ipSA = InetSocketAddress(dstAddr, m_port);
-        m_socket->SendTo(packet, 0, ipSA);
+        int result = m_socket->SendTo(packet, 0, ipSA);
+        if (result == -1) {
+            NS_LOG_ERROR("[node=" << GetNode()->GetId() << "] Sending packet failed!");
+            exit(1);
+        }
     }
 
     /*
