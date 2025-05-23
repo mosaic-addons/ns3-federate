@@ -183,7 +183,6 @@ namespace ns3 {
 
         NS_LOG_INFO("Install LTE devices");
         NetDeviceContainer ueDevs = m_lteHelper->InstallUeDevice (m_mobileNodes);
-        m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
 
         // assign IP address to UEs
         NS_LOG_DEBUG("[LTE GW] addr=" << epcHelper->GetUeDefaultGatewayAddress ());
@@ -211,6 +210,10 @@ namespace ns3 {
             node->AddApplication(app);
             app->SetSockets();
         }
+
+        NS_LOG_INFO("Attach UEs to specific eNB...");
+        // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
+        m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
     }
 
     uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
