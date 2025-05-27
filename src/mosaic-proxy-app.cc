@@ -103,6 +103,7 @@ namespace ns3 {
         m_sendCount++;
         NS_LOG_INFO("[node=" << GetNode()->GetId() << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength << " PacketID=" << packet->GetUid() << " PacketCount=" << m_sendCount);
         NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid());
+        LogComponentEnable ("TrafficControlLayer", (LogLevel)(LOG_DEBUG | LOG_PREFIX_NODE));
 
         // TODO: use channel 
 
@@ -144,6 +145,8 @@ namespace ns3 {
         }
 
         NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
+        LogComponentDisable ("TrafficControlLayer", LOG_DEBUG);
+
         if (m_nodeManager != 0) {
             //report the received messages to the MosaicNs3Server instance
             m_nodeManager->AddRecvPacket(Simulator::Now().GetNanoSeconds(), packet, GetNode()->GetId(), msgID);
