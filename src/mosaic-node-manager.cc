@@ -158,11 +158,19 @@ namespace ns3 {
         
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
-        m_enbNodes.Create (1);
+        m_enbNodes.Create (2);
         mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
         mobility.Install (m_enbNodes);
+        m_lteHelper->SetHandoverAlgorithmType ("ns3::NoOpHandoverAlgorithm"); // before InstallEnbDevice
         m_enbDevs = m_lteHelper->InstallEnbDevice (m_enbNodes);
         NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevs.Get(0));
+        m_lteHelper->AddX2Interface (m_enbNodes); // for handover
+
+        // Set position of eNB nr.2
+        Ptr<Node> node = m_enbNodes.Get(1);
+        Ptr<MobilityModel> mobModel = node->GetObject<MobilityModel> ();
+        mobModel->SetPosition(Vector(1000, 1000, 0.0));
+
 
         NS_LOG_INFO("Setup mobileNode's...");
         m_mobileNodes.Create (5);
@@ -214,6 +222,9 @@ namespace ns3 {
         NS_LOG_INFO("Attach UEs to specific eNB...");
         // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
         m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
+
+        NS_LOG_INFO("Schedule manual handovers...");
+        m_lteHelper->HandoverRequest (Seconds (3.000), ueDevs.Get (1), m_enbDevs.Get (0), m_enbDevs.Get (1));
     }
 
     uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
