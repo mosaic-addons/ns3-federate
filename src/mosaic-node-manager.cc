@@ -219,10 +219,6 @@ namespace ns3 {
             app->SetSockets();
         }
 
-        NS_LOG_INFO("Attach UEs to specific eNB...");
-        // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
-        m_lteHelper->Attach (ueDevs, m_enbDevs.Get(0));
-
         NS_LOG_INFO("Schedule manual handovers...");
         m_lteHelper->HandoverRequest (Seconds (3.000), ueDevs.Get (1), m_enbDevs.Get (0), m_enbDevs.Get (1));
     }
@@ -281,6 +277,13 @@ namespace ns3 {
         }
 
         UpdateNodePosition(mosaicNodeId, position);
+
+        NS_LOG_INFO("Attach UE to specific eNB...");
+        NS_LOG_INFO("ATTENTION: This requires about 21ms to fully connect");
+        // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
+        Ptr<Node> node = NodeList::GetNode(GetNs3NodeId(mosaicNodeId));
+        // Devices are 0:Loopback 1:Wifi 2:LTE
+        m_lteHelper->Attach (node->GetDevice(2), m_enbDevs.Get(0));
     }
 
     void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RADIO_CHANNEL channel, uint32_t msgID, uint32_t payLength) {
