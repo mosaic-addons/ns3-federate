@@ -150,6 +150,13 @@ namespace ns3 {
         if (m_nodeManager != 0) {
             //report the received messages to the MosaicNs3Server instance
             m_nodeManager->AddRecvPacket(Simulator::Now().GetNanoSeconds(), packet, GetNode()->GetId(), msgID);
+        } else {
+            // as server (currently m_nodeManager == 0): ping pong a packet back to fixed IP
+            /* Add one slash, to enable this test 
+            std::cout << std::endl;
+            Ipv4Address ip("7.0.0.4");
+            TransmitPacket(ip, ClientServerChannelSpace::RADIO_CHANNEL::CELL, 1234, 124);
+            //*/
         }
     }
 } // namespace ns3
