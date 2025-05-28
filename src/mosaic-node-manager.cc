@@ -199,7 +199,12 @@ namespace ns3 {
             Ptr<Node> ue = m_mobileNodes.Get (u);
             Ptr<NetDevice> ueLteDevice = ueDevs.Get (u);
             Ipv4InterfaceContainer ueIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (ueLteDevice));
-            NS_LOG_DEBUG("[node=" << ue->GetId() << "] dev=" << ueLteDevice << " lteAddr=" << ueIpIface.GetAddress(0));
+            NS_LOG_DEBUG("[node=" << ue->GetId() << "]"
+                << " dev=" << ueLteDevice 
+                << " lteAddr=" << ueIpIface.GetAddress(0) 
+                << " rrc=" << ueLteDevice->GetObject<LteUeNetDevice> ()->GetRrc ()
+                << " imsi=" << ueLteDevice->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
+            );
             // set the default gateway for the UE
             Ptr<Ipv4StaticRouting> ueStaticRouting;
             ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ue->GetObject<Ipv4> ());
