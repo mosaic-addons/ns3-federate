@@ -184,9 +184,30 @@ namespace ns3 {
         NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
         m_ipAddressHelper.SetBase ("10.1.0.0", "255.255.0.0");
         Ipv4InterfaceContainer waveIpIface = m_ipAddressHelper.Assign(netDevices);
-        for (uint32_t i = 0; i < waveIpIface.GetN (); ++i)
+        NS_ASSERT_MSG (m_mobileNodes.GetN () < 255, "Currently only support addressing for up to 254 nodes.");
+        for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
-            NS_LOG_DEBUG("[node=" << netDevices.Get(i)->GetNode()->GetId() << "] dev=" << netDevices.Get(i) << " wifiAddr=" << waveIpIface.GetAddress(i));
+            // Additionally assign an extra IPv4 Address (without ipv4 helper)
+            Ptr<Node> node = m_mobileNodes.Get(u);
+            Ptr<NetDevice> device = netDevices.Get(u);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
+
+            std::stringstream ssip;
+            ssip << "7.0.0." << (u+1);
+            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(Ipv4Address(ssip.str().c_str()), "255.255.0.0");
+            ipv4proto->AddAddress(ifIndex, ipv4Addr);
+
+            // logging
+            std::stringstream ss;
+            for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (ifIndex, j);
+                ss << "|" << iaddr.GetLocal ();
+            }
+            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
+                << " dev=" << node->GetDevice(ifIndex) 
+                << " wifiAddr=" << ss.str()
+            );
         }
 
         NS_LOG_INFO("Install LTE devices");
