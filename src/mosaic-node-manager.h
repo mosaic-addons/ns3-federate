@@ -133,7 +133,7 @@ namespace ns3 {
 
         // LTE 
         NodeContainer m_enbNodes;
-        NetDeviceContainer m_enbDevs;
+        NetDeviceContainer m_enbDevices;
 
         NodeContainer m_mobileNodes;
     };

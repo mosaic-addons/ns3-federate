@@ -103,16 +103,16 @@ namespace ns3 {
         p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.010)));
         Ptr<Node> remoteHost = remoteHostContainer.Get (0);
         Ptr<Node> pgw = epcHelper->GetPgwNode ();
-        NetDeviceContainer p2pDevices = p2ph.Install (remoteHost, pgw);
+        NetDeviceContainer coreDevices = p2ph.Install (remoteHost, pgw);
 
         NS_LOG_INFO("Assign IPs (for both server and core) and add routing...");
         m_ipAddressHelper.SetBase ("10.5.0.0", "255.255.0.0");
-        Ipv4InterfaceContainer p2pIpIfaces = m_ipAddressHelper.Assign (p2pDevices);
-        Ipv4Address remoteHostAddr = p2pIpIfaces.GetAddress (0);
+        Ipv4InterfaceContainer coreIpIfaces = m_ipAddressHelper.Assign (coreDevices);
+        Ipv4Address remoteHostAddr = coreIpIfaces.GetAddress (0);
 
         // add routing
         Ptr<Ipv4StaticRouting> remoteHostStaticRouting = ipv4RoutingHelper.GetStaticRouting (remoteHost->GetObject<Ipv4> ());
-        remoteHostStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), p2pDevices.Get(0)->GetIfIndex());
+        remoteHostStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), coreDevices.Get(0)->GetIfIndex());
 
         // logging for remoteHost
         NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] SERVER");
@@ -162,8 +162,8 @@ namespace ns3 {
         mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
         mobility.Install (m_enbNodes);
         m_lteHelper->SetHandoverAlgorithmType ("ns3::NoOpHandoverAlgorithm"); // before InstallEnbDevice
-        m_enbDevs = m_lteHelper->InstallEnbDevice (m_enbNodes);
-        NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevs.Get(0));
+        m_enbDevices = m_lteHelper->InstallEnbDevice (m_enbNodes);
+        NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevices.Get(0));
         m_lteHelper->AddX2Interface (m_enbNodes); // for handover
 
         // Set position of eNB nr.2
@@ -174,22 +174,22 @@ namespace ns3 {
 
         NS_LOG_INFO("Setup mobileNode's...");
         m_mobileNodes.Create (5);
+        internet.Install(m_mobileNodes);
+        NS_ASSERT_MSG (m_mobileNodes.GetN () < 255, "Currently only support addressing for up to 254 nodes.");
 
         NS_LOG_INFO("Install ConstantVelocityMobilityModel");
         mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
         mobility.Install (m_mobileNodes);
 
         NS_LOG_INFO("Install WAVE devices");
-        internet.Install(m_mobileNodes);
-        NetDeviceContainer netDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
+        NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
         m_ipAddressHelper.SetBase ("10.1.0.0", "255.255.0.0");
-        Ipv4InterfaceContainer waveIpIface = m_ipAddressHelper.Assign(netDevices);
-        NS_ASSERT_MSG (m_mobileNodes.GetN () < 255, "Currently only support addressing for up to 254 nodes.");
+        Ipv4InterfaceContainer wifiIpIfaces = m_ipAddressHelper.Assign(wifiDevices);
         for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
             // Additionally assign an extra IPv4 Address (without ipv4 helper)
             Ptr<Node> node = m_mobileNodes.Get(u);
-            Ptr<NetDevice> device = netDevices.Get(u);
+            Ptr<NetDevice> device = wifiDevices.Get(u);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
 
@@ -211,25 +211,49 @@ namespace ns3 {
         }
 
         NS_LOG_INFO("Install LTE devices");
-        NetDeviceContainer ueDevs = m_lteHelper->InstallUeDevice (m_mobileNodes);
+        NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_mobileNodes);
 
         // assign IP address to UEs
         NS_LOG_DEBUG("[LTE GW] addr=" << epcHelper->GetUeDefaultGatewayAddress ());
         for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
-            Ptr<Node> ue = m_mobileNodes.Get (u);
-            Ptr<NetDevice> ueLteDevice = ueDevs.Get (u);
-            Ipv4InterfaceContainer ueIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (ueLteDevice));
-            NS_LOG_DEBUG("[node=" << ue->GetId() << "]"
-                << " dev=" << ueLteDevice 
-                << " lteAddr=" << ueIpIface.GetAddress(0) 
-                << " rrc=" << ueLteDevice->GetObject<LteUeNetDevice> ()->GetRrc ()
-                << " imsi=" << ueLteDevice->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
+            Ptr<Node> node = m_mobileNodes.Get (u);
+            Ptr<NetDevice> device = lteDevices.Get (u);
+            Ipv4InterfaceContainer lteIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (device));
+            uint32_t ifIndex = device->GetIfIndex ();
+
+            std::stringstream ss;
+            for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (ifIndex, j);
+                ss << "|" << iaddr.GetLocal ();
+            }
+            NS_LOG_DEBUG("[node=" << node->GetId() << "]"
+                << " dev=" << device 
+                << " lteAddr=" << ss.str()
+                << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
+                << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
             );
+
             // set the default gateway for the UE
             Ptr<Ipv4StaticRouting> ueStaticRouting;
-            ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (ue->GetObject<Ipv4> ());
-            ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), ueLteDevice->GetIfIndex ());
+            ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
+            ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
+        }
+
+        // logging for mobile nodes
+        for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
+        {
+            Ptr<Node> node = m_mobileNodes.Get(u);
+            NS_LOG_LOGIC("[node=" << node->GetId () << "]");
+            for (uint32_t i = 0; i < node->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
+            {
+                std::stringstream ss;
+                for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (i); j++ ) {
+                    Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (i, j);
+                    ss << "|" << iaddr.GetLocal ();
+                }
+                NS_LOG_LOGIC("  if_" << i << " dev=" << node->GetDevice(i) << " addr=" << ss.str());
+            }
         }
         std::stringstream ss;
         m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
@@ -246,7 +270,7 @@ namespace ns3 {
         }
 
         NS_LOG_INFO("Schedule manual handovers...");
-        m_lteHelper->HandoverRequest (Seconds (3.000), ueDevs.Get (1), m_enbDevs.Get (0), m_enbDevs.Get (1));
+        m_lteHelper->HandoverRequest (Seconds (3.000), lteDevices.Get (1), m_enbDevices.Get (0), m_enbDevices.Get (1));
     }
 
     uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
@@ -309,7 +333,7 @@ namespace ns3 {
         // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
         Ptr<Node> node = NodeList::GetNode(GetNs3NodeId(mosaicNodeId));
         // Devices are 0:Loopback 1:Wifi 2:LTE
-        m_lteHelper->Attach (node->GetDevice(2), m_enbDevs.Get(0));
+        m_lteHelper->Attach (node->GetDevice(2), m_enbDevices.Get(0));
     }
 
     void MosaicNodeManager::SendMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RADIO_CHANNEL channel, uint32_t msgID, uint32_t payLength) {
