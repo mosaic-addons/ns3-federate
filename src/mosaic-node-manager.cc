@@ -130,7 +130,7 @@ namespace ns3 {
         // add routing for PGW
         Ptr<Ipv4StaticRouting> pgwStaticRouting = ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
         // Devices are 0:Loopback  1:TunDevice 2:SGW 3:server
-        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.1.0.0"), "255.255.0.0", 1); 
+        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1); 
 
         // logging for PGW
         NS_LOG_DEBUG("[node=" << pgw->GetId() << "] PGW");
@@ -231,7 +231,7 @@ namespace ns3 {
 
             // Additionally assign an extra IPv4 Address (without ipv4 helper)
             std::stringstream ssip;
-            ssip << "10.1.0." << (u+2);
+            ssip << "10." << (u+2) << ".0." << (u+2);
             Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(Ipv4Address(ssip.str().c_str()), "255.0.0.0");
             ipv4proto->AddAddress(ifIndex, ipv4Addr);
 
