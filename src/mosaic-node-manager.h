@@ -64,6 +64,8 @@ namespace ns3 {
 
         void Configure(MosaicNs3Server* serverPtr);
 
+        void OnShutdown(void);
+
         /**
          * @brief create a new node
          *

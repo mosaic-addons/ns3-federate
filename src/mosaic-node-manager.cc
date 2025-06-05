@@ -281,6 +281,33 @@ namespace ns3 {
         m_lteHelper->HandoverRequest (Seconds (3.000), lteDevices.Get (1), m_enbDevices.Get (0), m_enbDevices.Get (1));
     }
 
+    void MosaicNodeManager::OnShutdown() {
+        NS_LOG_FUNCTION (this);
+
+        NS_LOG_DEBUG("Print IP assignment for all used mobileNodes");
+        for (uint32_t u = 0; u < m_mosaic2nsdrei.size(); ++u)
+        {
+            Ptr<Node> node = m_mobileNodes.Get(u);
+            NS_LOG_DEBUG("[node=" << node->GetId () << "]");
+            for (uint32_t i = 0; i < node->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
+            {
+                if (i==0) {
+                    // 0: Loopback
+                    continue;
+                }
+                std::stringstream ss;
+                for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (i); j++ ) {
+                    Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (i, j);
+                    ss << "|" << iaddr.GetLocal ();
+                }
+                NS_LOG_DEBUG("  if_" << i << " dev=" << node->GetDevice(i) << " addr=" << ss.str());
+            }
+        }
+        std::stringstream ss;
+        m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
+        NS_LOG_LOGIC(ss.str());
+    }
+
     uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
         if (m_mosaic2nsdrei.find(mosaicNodeId) == m_mosaic2nsdrei.end()){
             NS_LOG_ERROR("Node ID " << mosaicNodeId << " not found in m_mosaic2nsdrei");
