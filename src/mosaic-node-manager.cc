@@ -181,7 +181,6 @@ namespace ns3 {
         NS_LOG_INFO("Setup mobileNode's...");
         m_mobileNodes.Create (5);
         internet.Install(m_mobileNodes);
-        NS_ASSERT_MSG (m_mobileNodes.GetN () < 255, "Currently only support addressing for up to 254 nodes.");
 
         NS_LOG_INFO("Install ConstantVelocityMobilityModel");
         mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
@@ -197,12 +196,6 @@ namespace ns3 {
             Ptr<NetDevice> device = wifiDevices.Get(u);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
-
-            // Additionally assign an extra IPv4 Address (without ipv4 helper)
-            std::stringstream ssip;
-            ssip << "7.0.0." << (u+1);
-            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(Ipv4Address(ssip.str().c_str()), "255.255.0.0");
-            ipv4proto->AddAddress(ifIndex, ipv4Addr);
 
             // logging
             std::stringstream ss;
@@ -420,12 +413,12 @@ namespace ns3 {
         m_isDeactivated[nodeId] = true;
     }
 
-    void MosaicNodeManager::ConfigureWifiRadio(uint32_t mosaicNodeId, bool radioTurnedOn, double transmitPower) {
+    void MosaicNodeManager::ConfigureWifiRadio(uint32_t mosaicNodeId, bool radioTurnedOn, double transmitPower, Ipv4Address ip) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] radioTurnedOn="<< radioTurnedOn << " txPow=" << transmitPower);
+        NS_LOG_INFO("[node=" << nodeId << "] radioTurnedOn="<< radioTurnedOn << " txPow=" << transmitPower << " ip=" << ip);
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
 
@@ -451,6 +444,29 @@ namespace ns3 {
                     wavePhy->SetTxPowerEnd(txDBm);
                 }
             }
+
+            // FIXME: Somehow do the following logic only exactly once, with first config message.
+
+            // Devices are 0:Loopback 1:Wifi 2:LTE
+            Ptr<NetDevice> device =node->GetDevice(1);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
+
+            // Additionally assign an extra IPv4 Address (without ipv4 helper)
+            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
+            ipv4proto->AddAddress(ifIndex, ipv4Addr);
+
+            // logging
+            std::stringstream ss;
+            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+                ss << "|" << iaddr.GetLocal ();
+            }
+            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
+                << " dev=" << node->GetDevice(ifIndex) 
+                << " wifiAddr=" << ss.str()
+            );
+
         } else {
             ssa->Disable();
         }

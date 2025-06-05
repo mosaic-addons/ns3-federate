@@ -85,7 +85,7 @@ namespace ns3 {
         /**
          * @brief Evaluates configuration message and applies it to the node
          */
-        void ConfigureWifiRadio(uint32_t mosaicNodeId, bool radioTurnedOn, double transmitPower);
+        void ConfigureWifiRadio(uint32_t mosaicNodeId, bool radioTurnedOn, double transmitPower, Ipv4Address ip);
 
         /**
          * @brief Sets the provided configuration, and attaches the UE to an eNB
