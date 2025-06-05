@@ -188,7 +188,7 @@ namespace ns3 {
 
         NS_LOG_INFO("Install WAVE devices");
         NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
-        m_ipAddressHelper.SetBase ("10.1.0.0", "255.255.0.0");
+        m_ipAddressHelper.SetBase ("6.0.0.0", "255.0.0.0");
         Ipv4InterfaceContainer wifiIpIfaces = m_ipAddressHelper.Assign(wifiDevices);
         for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
