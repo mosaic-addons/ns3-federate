@@ -110,14 +110,14 @@ namespace ns3 {
         Ipv4InterfaceContainer coreIpIfaces = m_ipAddressHelper.Assign (coreDevices);
         Ipv4Address remoteHostAddr = coreIpIfaces.GetAddress (0);
 
-        // add routing
+        // add routing for remoteHost
         Ptr<Ipv4StaticRouting> remoteHostStaticRouting = ipv4RoutingHelper.GetStaticRouting (remoteHost->GetObject<Ipv4> ());
         remoteHostStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), coreDevices.Get(0)->GetIfIndex());
 
         // logging for remoteHost
         NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] SERVER");
         NS_LOG_DEBUG("Server interfaces:");
-        for (uint32_t i = 0; i < remoteHost->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
+        for (uint32_t i = 0; i < remoteHost->GetObject<Ipv4> ()->GetNInterfaces (); i++)
         {
             Ipv4InterfaceAddress iaddr = remoteHost->GetObject<Ipv4> ()->GetAddress (i, 0);
             NS_LOG_DEBUG("  if_" << i << " dev=" << remoteHost->GetDevice(i) << " iaddr=" << iaddr);
@@ -126,6 +126,11 @@ namespace ns3 {
         remoteHostRouting << "Server routing:" << std::endl;
         remoteHost->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&remoteHostRouting));
         NS_LOG_LOGIC(remoteHostRouting.str());
+
+        // add routing for PGW
+        Ptr<Ipv4StaticRouting> pgwStaticRouting = ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
+        // Devices are 0:Loopback  1:TunDevice 2:SGW 3:server
+        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.1.0.0"), "255.255.0.0", 1); 
 
         // logging for PGW
         NS_LOG_DEBUG("[node=" << pgw->GetId() << "] PGW");
@@ -164,6 +169,7 @@ namespace ns3 {
         m_lteHelper->SetHandoverAlgorithmType ("ns3::NoOpHandoverAlgorithm"); // before InstallEnbDevice
         m_enbDevices = m_lteHelper->InstallEnbDevice (m_enbNodes);
         NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevices.Get(0));
+        NS_LOG_DEBUG("[node=" << m_enbNodes.Get(1)->GetId() << "] dev=" << m_enbDevices.Get(1));
         m_lteHelper->AddX2Interface (m_enbNodes); // for handover
 
         // Set position of eNB nr.2
@@ -187,12 +193,12 @@ namespace ns3 {
         Ipv4InterfaceContainer wifiIpIfaces = m_ipAddressHelper.Assign(wifiDevices);
         for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
-            // Additionally assign an extra IPv4 Address (without ipv4 helper)
             Ptr<Node> node = m_mobileNodes.Get(u);
             Ptr<NetDevice> device = wifiDevices.Get(u);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
 
+            // Additionally assign an extra IPv4 Address (without ipv4 helper)
             std::stringstream ssip;
             ssip << "7.0.0." << (u+1);
             Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(Ipv4Address(ssip.str().c_str()), "255.255.0.0");
@@ -200,8 +206,8 @@ namespace ns3 {
 
             // logging
             std::stringstream ss;
-            for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (ifIndex, j);
+            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
                 ss << "|" << iaddr.GetLocal ();
             }
             NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
@@ -212,6 +218,7 @@ namespace ns3 {
 
         NS_LOG_INFO("Install LTE devices");
         NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_mobileNodes);
+        Ipv4InterfaceContainer lteIpIfaces = epcHelper->AssignUeIpv4Address (lteDevices);
 
         // assign IP address to UEs
         NS_LOG_DEBUG("[LTE GW] addr=" << epcHelper->GetUeDefaultGatewayAddress ());
@@ -219,12 +226,19 @@ namespace ns3 {
         {
             Ptr<Node> node = m_mobileNodes.Get (u);
             Ptr<NetDevice> device = lteDevices.Get (u);
-            Ipv4InterfaceContainer lteIpIface = epcHelper->AssignUeIpv4Address (NetDeviceContainer (device));
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             uint32_t ifIndex = device->GetIfIndex ();
 
+            // Additionally assign an extra IPv4 Address (without ipv4 helper)
+            std::stringstream ssip;
+            ssip << "10.1.0." << (u+2);
+            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(Ipv4Address(ssip.str().c_str()), "255.0.0.0");
+            ipv4proto->AddAddress(ifIndex, ipv4Addr);
+
+            // logging
             std::stringstream ss;
-            for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (ifIndex, j);
+            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
                 ss << "|" << iaddr.GetLocal ();
             }
             NS_LOG_DEBUG("[node=" << node->GetId() << "]"
