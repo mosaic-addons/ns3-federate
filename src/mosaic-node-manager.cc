@@ -179,6 +179,10 @@ namespace ns3 {
 
 
         NS_LOG_INFO("Setup mobileNode's...");
+        /* 
+         * We create all mobileNodes now, because ns3 does not allow to create them after simulation start.
+         * see "Cannot create UE devices after simulation started" at https://gitlab.com/nsnam/ns-3-dev/-/blob/master/src/lte/model/lte-ue-phy.cc#L144
+         */ 
         m_mobileNodes.Create (5);
         internet.Install(m_mobileNodes);
 
