@@ -135,8 +135,10 @@ namespace ns3 {
         YansWifiPhyHelper m_wifiPhyHelper;
         NqosWaveMacHelper m_waveMacHelper = NqosWaveMacHelper::Default();
         Wifi80211pHelper m_wifi80211pHelper = Wifi80211pHelper::Default();
-        Ipv4AddressHelper m_ipAddressHelper;
         Ptr<LteHelper> m_lteHelper;
+
+        Ipv4AddressHelper m_backboneAddressHelper;
+        Ipv4AddressHelper m_wifiAddressHelper;
 
         // LTE 
         NodeContainer m_enbNodes;

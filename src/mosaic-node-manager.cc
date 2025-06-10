@@ -58,7 +58,9 @@ namespace ns3 {
         return tid;
     }
 
-    MosaicNodeManager::MosaicNodeManager() : m_ipAddressHelper("10.1.0.0", "255.255.0.0") {
+    MosaicNodeManager::MosaicNodeManager() 
+      : m_backboneAddressHelper("5.0.0.0", "255.0.0.0"),
+        m_wifiAddressHelper("6.0.0.0", "255.0.0.0", "0.0.0.2") {
     }
 
     void MosaicNodeManager::Configure(MosaicNs3Server* serverPtr) {
@@ -106,8 +108,7 @@ namespace ns3 {
         NetDeviceContainer coreDevices = p2ph.Install (remoteHost, pgw);
 
         NS_LOG_INFO("Assign IPs (for both server and core) and add routing...");
-        m_ipAddressHelper.SetBase ("10.5.0.0", "255.255.0.0");
-        Ipv4InterfaceContainer coreIpIfaces = m_ipAddressHelper.Assign (coreDevices);
+        Ipv4InterfaceContainer coreIpIfaces = m_backboneAddressHelper.Assign (coreDevices);
         Ipv4Address remoteHostAddr = coreIpIfaces.GetAddress (0);
 
         // add routing for remoteHost
@@ -192,8 +193,7 @@ namespace ns3 {
 
         NS_LOG_INFO("Install WAVE devices");
         NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
-        m_ipAddressHelper.SetBase ("6.0.0.0", "255.0.0.0");
-        Ipv4InterfaceContainer wifiIpIfaces = m_ipAddressHelper.Assign(wifiDevices);
+        Ipv4InterfaceContainer wifiIpIfaces = m_wifiAddressHelper.Assign(wifiDevices);
         for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
             Ptr<Node> node = m_mobileNodes.Get(u);
