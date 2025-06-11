@@ -181,7 +181,6 @@ namespace ns3 {
         m_enbNodes.Create (2);
         m_mobilityHelper.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
         m_mobilityHelper.Install (m_enbNodes);
-        m_lteHelper->SetHandoverAlgorithmType ("ns3::NoOpHandoverAlgorithm"); // before InstallEnbDevice
         m_enbDevices = m_lteHelper->InstallEnbDevice (m_enbNodes);
         NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevices.Get(0));
         NS_LOG_DEBUG("[node=" << m_enbNodes.Get(1)->GetId() << "] dev=" << m_enbDevices.Get(1));
