@@ -97,11 +97,17 @@ namespace ns3 {
         Ptr<Node> pgw = m_epcHelper->GetPgwNode ();
         Ptr<Node> sgw = m_epcHelper->GetSgwNode ();
 
-        NS_LOG_INFO("Setup backbone...");
+        NS_LOG_INFO("Setup backbone connection...");
         m_backboneNodes.Add (pgw);
         m_backboneNodes.Add (m_serverNodes);
         m_backboneDevices = m_csmaHelper.Install(m_backboneNodes);
         Ipv4InterfaceContainer coreIpIfaces = m_backboneAddressHelper.Assign (m_backboneDevices);
+
+        NS_LOG_INFO("Configure routing...");
+        // add routing for PGW
+        Ptr<Ipv4StaticRouting> pgwStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
+        // Devices are 0:Loopback 1:TunDevice 2:SGW 3:backbone
+        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1); 
 
         // routing and logging for servers
         for (uint32_t u = 1; u < m_backboneNodes.GetN (); ++u)
@@ -114,27 +120,9 @@ namespace ns3 {
             // add routing for servers
             Ptr<Ipv4StaticRouting> serverStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
             serverStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
-
-            // logging
-            std::stringstream ss;
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
-                << " dev=" << node->GetDevice(ifIndex) 
-                << " csmaAddr=" << ss.str()
-            );
         }
-        std::stringstream serverRouting;
-        serverRouting << "Server routing:" << std::endl;
-        m_serverNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
-        NS_LOG_LOGIC(serverRouting.str());
 
-        // add routing for PGW
-        Ptr<Ipv4StaticRouting> pgwStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
-        // Devices are 0:Loopback 1:TunDevice 2:SGW 3:backbone
-        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1); 
+        NS_LOG_INFO("Do logging...");
 
         // logging for PGW
         NS_LOG_DEBUG("[node=" << pgw->GetId() << "] PGW");
@@ -163,6 +151,30 @@ namespace ns3 {
         NS_LOG_LOGIC(sgwRouting.str());
 
         // [node=3] see no-backhaul-epc-helper:m_mme ... MME network element
+        
+        // logging for servers
+        for (uint32_t u = 1; u < m_backboneNodes.GetN (); ++u)
+        {
+            Ptr<Node> node = m_backboneNodes.Get(u);
+            Ptr<NetDevice> device = m_backboneDevices.Get(u);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
+
+            // logging
+            std::stringstream ss;
+            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+                ss << "|" << iaddr.GetLocal ();
+            }
+            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
+                << " dev=" << node->GetDevice(ifIndex) 
+                << " csmaAddr=" << ss.str()
+            );
+        }
+        std::stringstream serverRouting;
+        serverRouting << "Server routing:" << std::endl;
+        m_serverNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
+        NS_LOG_LOGIC(serverRouting.str());
         
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
