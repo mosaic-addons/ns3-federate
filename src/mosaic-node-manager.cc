@@ -45,6 +45,10 @@ namespace ns3 {
                 UintegerValue(10),
                 MakeUintegerAccessor(&MosaicNodeManager::m_numRadioNodes),
                 MakeUintegerChecker<uint16_t> ())
+                .AddAttribute("numServerNodes", "Number of server nodes in the backbone",
+                UintegerValue(1),
+                MakeUintegerAccessor(&MosaicNodeManager::m_numServerNodes),
+                MakeUintegerChecker<uint16_t> ())
                 ;
         return tid;
     }
@@ -66,21 +70,22 @@ namespace ns3 {
         // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
         m_epcHelper = CreateObject<PointToPointEpcHelper> (); 
         m_lteHelper->SetEpcHelper (m_epcHelper);
+        // Cabled
+        m_csmaHelper.SetChannelAttribute("DataRate", StringValue("100Gb/s"));
+        m_csmaHelper.SetChannelAttribute("Delay", TimeValue(NanoSeconds(6560)));
     }
 
     void MosaicNodeManager::Configure(MosaicNs3Server* serverPtr) {
         NS_LOG_INFO("Initialize Node Infrastructure...");
         m_serverPtr = serverPtr;
 
-        NS_LOG_INFO("Setup server...");
-        NodeContainer remoteHostContainer;
-        remoteHostContainer.Create (1);
-        m_internetHelper.Install (remoteHostContainer);
-
+        NS_LOG_INFO("Setup server's...");
+        m_serverNodes.Create(m_numServerNodes);
+        m_internetHelper.Install (m_serverNodes);
         NS_LOG_INFO("Install MosaicProxyApp application");
-        for (uint32_t i = 0; i < remoteHostContainer.GetN(); ++i)
+        for (uint32_t i = 0; i < m_serverNodes.GetN(); ++i)
         {
-            Ptr<Node> node = remoteHostContainer.Get(i);
+            Ptr<Node> node = m_serverNodes.Get(i);
             Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
             // app->SetNodeManager(this);
             node->AddApplication(app);
@@ -89,37 +94,46 @@ namespace ns3 {
         }
 
         NS_LOG_INFO("Setup core...");
-        m_point2pointHelper.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
-        m_point2pointHelper.SetDeviceAttribute ("Mtu", UintegerValue (1500));
-        m_point2pointHelper.SetChannelAttribute ("Delay", TimeValue (Seconds (0.010)));
-        Ptr<Node> remoteHost = remoteHostContainer.Get (0);
         Ptr<Node> pgw = m_epcHelper->GetPgwNode ();
-        NetDeviceContainer coreDevices = m_point2pointHelper.Install (remoteHost, pgw);
+        Ptr<Node> sgw = m_epcHelper->GetSgwNode ();
 
-        NS_LOG_INFO("Assign IPs (for both server and core) and add routing...");
-        Ipv4InterfaceContainer coreIpIfaces = m_backboneAddressHelper.Assign (coreDevices);
-        Ipv4Address remoteHostAddr = coreIpIfaces.GetAddress (0);
+        NS_LOG_INFO("Setup backbone...");
+        m_backboneNodes.Add (pgw);
+        m_backboneNodes.Add (m_serverNodes);
+        m_backboneDevices = m_csmaHelper.Install(m_backboneNodes);
+        Ipv4InterfaceContainer coreIpIfaces = m_backboneAddressHelper.Assign (m_backboneDevices);
 
-        // add routing for remoteHost
-        Ptr<Ipv4StaticRouting> remoteHostStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (remoteHost->GetObject<Ipv4> ());
-        remoteHostStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), coreDevices.Get(0)->GetIfIndex());
-
-        // logging for remoteHost
-        NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] SERVER");
-        NS_LOG_DEBUG("Server interfaces:");
-        for (uint32_t i = 0; i < remoteHost->GetObject<Ipv4> ()->GetNInterfaces (); i++)
+        // routing and logging for servers
+        for (uint32_t u = 1; u < m_backboneNodes.GetN (); ++u)
         {
-            Ipv4InterfaceAddress iaddr = remoteHost->GetObject<Ipv4> ()->GetAddress (i, 0);
-            NS_LOG_DEBUG("  if_" << i << " dev=" << remoteHost->GetDevice(i) << " iaddr=" << iaddr);
+            Ptr<Node> node = m_backboneNodes.Get(u);
+            Ptr<NetDevice> device = m_backboneDevices.Get(u);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
+
+            // add routing for servers
+            Ptr<Ipv4StaticRouting> serverStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
+            serverStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
+
+            // logging
+            std::stringstream ss;
+            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+                ss << "|" << iaddr.GetLocal ();
+            }
+            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
+                << " dev=" << node->GetDevice(ifIndex) 
+                << " csmaAddr=" << ss.str()
+            );
         }
-        std::stringstream remoteHostRouting;
-        remoteHostRouting << "Server routing:" << std::endl;
-        remoteHost->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&remoteHostRouting));
-        NS_LOG_LOGIC(remoteHostRouting.str());
+        std::stringstream serverRouting;
+        serverRouting << "Server routing:" << std::endl;
+        m_serverNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
+        NS_LOG_LOGIC(serverRouting.str());
 
         // add routing for PGW
         Ptr<Ipv4StaticRouting> pgwStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
-        // Devices are 0:Loopback  1:TunDevice 2:SGW 3:server
+        // Devices are 0:Loopback 1:TunDevice 2:SGW 3:backbone
         pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1); 
 
         // logging for PGW
@@ -136,7 +150,6 @@ namespace ns3 {
         NS_LOG_LOGIC(pgwRouting.str());
 
         // logging for SGW
-        Ptr<Node> sgw = m_epcHelper->GetSgwNode ();
         NS_LOG_DEBUG("[node=" << sgw->GetId() << "] SGW");
         NS_LOG_DEBUG("SGW interfaces:");
         for (uint32_t i = 0; i < sgw->GetObject<Ipv4> ()->GetNInterfaces (); i++ )

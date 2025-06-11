@@ -37,12 +37,12 @@
 #include "ns3/lte-helper.h"
 #include "ns3/point-to-point-epc-helper.h"
 
+#include "ns3/csma-helper.h"
+
 #include "ns3/internet-stack-helper.h"
 #include "ns3/ipv4-static-routing-helper.h"
 #include "ns3/ipv4-address-helper.h"
 #include "ns3/mobility-helper.h"
-
-#include "ns3/point-to-point-helper.h"
 
 #include "ClientServerChannel.h"
 
@@ -113,6 +113,7 @@ namespace ns3 {
 
         // Must be public to be accessible by ns-3 object creation routine
         uint16_t m_numRadioNodes;
+        uint16_t m_numServerNodes;
 
     private:
 
@@ -141,7 +142,7 @@ namespace ns3 {
         Ptr<LteHelper> m_lteHelper; // problematic if not stored as pointer
         Ptr<PointToPointEpcHelper> m_epcHelper;
         // Cabled
-        PointToPointHelper m_point2pointHelper;
+        CsmaHelper m_csmaHelper;
         // Internet
         InternetStackHelper m_internetHelper;   
         Ipv4StaticRoutingHelper m_ipv4RoutingHelper;
@@ -152,6 +153,9 @@ namespace ns3 {
         MobilityHelper m_mobilityHelper;
 
         /** Nodes and Devices **/
+        NodeContainer m_serverNodes;
+        NodeContainer m_backboneNodes;
+        NetDeviceContainer m_backboneDevices;
         NodeContainer m_enbNodes;
         NetDeviceContainer m_enbDevices;
         NodeContainer m_radioNodes;
