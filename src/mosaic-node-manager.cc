@@ -438,7 +438,6 @@ namespace ns3 {
         NS_LOG_INFO("[node=" << nodeId << "] radioTurnedOn="<< radioTurnedOn << " txPow=" << transmitPower << " ip=" << ip);
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
-
         Ptr<Application> app = node->GetApplication(0);
         Ptr<MosaicProxyApp> ssa = app->GetObject<MosaicProxyApp>();
         if (!ssa) {
@@ -465,7 +464,7 @@ namespace ns3 {
             // FIXME: Somehow do the following logic only exactly once, with first config message.
 
             // Devices are 0:Loopback 1:Wifi 2:LTE
-            Ptr<NetDevice> device =node->GetDevice(1);
+            Ptr<NetDevice> device = node->GetDevice(1);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
 
@@ -495,9 +494,16 @@ namespace ns3 {
             return;
         }
         NS_LOG_INFO("[node=" << nodeId << "] radioTurnedOn="<< radioTurnedOn << " ip=" << ip);
-        
-        Ptr<Node> node = NodeList::GetNode(nodeId);
 
+        /* check for valid IP, required to match routing configuration */
+        bool partOf10 = ip.CombineMask("255.0.0.0").Get() == Ipv4Address("10.0.0.0").Get();
+        NS_ASSERT_MSG(partOf10, "The ip for radio nodes must be part of 10.0.0.0/8 network.");
+        bool partOf105 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.5.0.0").Get();
+        NS_ASSERT_MSG(!partOf105, "The ip for radio nodes must not be part of 10.5.0.0/16 network.");
+        bool partOf106 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.6.0.0").Get();
+        NS_ASSERT_MSG(!partOf106, "The ip for radio nodes must not be part of 10.6.0.0/16 network.");
+
+        Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<Application> app = node->GetApplication(0);
         Ptr<MosaicProxyApp> ssa = app->GetObject<MosaicProxyApp>();
         if (!ssa) {
@@ -511,7 +517,7 @@ namespace ns3 {
             // When applying this multiple times (with different IPs) then routing might break or require fixes...
 
             // Devices are 0:Loopback 1:Wifi 2:LTE
-            Ptr<NetDevice> device =node->GetDevice(2);
+            Ptr<NetDevice> device = node->GetDevice(2);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             uint32_t ifIndex = device->GetIfIndex ();
 
