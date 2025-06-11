@@ -39,8 +39,13 @@ namespace ns3 {
     TypeId MosaicNodeManager::GetTypeId(void) {
         static TypeId tid = TypeId("ns3::MosaicNodeManager")
                 .SetParent<Object>()
-                .AddConstructor<MosaicNodeManager>();
+                .AddConstructor<MosaicNodeManager>()
                 // Attributes are only set _after_ constructor ran
+                .AddAttribute("numRadioNodes", "Number of mobile and stationary radio nodes",
+                UintegerValue(10),
+                MakeUintegerAccessor(&MosaicNodeManager::m_numRadioNodes),
+                MakeUintegerChecker<uint16_t> ())
+                ;
         return tid;
     }
 
@@ -168,7 +173,7 @@ namespace ns3 {
          * We create all mobileNodes now, because ns3 does not allow to create them after simulation start.
          * see "Cannot create UE devices after simulation started" at https://gitlab.com/nsnam/ns-3-dev/-/blob/master/src/lte/model/lte-ue-phy.cc#L144
          */ 
-        m_mobileNodes.Create (5);
+        m_mobileNodes.Create (m_numRadioNodes);
         m_internetHelper.Install(m_mobileNodes);
 
         NS_LOG_INFO("Install ConstantVelocityMobilityModel");

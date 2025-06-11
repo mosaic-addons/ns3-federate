@@ -111,6 +111,9 @@ namespace ns3 {
 
         void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID);
 
+        // Must be public to be accessible by ns-3 object creation routine
+        uint16_t m_numRadioNodes;
+
     private:
 
         /**
