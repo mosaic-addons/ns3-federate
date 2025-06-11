@@ -27,20 +27,22 @@
 
 #include "ns3/node-container.h"
 #include "ns3/vector.h"
+
 #include "ns3/yans-wifi-phy.h"
 #include "ns3/yans-wifi-channel.h"
-
-#include "ns3/ipv4-address-helper.h"
-#include "ns3/ipv4-static-routing-helper.h"
-#include "ns3/wifi-80211p-helper.h"
-#include "ns3/wave-mac-helper.h"
 #include "ns3/yans-wifi-helper.h"
+#include "ns3/wave-mac-helper.h"
+#include "ns3/wifi-80211p-helper.h"
 
-// TODO: use more specific classes and not the whole core?
-#include "ns3/core-module.h"
-#include "ns3/network-module.h"
-#include "ns3/mobility-module.h"
-#include "ns3/lte-module.h"
+#include "ns3/lte-helper.h"
+#include "ns3/point-to-point-epc-helper.h"
+
+#include "ns3/internet-stack-helper.h"
+#include "ns3/ipv4-static-routing-helper.h"
+#include "ns3/ipv4-address-helper.h"
+#include "ns3/mobility-helper.h"
+
+#include "ns3/point-to-point-helper.h"
 
 #include "ClientServerChannel.h"
 
@@ -109,10 +111,6 @@ namespace ns3 {
 
         void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID);
 
-        //Must be public to be accessible by ns-3 object creation routine
-        std::string m_lossModel;
-        std::string m_delayModel;
-
     private:
 
         /**
@@ -130,20 +128,29 @@ namespace ns3 {
         std::map<uint32_t, uint32_t> m_nsdrei2mosaic;
         std::unordered_map<uint32_t, bool> m_isDeactivated;
 
-        // Helpers
+        /** Helpers **/
+        // Wifi
         YansWifiChannelHelper m_wifiChannelHelper;
         YansWifiPhyHelper m_wifiPhyHelper;
-        NqosWaveMacHelper m_waveMacHelper = NqosWaveMacHelper::Default();
-        Wifi80211pHelper m_wifi80211pHelper = Wifi80211pHelper::Default();
-        Ptr<LteHelper> m_lteHelper;
-
+        NqosWaveMacHelper m_waveMacHelper;
+        Wifi80211pHelper m_wifi80211pHelper;
+        // LTE
+        Ptr<LteHelper> m_lteHelper; // problematic if not stored as pointer
+        Ptr<PointToPointEpcHelper> m_epcHelper;
+        // Cabled
+        PointToPointHelper m_point2pointHelper;
+        // Internet
+        InternetStackHelper m_internetHelper;   
+        Ipv4StaticRoutingHelper m_ipv4RoutingHelper;
+        // IP
         Ipv4AddressHelper m_backboneAddressHelper;
         Ipv4AddressHelper m_wifiAddressHelper;
+        // Mobility
+        MobilityHelper m_mobilityHelper;
 
-        // LTE 
+        /** Nodes and Devices **/
         NodeContainer m_enbNodes;
         NetDeviceContainer m_enbDevices;
-
         NodeContainer m_mobileNodes;
     };
 }

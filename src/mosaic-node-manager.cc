@@ -22,17 +22,10 @@
 
 #include "mosaic-node-manager.h"
 
-#include "ClientServerChannel.h" // early import required for wave-net-device.h
-
-#include "ns3/wave-net-device.h"
-#include "ns3/string.h"
-#include "ns3/log.h"
-#include "ns3/constant-velocity-mobility-model.h"
-#include "ns3/wifi-net-device.h"
 #include "ns3/node-list.h"
-
-#include "ns3/internet-stack-helper.h"
-#include "ns3/point-to-point-helper.h"
+#include "ns3/wifi-net-device.h"
+#include "ns3/lte-ue-net-device.h"
+#include "ns3/lte-ue-rrc.h"
 
 #include "mosaic-ns3-server.h" 
 #include "mosaic-proxy-app.h"
@@ -46,42 +39,38 @@ namespace ns3 {
     TypeId MosaicNodeManager::GetTypeId(void) {
         static TypeId tid = TypeId("ns3::MosaicNodeManager")
                 .SetParent<Object>()
-                .AddConstructor<MosaicNodeManager>()
-                .AddAttribute("LossModel", "The used loss model",
-                StringValue("ns3::FriisPropagationLossModel"),
-                MakeStringAccessor(&MosaicNodeManager::m_lossModel),
-                MakeStringChecker())
-                .AddAttribute("DelayModel", "The used delay model",
-                StringValue("ns3::ConstantSpeedPropagationDelayModel"),
-                MakeStringAccessor(&MosaicNodeManager::m_delayModel),
-                MakeStringChecker());
+                .AddConstructor<MosaicNodeManager>();
+                // Attributes are only set _after_ constructor ran
         return tid;
     }
 
     MosaicNodeManager::MosaicNodeManager() 
       : m_backboneAddressHelper("5.0.0.0", "255.0.0.0"),
         m_wifiAddressHelper("6.0.0.0", "255.0.0.0", "0.0.0.2") {
+
+        /** Helpers **/
+        // Wifi
+        m_wifiChannelHelper.AddPropagationLoss("ns3::FriisPropagationLossModel");
+        m_wifiChannelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
+        Ptr<YansWifiChannel> channel = m_wifiChannelHelper.Create();
+        m_wifiPhyHelper.SetChannel(channel);
+        m_waveMacHelper = NqosWaveMacHelper::Default();
+        m_wifi80211pHelper = Wifi80211pHelper::Default();
+        // LTE
+        m_lteHelper = CreateObject<LteHelper> ();
+        // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
+        m_epcHelper = CreateObject<PointToPointEpcHelper> (); 
+        m_lteHelper->SetEpcHelper (m_epcHelper);
     }
 
     void MosaicNodeManager::Configure(MosaicNs3Server* serverPtr) {
         NS_LOG_INFO("Initialize Node Infrastructure...");
         m_serverPtr = serverPtr;
 
-        // init m_helpers
-        m_wifiChannelHelper.AddPropagationLoss(m_lossModel);
-        m_wifiChannelHelper.SetPropagationDelay(m_delayModel);
-        Ptr<YansWifiChannel> channel = m_wifiChannelHelper.Create();
-        m_wifiPhyHelper.SetChannel(channel);
-        m_lteHelper = CreateObject<LteHelper> ();
-        // init helpers
-        InternetStackHelper internet;   
-        Ipv4StaticRoutingHelper ipv4RoutingHelper;
-        MobilityHelper mobility;
-
         NS_LOG_INFO("Setup server...");
         NodeContainer remoteHostContainer;
         remoteHostContainer.Create (1);
-        internet.Install (remoteHostContainer);
+        m_internetHelper.Install (remoteHostContainer);
 
         NS_LOG_INFO("Install MosaicProxyApp application");
         for (uint32_t i = 0; i < remoteHostContainer.GetN(); ++i)
@@ -95,25 +84,20 @@ namespace ns3 {
         }
 
         NS_LOG_INFO("Setup core...");
-        // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
-        Ptr<PointToPointEpcHelper> epcHelper = CreateObject<PointToPointEpcHelper> (); 
-        m_lteHelper->SetEpcHelper (epcHelper);
-
-        PointToPointHelper p2ph;
-        p2ph.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
-        p2ph.SetDeviceAttribute ("Mtu", UintegerValue (1500));
-        p2ph.SetChannelAttribute ("Delay", TimeValue (Seconds (0.010)));
+        m_point2pointHelper.SetDeviceAttribute ("DataRate", DataRateValue (DataRate ("100Gb/s")));
+        m_point2pointHelper.SetDeviceAttribute ("Mtu", UintegerValue (1500));
+        m_point2pointHelper.SetChannelAttribute ("Delay", TimeValue (Seconds (0.010)));
         Ptr<Node> remoteHost = remoteHostContainer.Get (0);
-        Ptr<Node> pgw = epcHelper->GetPgwNode ();
-        NetDeviceContainer coreDevices = p2ph.Install (remoteHost, pgw);
+        Ptr<Node> pgw = m_epcHelper->GetPgwNode ();
+        NetDeviceContainer coreDevices = m_point2pointHelper.Install (remoteHost, pgw);
 
         NS_LOG_INFO("Assign IPs (for both server and core) and add routing...");
         Ipv4InterfaceContainer coreIpIfaces = m_backboneAddressHelper.Assign (coreDevices);
         Ipv4Address remoteHostAddr = coreIpIfaces.GetAddress (0);
 
         // add routing for remoteHost
-        Ptr<Ipv4StaticRouting> remoteHostStaticRouting = ipv4RoutingHelper.GetStaticRouting (remoteHost->GetObject<Ipv4> ());
-        remoteHostStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), coreDevices.Get(0)->GetIfIndex());
+        Ptr<Ipv4StaticRouting> remoteHostStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (remoteHost->GetObject<Ipv4> ());
+        remoteHostStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), coreDevices.Get(0)->GetIfIndex());
 
         // logging for remoteHost
         NS_LOG_DEBUG("[node=" << remoteHost->GetId() << "] SERVER");
@@ -129,7 +113,7 @@ namespace ns3 {
         NS_LOG_LOGIC(remoteHostRouting.str());
 
         // add routing for PGW
-        Ptr<Ipv4StaticRouting> pgwStaticRouting = ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
+        Ptr<Ipv4StaticRouting> pgwStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
         // Devices are 0:Loopback  1:TunDevice 2:SGW 3:server
         pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1); 
 
@@ -147,7 +131,7 @@ namespace ns3 {
         NS_LOG_LOGIC(pgwRouting.str());
 
         // logging for SGW
-        Ptr<Node> sgw = epcHelper->GetSgwNode ();
+        Ptr<Node> sgw = m_epcHelper->GetSgwNode ();
         NS_LOG_DEBUG("[node=" << sgw->GetId() << "] SGW");
         NS_LOG_DEBUG("SGW interfaces:");
         for (uint32_t i = 0; i < sgw->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
@@ -165,8 +149,8 @@ namespace ns3 {
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
         m_enbNodes.Create (2);
-        mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-        mobility.Install (m_enbNodes);
+        m_mobilityHelper.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+        m_mobilityHelper.Install (m_enbNodes);
         m_lteHelper->SetHandoverAlgorithmType ("ns3::NoOpHandoverAlgorithm"); // before InstallEnbDevice
         m_enbDevices = m_lteHelper->InstallEnbDevice (m_enbNodes);
         NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevices.Get(0));
@@ -185,11 +169,11 @@ namespace ns3 {
          * see "Cannot create UE devices after simulation started" at https://gitlab.com/nsnam/ns-3-dev/-/blob/master/src/lte/model/lte-ue-phy.cc#L144
          */ 
         m_mobileNodes.Create (5);
-        internet.Install(m_mobileNodes);
+        m_internetHelper.Install(m_mobileNodes);
 
         NS_LOG_INFO("Install ConstantVelocityMobilityModel");
-        mobility.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
-        mobility.Install (m_mobileNodes);
+        m_mobilityHelper.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
+        m_mobilityHelper.Install (m_mobileNodes);
 
         NS_LOG_INFO("Install WAVE devices");
         NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
@@ -215,10 +199,10 @@ namespace ns3 {
 
         NS_LOG_INFO("Install LTE devices");
         NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_mobileNodes);
-        Ipv4InterfaceContainer lteIpIfaces = epcHelper->AssignUeIpv4Address (lteDevices);
+        Ipv4InterfaceContainer lteIpIfaces = m_epcHelper->AssignUeIpv4Address (lteDevices);
 
         // assign IP address to UEs
-        NS_LOG_DEBUG("[LTE GW] addr=" << epcHelper->GetUeDefaultGatewayAddress ());
+        NS_LOG_DEBUG("[LTE GW] addr=" << m_epcHelper->GetUeDefaultGatewayAddress ());
         for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
         {
             Ptr<Node> node = m_mobileNodes.Get (u);
@@ -241,8 +225,8 @@ namespace ns3 {
 
             // set the default gateway for the UE
             Ptr<Ipv4StaticRouting> ueStaticRouting;
-            ueStaticRouting = ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
-            ueStaticRouting->SetDefaultRoute (epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
+            ueStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
+            ueStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
         }
 
         // logging for mobile nodes

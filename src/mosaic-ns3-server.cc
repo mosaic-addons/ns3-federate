@@ -22,9 +22,6 @@
 
 #include "mosaic-ns3-server.h"
 
-#include "ns3/node-list.h"
-#include "ns3/log.h"
-
 #include "mosaic-simulator-impl.h"
 
 NS_LOG_COMPONENT_DEFINE("MosaicNs3Server");
