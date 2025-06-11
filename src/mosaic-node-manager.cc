@@ -168,24 +168,24 @@ namespace ns3 {
         mobModel->SetPosition(Vector(1000, 1000, 0.0));
 
 
-        NS_LOG_INFO("Setup mobileNode's...");
+        NS_LOG_INFO("Setup radioNode's...");
         /* 
          * We create all mobileNodes now, because ns3 does not allow to create them after simulation start.
          * see "Cannot create UE devices after simulation started" at https://gitlab.com/nsnam/ns-3-dev/-/blob/master/src/lte/model/lte-ue-phy.cc#L144
          */ 
-        m_mobileNodes.Create (m_numRadioNodes);
-        m_internetHelper.Install(m_mobileNodes);
+        m_radioNodes.Create (m_numRadioNodes);
+        m_internetHelper.Install(m_radioNodes);
 
         NS_LOG_INFO("Install ConstantVelocityMobilityModel");
         m_mobilityHelper.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
-        m_mobilityHelper.Install (m_mobileNodes);
+        m_mobilityHelper.Install (m_radioNodes);
 
         NS_LOG_INFO("Install WAVE devices");
-        NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_mobileNodes);
+        NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_radioNodes);
         Ipv4InterfaceContainer wifiIpIfaces = m_wifiAddressHelper.Assign(wifiDevices);
-        for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
+        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
         {
-            Ptr<Node> node = m_mobileNodes.Get(u);
+            Ptr<Node> node = m_radioNodes.Get(u);
             Ptr<NetDevice> device = wifiDevices.Get(u);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
@@ -203,14 +203,14 @@ namespace ns3 {
         }
 
         NS_LOG_INFO("Install LTE devices");
-        NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_mobileNodes);
+        NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_radioNodes);
         Ipv4InterfaceContainer lteIpIfaces = m_epcHelper->AssignUeIpv4Address (lteDevices);
 
         // assign IP address to UEs
         NS_LOG_DEBUG("[LTE GW] addr=" << m_epcHelper->GetUeDefaultGatewayAddress ());
-        for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
+        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
         {
-            Ptr<Node> node = m_mobileNodes.Get (u);
+            Ptr<Node> node = m_radioNodes.Get (u);
             Ptr<NetDevice> device = lteDevices.Get (u);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             uint32_t ifIndex = device->GetIfIndex ();
@@ -235,9 +235,9 @@ namespace ns3 {
         }
 
         // logging for mobile nodes
-        for (uint32_t u = 0; u < m_mobileNodes.GetN (); ++u)
+        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
         {
-            Ptr<Node> node = m_mobileNodes.Get(u);
+            Ptr<Node> node = m_radioNodes.Get(u);
             NS_LOG_LOGIC("[node=" << node->GetId () << "]");
             for (uint32_t i = 0; i < node->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
             {
@@ -250,13 +250,13 @@ namespace ns3 {
             }
         }
         std::stringstream ss;
-        m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
+        m_radioNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
         NS_LOG_LOGIC(ss.str());
 
         NS_LOG_INFO("Install MosaicProxyApp application");
-        for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)
+        for (uint32_t i = 0; i < m_radioNodes.GetN(); ++i)
         {
-            Ptr<Node> node = m_mobileNodes.Get(i);
+            Ptr<Node> node = m_radioNodes.Get(i);
             Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
             app->SetNodeManager(this);
             node->AddApplication(app);
@@ -273,7 +273,7 @@ namespace ns3 {
         NS_LOG_DEBUG("Print IP assignment for all used mobileNodes");
         for (uint32_t u = 0; u < m_mosaic2nsdrei.size(); ++u)
         {
-            Ptr<Node> node = m_mobileNodes.Get(u);
+            Ptr<Node> node = m_radioNodes.Get(u);
             NS_LOG_DEBUG("[node=" << node->GetId () << "]");
             for (uint32_t i = 0; i < node->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
             {
@@ -290,7 +290,7 @@ namespace ns3 {
             }
         }
         std::stringstream ss;
-        m_mobileNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
+        m_radioNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
         NS_LOG_LOGIC(ss.str());
     }
 
@@ -330,9 +330,9 @@ namespace ns3 {
             exit(1);
         }
 
-        for (uint32_t i = 0; i < m_mobileNodes.GetN(); ++i)
+        for (uint32_t i = 0; i < m_radioNodes.GetN(); ++i)
         {
-            Ptr<Node> node = m_mobileNodes.Get(i);
+            Ptr<Node> node = m_radioNodes.Get(i);
             if (m_nsdrei2mosaic.find(node->GetId()) == m_nsdrei2mosaic.end()){
                 // the node is not used yet, add it to the lookup tables
                 NS_LOG_INFO("Activate node " << mosaicNodeId << "->" << node->GetId());

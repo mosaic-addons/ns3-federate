@@ -154,7 +154,7 @@ namespace ns3 {
         /** Nodes and Devices **/
         NodeContainer m_enbNodes;
         NetDeviceContainer m_enbDevices;
-        NodeContainer m_mobileNodes;
+        NodeContainer m_radioNodes;
     };
 }
 #endif
