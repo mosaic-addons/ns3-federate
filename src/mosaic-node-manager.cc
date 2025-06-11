@@ -45,9 +45,9 @@ namespace ns3 {
                 UintegerValue(10),
                 MakeUintegerAccessor(&MosaicNodeManager::m_numRadioNodes),
                 MakeUintegerChecker<uint16_t> ())
-                .AddAttribute("numServerNodes", "Number of server nodes in the backbone",
+                .AddAttribute("numWiredNodes", "Number of server nodes in the backbone",
                 UintegerValue(1),
-                MakeUintegerAccessor(&MosaicNodeManager::m_numServerNodes),
+                MakeUintegerAccessor(&MosaicNodeManager::m_numWiredNodes),
                 MakeUintegerChecker<uint16_t> ())
                 ;
         return tid;
@@ -70,7 +70,7 @@ namespace ns3 {
         // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
         m_epcHelper = CreateObject<PointToPointEpcHelper> (); 
         m_lteHelper->SetEpcHelper (m_epcHelper);
-        // Cabled
+        // Wired
         m_csmaHelper.SetChannelAttribute("DataRate", StringValue("100Gb/s"));
         m_csmaHelper.SetChannelAttribute("Delay", TimeValue(NanoSeconds(6560)));
     }
@@ -80,12 +80,12 @@ namespace ns3 {
         m_serverPtr = serverPtr;
 
         NS_LOG_INFO("Setup server's...");
-        m_serverNodes.Create(m_numServerNodes);
-        m_internetHelper.Install (m_serverNodes);
+        m_wiredNodes.Create(m_numWiredNodes);
+        m_internetHelper.Install (m_wiredNodes);
         NS_LOG_INFO("Install MosaicProxyApp application");
-        for (uint32_t i = 0; i < m_serverNodes.GetN(); ++i)
+        for (uint32_t i = 0; i < m_wiredNodes.GetN(); ++i)
         {
-            Ptr<Node> node = m_serverNodes.Get(i);
+            Ptr<Node> node = m_wiredNodes.Get(i);
             Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
             // app->SetNodeManager(this);
             node->AddApplication(app);
@@ -99,7 +99,7 @@ namespace ns3 {
 
         NS_LOG_INFO("Setup backbone connection...");
         m_backboneNodes.Add (pgw);
-        m_backboneNodes.Add (m_serverNodes);
+        m_backboneNodes.Add (m_wiredNodes);
         m_backboneDevices = m_csmaHelper.Install(m_backboneNodes);
         Ipv4InterfaceContainer coreIpIfaces = m_backboneAddressHelper.Assign (m_backboneDevices);
 
@@ -173,7 +173,7 @@ namespace ns3 {
         }
         std::stringstream serverRouting;
         serverRouting << "Server routing:" << std::endl;
-        m_serverNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
+        m_wiredNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
         NS_LOG_LOGIC(serverRouting.str());
         
         // TODO: this has to come from RTI interaction or configuration file

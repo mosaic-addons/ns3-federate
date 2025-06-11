@@ -113,7 +113,7 @@ namespace ns3 {
 
         // Must be public to be accessible by ns-3 object creation routine
         uint16_t m_numRadioNodes;
-        uint16_t m_numServerNodes;
+        uint16_t m_numWiredNodes;
 
     private:
 
@@ -141,7 +141,7 @@ namespace ns3 {
         // LTE
         Ptr<LteHelper> m_lteHelper; // problematic if not stored as pointer
         Ptr<PointToPointEpcHelper> m_epcHelper;
-        // Cabled
+        // Wired
         CsmaHelper m_csmaHelper;
         // Internet
         InternetStackHelper m_internetHelper;   
@@ -153,7 +153,7 @@ namespace ns3 {
         MobilityHelper m_mobilityHelper;
 
         /** Nodes and Devices **/
-        NodeContainer m_serverNodes;
+        NodeContainer m_wiredNodes;
         NodeContainer m_backboneNodes;
         NetDeviceContainer m_backboneDevices;
         NodeContainer m_enbNodes;
