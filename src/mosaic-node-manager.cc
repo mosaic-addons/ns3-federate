@@ -119,7 +119,9 @@ namespace ns3 {
 
             // add routing for servers
             Ptr<Ipv4StaticRouting> serverStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
-            serverStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
+            serverStaticRouting->SetDefaultRoute (Ipv4Address("5.0.0.1"), ifIndex); 
+            // We cannot use any IP address of PGW (that worked with point-to-point, but not anymore)
+            // We have to use the IP address of PGW that is actually connected to the CSMA, in order for ARP to function properly
         }
 
         NS_LOG_INFO("Do logging...");
