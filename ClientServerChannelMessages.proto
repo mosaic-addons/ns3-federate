@@ -44,23 +44,6 @@ message CommandMessage {
     required CommandType command_type = 1;
 }
 
-message UpdateNode {
-    enum UpdateType {
-        ADD_RSU = 1;
-        ADD_VEHICLE = 2;
-        MOVE_NODE = 3;
-        REMOVE_NODE = 4;
-    }
-    required UpdateType update_type = 1;
-    required int64  time = 2;
-    message NodeData {
-        required int32 id = 1;
-        required double x = 2;
-        required double y = 3;
-    }   
-    repeated NodeData properties = 3;
-}
-
 message InitMessage {
     required int64 start_time = 1;
     required int64 end_time = 2;
@@ -74,13 +57,26 @@ message TimeMessage {
     required int64 time = 1;
 }
 
-message ReceiveMessage {
-    required int64 time = 1;
-    required uint32 node_id = 2;
-    required RadioChannel channel_id = 3;
-    required uint32 message_id = 4;
-    required float rssi = 5;
+/* Entities... */
+
+message UpdateNode {
+    enum UpdateType {
+        ADD_RSU = 1;
+        ADD_VEHICLE = 2;
+        MOVE_NODE = 3;
+        REMOVE_NODE = 4;
+    }
+    required UpdateType update_type = 1;
+    required int64  time = 2;
+    message NodeData {
+        required int32 id = 1;
+        required double x = 2;
+        required double y = 3;
+    }
+    repeated NodeData properties = 3;
 }
+
+/* Adhoc Communication... */
 
 enum RadioChannel {
     PROTO_SCH1 = 0;
@@ -155,3 +151,10 @@ message SendMessageMessage {
     }   
 }
 
+message ReceiveMessage {
+    required int64 time = 1;
+    required uint32 node_id = 2;
+    required RadioChannel channel_id = 3;
+    required uint32 message_id = 4;
+    required float rssi = 5;
+}
