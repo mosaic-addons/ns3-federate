@@ -109,18 +109,16 @@ class ClientServerChannel {
 		/**
 		 * Reads a ConfigureWifiRadio message from the channel
 		 *
-		 * @param return_value the struct to fill the data in
-		 * @return 0 if successful
+		 * @return ConfigureWifiRadio message
 		 */
 		ConfigureWifiRadio readConfigureWifiRadio(void);
 
 		/**
 		 * Reads a SendWifiMessage message from the channel
 		 *
-		 * @param return_value the struct to fill the data in
-		 * @return 0 if successful
+		 * @return SendWifiMessage message
 		 */
-		SendWifiMessage readSendWifiMessage();
+		SendWifiMessage readSendWifiMessage(void);
 
 		/** Reads TimeMessage from the channel and returns the contained time as a long */
 		virtual int64_t readTimeMessage();
