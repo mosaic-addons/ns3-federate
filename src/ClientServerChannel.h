@@ -120,6 +120,13 @@ class ClientServerChannel {
 		 */
 		SendWifiMessage readSendWifiMessage(void);
 
+		/**
+		 * Reads a ConfigureCellRadio message from the channel
+		 *
+		 * @return ConfigureCellRadio message
+		 */
+		ConfigureCellRadio readConfigureCellRadio(void);
+
 		/** Reads TimeMessage from the channel and returns the contained time as a long */
 		virtual int64_t readTimeMessage();
 

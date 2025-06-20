@@ -229,18 +229,13 @@ namespace ns3 {
             case CommandMessage_CommandType_CONF_CELL_RADIO:
             {
                 try {
-                    ConfigureWifiRadio message = ambassadorFederateChannel.readConfigureWifiRadio();
+                    ConfigureCellRadio message = ambassadorFederateChannel.readConfigureCellRadio();
                     Time tNext = NanoSeconds(message.time());
                     Time tDelay = tNext - m_sim->Now();
-                    bool radioTurnedOn = false;
                     Ipv4Address ip;
+                    ip.Set(message.ip_address());
 
-                    if (message.radio_number() == ConfigureWifiRadio_RadioNumber_SINGLE_RADIO) {
-                        radioTurnedOn = true; 
-                        ip.Set(message.primary_radio_configuration().ip_address());
-                    }
-
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), radioTurnedOn, ip));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), true, ip));
                     NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 } catch (int e) {
