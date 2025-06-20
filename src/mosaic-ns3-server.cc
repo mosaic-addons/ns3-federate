@@ -179,10 +179,8 @@ namespace ns3 {
                         // other modes currently not supported, other modes turn off radio
                     }
 
-                    // m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower, ip));
-                    // FIXME: Need separate LTE_CONF message -> reenable wifi functionality
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureLteRadio, m_nodeManager, config_message.node_id, radioTurnedOn, ip));
-                    NS_LOG_DEBUG("Received CMD_CONF_RADIO: mosNID=" << config_message.node_id << " tNext=" << tNext);
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower, ip));
+                    NS_LOG_DEBUG("Received CONF_WIFI_RADIO: mosNID=" << config_message.node_id << " tNext=" << tNext);
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");
@@ -211,6 +209,31 @@ namespace ns3 {
                 }
                 break;
             }
+
+
+            case CommandMessage_CommandType_CONF_CELL_RADIO:
+
+                try {
+                    CSC_config_message config_message;
+                    ambassadorFederateChannel.readConfigurationMessage(config_message);
+                    Time tNext = NanoSeconds(config_message.time);
+                    Time tDelay = tNext - m_sim->Now();
+                    bool radioTurnedOn = false;
+                    Ipv4Address ip;
+
+                    if (config_message.num_radios == SINGLE_RADIO) {
+                        radioTurnedOn = true; 
+                        ip.Set(config_message.primary_radio.ip_address);
+                    }
+
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, config_message.node_id, radioTurnedOn, ip));
+                    NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << config_message.node_id << " tNext=" << tNext);
+
+                } catch (int e) {
+                    NS_LOG_ERROR("Error while reading configuration message");
+                    m_closeConnection = true;
+                }
+                break;
 
             case CommandMessage_CommandType_SHUT_DOWN:
                 NS_LOG_INFO("Received CMD_SHUT_DOWN");

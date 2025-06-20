@@ -92,7 +92,7 @@ namespace ns3 {
         /**
          * @brief Sets the provided configuration, and attaches the UE to an eNB
          */
-        void ConfigureLteRadio(uint32_t mosaicNodeId, bool radioTurnedOn, Ipv4Address ip);
+        void ConfigureCellRadio(uint32_t mosaicNodeId, bool radioTurnedOn, Ipv4Address ip);
 
         /**
          * @brief start the sending of a message on a node

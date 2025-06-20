@@ -490,7 +490,7 @@ namespace ns3 {
         }
     }
 
-    void MosaicNodeManager::ConfigureLteRadio(uint32_t mosaicNodeId, bool radioTurnedOn, Ipv4Address ip) {
+    void MosaicNodeManager::ConfigureCellRadio(uint32_t mosaicNodeId, bool radioTurnedOn, Ipv4Address ip) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
