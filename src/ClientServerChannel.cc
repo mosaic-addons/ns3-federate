@@ -533,7 +533,6 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
                 << return_value.secondary_radio.secondary_channel);
         }
     }
-    writeCommand(CommandMessage_CommandType_SUCCESS);
 
     return 0;
 }
@@ -589,7 +588,6 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
         NS_LOG_ERROR("Address is missing.");
         exit(1);
     }
-    writeCommand(CommandMessage_CommandType_SUCCESS);
 
     return 0;
 }

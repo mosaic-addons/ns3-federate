@@ -169,13 +169,14 @@ namespace ns3 {
                     m_sim->RunOneEvent();
                 }
 
-                //write the confirmation at the end of the sequence
+                // write the confirmation at the end of the sequence
+                // this acknowledgement is exceptionally on the other channel (federate->ambassador)
                 federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                 federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                 break;
 
             case CommandMessage_CommandType_CONF_WIFI_RADIO:
-
+            {
                 try {
                     CSC_config_message config_message;
                     ambassadorFederateChannel.readConfigurationMessage(config_message);
@@ -201,8 +202,10 @@ namespace ns3 {
                     NS_LOG_ERROR("Error while reading configuration message");
                     m_closeConnection = true;
                 }
+                
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
                 break;
-
+            }
             case CommandMessage_CommandType_SEND_WIFI_MSG:
             {
                 try {
@@ -222,10 +225,12 @@ namespace ns3 {
                 } catch (int e) {
                     NS_LOG_ERROR("Error while sending message");
                 }
+
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
                 break;
             }
             case CommandMessage_CommandType_CONF_CELL_RADIO:
-
+            {
                 try {
                     CSC_config_message config_message;
                     ambassadorFederateChannel.readConfigurationMessage(config_message);
@@ -246,8 +251,10 @@ namespace ns3 {
                     NS_LOG_ERROR("Error while reading configuration message");
                     m_closeConnection = true;
                 }
+                
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
                 break;
-
+            }
             case CommandMessage_CommandType_SHUT_DOWN:
                 NS_LOG_INFO("Received CMD_SHUT_DOWN");
                 m_nodeManager->OnShutdown();
