@@ -135,6 +135,9 @@ message ConfigureWifiRadio {
     optional RadioConfiguration secondary_radio_configuration = 6;
 }
 
+/*
+ * in ns3: currently RadioChannel and TTL are unused, only TopoAddress implemented
+ */
 message SendWifiMessage {
     required int64 time = 1;
     required uint32 node_id = 2;
@@ -166,6 +169,9 @@ message SendWifiMessage {
     }   
 }
 
+/*
+ * in ns3: currently RadioChannel and RSSI are unused
+ */
 message ReceiveWifiMessage {
     required int64 time = 1;
     required uint32 node_id = 2;
