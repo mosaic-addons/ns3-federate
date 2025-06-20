@@ -194,8 +194,8 @@ namespace ns3 {
                         // other modes currently not supported, other modes turn off radio
                     }
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, message.external_id(), radioTurnedOn, transmitPower, ip));
-                    NS_LOG_DEBUG("Received CONF_WIFI_RADIO: mosNID=" << message.external_id() << " tNext=" << tNext);
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, message.node_id(), radioTurnedOn, transmitPower, ip));
+                    NS_LOG_DEBUG("Received CONF_WIFI_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");
@@ -240,8 +240,8 @@ namespace ns3 {
                         ip.Set(message.primary_radio_configuration().ip_address());
                     }
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.external_id(), radioTurnedOn, ip));
-                    NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << message.external_id() << " tNext=" << tNext);
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), radioTurnedOn, ip));
+                    NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");

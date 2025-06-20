@@ -106,12 +106,12 @@ enum RadioChannel {
 }
 
 /*
- * in ns3: currently only time, external_id, radio_number, primary_radio.tx_power are used
+ * in ns3: currently only time, node_id, radio_number, primary_radio.tx_power are used
  */
 message ConfigureWifiRadio {
     required int64 time = 1;
     required uint32 message_id = 2;
-    required uint32 external_id = 3; // = node_id
+    required uint32 node_id = 3;
     enum RadioNumber {
         NO_RADIO = 0;
         SINGLE_RADIO = 1;
