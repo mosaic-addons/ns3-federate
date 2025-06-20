@@ -410,45 +410,35 @@ ConfigureWifiRadio ClientServerChannel::readConfigureWifiRadio(void) {
     return message;
 }
 
-int ClientServerChannel::readSendWifiMessage ( CSC_send_message &return_value ) {
+SendWifiMessage ClientServerChannel::readSendWifiMessage(void) {
     NS_LOG_FUNCTION(this);
-    std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
-    if ( !message_size ) { return -1; }
-    NS_LOG_LOGIC("read send announced message size: " << *message_size);
-
+    const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
+    if (!message_size) { 
+        NS_LOG_ERROR("Cannot access message size");
+        exit(1);
+    }
+    if (*message_size < 0) {
+        NS_LOG_ERROR("Message size smaller zero");
+        exit(1);
+    }
     char message_buffer[*message_size];
-    const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-    NS_LOG_LOGIC("read send received message size: " << count);
-
+    const size_t count = recv(sock, message_buffer, *message_size, MSG_WAITALL);
+    if (*message_size != count) {
+        NS_LOG_ERROR("Expected " << *message_size << " bytes, but read " << count << " bytes");
+        exit(1);
+    }
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
 
-    SendWifiMessage send_message;
-    send_message.ParseFromCodedStream(&codedIn);
+    SendWifiMessage message;
+    message.ParseFromCodedStream(&codedIn);
 
-    return_value.time = send_message.time();
-    return_value.node_id = send_message.node_id();
-
-    NS_LOG_INFO("read send message time: " << return_value.time);
-    NS_LOG_INFO("read send message node id: " << return_value.node_id);
-
-    return_value.channel_id = protoChannelToChannel(send_message.channel_id());
-    return_value.message_id = send_message.message_id();
-    return_value.length = send_message.length();
-
-    NS_LOG_INFO("read send message channel id: " << return_value.channel_id);
-    NS_LOG_INFO("read send message message id: " << return_value.message_id);
-    NS_LOG_INFO("read send message length: " << return_value.length);
-
-    if (send_message.has_topo_address() ) {
-        return_value.topo_address.ip_address = send_message.topo_address().ip_address();
-        return_value.topo_address.ttl = send_message.topo_address().ttl();
-        NS_LOG_INFO("read send message topo address ip: " << return_value.topo_address.ip_address);
-        NS_LOG_INFO("read send message topo address ttl: " << return_value.topo_address.ttl);
-    } else if (send_message.has_rectangle_address() ) {
+    if (message.has_topo_address() ) {
+        // all good
+    } else if (message.has_rectangle_address() ) {
         NS_LOG_ERROR("Not yet implemented.");
         exit(1);
-    } else if (send_message.has_circle_address() ) {
+    } else if (message.has_circle_address() ) {
         NS_LOG_ERROR("Not yet implemented.");
         exit(1);
     } else {
@@ -456,7 +446,7 @@ int ClientServerChannel::readSendWifiMessage ( CSC_send_message &return_value ) 
         exit(1);
     }
 
-    return 0;
+    return message;
 }
 
 //#####################################################
@@ -488,13 +478,13 @@ void ClientServerChannel::writeCommand(CommandMessage_CommandType cmd) {
     NS_LOG_LOGIC("write command send bytes: " << count);
 }
 
-void ClientServerChannel::writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi) {
+void ClientServerChannel::writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RadioChannel channel, int rssi) {
     NS_LOG_FUNCTION(this << time << node_id << message_id << channel << rssi);
     ReceiveWifiMessage receive_message;
     receive_message.set_time(time);
     receive_message.set_node_id(node_id);
     receive_message.set_message_id(message_id);
-    receive_message.set_channel_id(channelToProtoChannel(channel));
+    receive_message.set_channel_id(channel);
     receive_message.set_rssi(rssi);
     int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(receive_message.ByteSizeLong());
     NS_LOG_LOGIC("write receive message varint size: " << varintsize);
@@ -598,31 +588,4 @@ std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) 
     return std::make_shared < uint32_t > ( return_value );
 }
 
-RADIO_CHANNEL ClientServerChannel::protoChannelToChannel(RadioChannel protoChannel) {
-    switch(protoChannel) {
-        case PROTO_SCH1: return SCH1;
-        case PROTO_SCH2: return SCH2;
-        case PROTO_SCH3: return SCH3;
-        case PROTO_CCH: return CCH;
-        case PROTO_SCH4: return SCH4;
-        case PROTO_SCH5: return SCH5;
-        case PROTO_SCH6: return SCH6;
-        case PROTO_CELL: return CELL;
-        default: return UNDEF_CHANNEL;
-    }
-}
-
-RadioChannel ClientServerChannel::channelToProtoChannel(RADIO_CHANNEL channel) {
-    switch(channel) {
-        case SCH1: return PROTO_SCH1;
-        case SCH2: return PROTO_SCH2;
-        case SCH3: return PROTO_SCH3;
-        case CCH: return PROTO_CCH;
-        case SCH4: return PROTO_SCH4;
-        case SCH5: return PROTO_SCH5;
-        case SCH6: return PROTO_SCH6;
-        case CELL: return PROTO_CELL;
-        default: return PROTO_UNDEF;
-    }
-}
-}//END NAMESPACE
+} // namespace ClientServerChannelSpace

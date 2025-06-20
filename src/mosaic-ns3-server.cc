@@ -208,19 +208,17 @@ namespace ns3 {
             case CommandMessage_CommandType_SEND_WIFI_MSG:
             {
                 try {
-                    CSC_send_message send_message;
-                    ambassadorFederateChannel.readSendWifiMessage(send_message);
-                    //Convert the IP address
-                    Ipv4Address ip(send_message.topo_address.ip_address);
-                    NS_LOG_DEBUG("Received CMD_MSG_SEND: mosNID=" << send_message.node_id << " id=" << send_message.message_id << " sendTime=" << send_message.time << " length=" << send_message.length);
+                    SendWifiMessage message = ambassadorFederateChannel.readSendWifiMessage();
+                    Ipv4Address ip(message.topo_address().ip_address());
 
+                    Time tNext = NanoSeconds(message.time());
                     // ns3 does not like to send packets at time zero, use 1ns instead
-                    if (send_message.time == 0) {
-                        send_message.time = 1;
+                    if (tNext == NanoSeconds(0)) {
+                        tNext = NanoSeconds(1);
                     }
-                    Time tNext = NanoSeconds(send_message.time);
                     Time tDelay = tNext - m_sim->Now();
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendMsg, m_nodeManager, send_message.node_id, ip, send_message.channel_id, send_message.message_id, send_message.length));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendMsg, m_nodeManager, message.node_id(), ip, message.channel_id(), message.message_id(), message.length()));
+                    NS_LOG_DEBUG("Received CMD_MSG_SEND: mosNID=" << message.node_id() << " id=" << message.message_id() << " sendTime=" << message.time() << " length=" << message.length());
                 } catch (int e) {
                     NS_LOG_ERROR("Error while sending message");
                 }
@@ -276,7 +274,9 @@ namespace ns3 {
 
     void MosaicNs3Server::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID) {
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
-        federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, CCH, 0);
+        federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, RadioChannel::PROTO_CCH, 0);
+        // FIXME: Channel is hardcoded
+        // FIXME: RSSI is hardcoded
     }
 
 } //END Namespace

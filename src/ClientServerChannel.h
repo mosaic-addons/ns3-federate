@@ -37,18 +37,6 @@ constexpr const int INVALID_SOCKET = -1;
  */
 namespace ClientServerChannelSpace {
 
-enum RADIO_CHANNEL {
-	SCH1 = 0,
-	SCH2 = 1,
-	SCH3 = 2,
-	CCH = 3,
-	SCH4 = 4,
-	SCH5 = 5,
-	SCH6 = 6,
-	UNDEF_CHANNEL = 7,
-	CELL = 8,
-};
-
 struct CSC_init_return{
     int64_t start_time;
     int64_t end_time;
@@ -57,15 +45,6 @@ struct CSC_init_return{
 struct CSC_topo_address{
 	uint32_t ip_address;
 	int ttl;
-};
-
-struct CSC_send_message{
-	int64_t time;
-	int node_id;
-	RADIO_CHANNEL channel_id;
-	int message_id;
-	int length;
-	CSC_topo_address topo_address;
 };
 
 class ClientServerChannel {
@@ -141,7 +120,7 @@ class ClientServerChannel {
 		 * @param return_value the struct to fill the data in
 		 * @return 0 if successful
 		 */
-		int readSendWifiMessage(CSC_send_message &return_value);
+		SendWifiMessage readSendWifiMessage();
 
 		/** Reads TimeMessage from the channel and returns the contained time as a long */
 		virtual int64_t readTimeMessage();
@@ -166,7 +145,7 @@ class ClientServerChannel {
 		 * @param channel the receiver channel
 		 * @param rssi the rssi during the receive event
 		 */
-		void writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi);
+		void writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RadioChannel channel, int rssi);
 
 	private:
 		/** Initial server socket
@@ -180,13 +159,7 @@ class ClientServerChannel {
 
 		/** Reads a Varint from a socket and returns it */
 		virtual std::shared_ptr < uint32_t > readVarintPrefix(SOCKET sock);
-
-		/** converts a channel given as a protobuf internal enum to our channel enum */
-		virtual RADIO_CHANNEL protoChannelToChannel(RadioChannel protoChannel);
-
-		/** converts a channel given as our channel enum to a protobuf internal channel enum */
-		virtual RadioChannel channelToProtoChannel(RADIO_CHANNEL channel);
 };
 
-}//END NAMESPACE
+} // namespace ClientServerChannelSpace
 #endif

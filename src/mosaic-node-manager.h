@@ -103,7 +103,7 @@ namespace ns3 {
          * @param msgID the msgID of the message
          * @param payLenght the lenght of the message
          */
-        void SendMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RADIO_CHANNEL channel, uint32_t msgID, uint32_t payLenght);
+        void SendMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLenght);
 
         bool ActivateNode(uint32_t mosaicNodeId);
 
