@@ -179,7 +179,7 @@ namespace ns3 {
             {
                 try {
                     CSC_config_message config_message;
-                    ambassadorFederateChannel.readConfigurationMessage(config_message);
+                    ambassadorFederateChannel.readConfigureWifiRadio(config_message);
                     Time tNext = NanoSeconds(config_message.time);
                     Time tDelay = tNext - m_sim->Now();
                     double transmitPower = -1;
@@ -210,7 +210,7 @@ namespace ns3 {
             {
                 try {
                     CSC_send_message send_message;
-                    ambassadorFederateChannel.readSendMessage(send_message);
+                    ambassadorFederateChannel.readSendWifiMessage(send_message);
                     //Convert the IP address
                     Ipv4Address ip(send_message.topo_address.ip_address);
                     NS_LOG_DEBUG("Received CMD_MSG_SEND: mosNID=" << send_message.node_id << " id=" << send_message.message_id << " sendTime=" << send_message.time << " length=" << send_message.length);
@@ -233,7 +233,7 @@ namespace ns3 {
             {
                 try {
                     CSC_config_message config_message;
-                    ambassadorFederateChannel.readConfigurationMessage(config_message);
+                    ambassadorFederateChannel.readConfigureWifiRadio(config_message);
                     Time tNext = NanoSeconds(config_message.time);
                     Time tDelay = tNext - m_sim->Now();
                     bool radioTurnedOn = false;
@@ -278,7 +278,7 @@ namespace ns3 {
 
     void MosaicNs3Server::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID) {
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
-        federateAmbassadorChannel.writeReceiveMessage(recvTime, nodeID, msgID, CCH, 0);
+        federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, CCH, 0);
     }
 
 } //END Namespace

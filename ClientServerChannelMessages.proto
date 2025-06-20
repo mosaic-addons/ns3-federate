@@ -108,7 +108,7 @@ enum RadioChannel {
 /*
  * in ns3: currently only time, external_id, radio_number, primary_radio.tx_power are used
  */
-message ConfigureRadioMessage {
+message ConfigureWifiRadio {
     required int64 time = 1;
     required uint32 message_id = 2;
     required uint32 external_id = 3; // = node_id
@@ -135,7 +135,7 @@ message ConfigureRadioMessage {
     optional RadioConfiguration secondary_radio_configuration = 6;
 }
 
-message SendMessageMessage {
+message SendWifiMessage {
     required int64 time = 1;
     required uint32 node_id = 2;
     required RadioChannel channel_id = 3;
@@ -166,7 +166,7 @@ message SendMessageMessage {
     }   
 }
 
-message ReceiveMessage {
+message ReceiveWifiMessage {
     required int64 time = 1;
     required uint32 node_id = 2;
     required RadioChannel channel_id = 3;

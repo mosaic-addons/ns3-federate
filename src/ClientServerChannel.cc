@@ -414,13 +414,7 @@ int64_t ClientServerChannel::readTimeMessage() {
     return time;
 }
 
-/**
- * Reads a configuration message from the command channel and returns it
- *
- * @param return_value the struct to fill the data in
- * @return 0 if successful
- */
-int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_value) {
+int ClientServerChannel::readConfigureWifiRadio(CSC_config_message &return_value) {
     NS_LOG_FUNCTION(this);
     const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
     if ( !message_size ) { return -1; }
@@ -433,7 +427,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
 
-    ConfigureRadioMessage conf_message;
+    ConfigureWifiRadio conf_message;
     conf_message.ParseFromCodedStream ( &codedIn );
 
     return_value.time = conf_message.time();
@@ -444,11 +438,11 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
     NS_LOG_INFO("read config message msg id: " << return_value.msg_id);
     NS_LOG_INFO("read config message node id: " << return_value.node_id);
 
-    if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_SINGLE_RADIO ) {
+    if ( conf_message.radio_number() == ConfigureWifiRadio_RadioNumber_SINGLE_RADIO ) {
         return_value.num_radios = SINGLE_RADIO;
-    } else if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_DUAL_RADIO ) {
+    } else if ( conf_message.radio_number() == ConfigureWifiRadio_RadioNumber_DUAL_RADIO ) {
         return_value.num_radios = DUAL_RADIO;
-    } else if ( conf_message.radio_number() == ConfigureRadioMessage_RadioNumber_NO_RADIO ) {
+    } else if ( conf_message.radio_number() == ConfigureWifiRadio_RadioNumber_NO_RADIO ) {
         return_value.num_radios = NO_RADIO;
     } else {
         NS_LOG_ERROR("Unexpected State.");
@@ -475,10 +469,10 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
             << return_value.primary_radio.primary_channel);
 
         if ( conf_message.primary_radio_configuration().radio_mode()
-                    == ConfigureRadioMessage_RadioConfiguration_RadioMode_SINGLE_CHANNEL ) {
+                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_SINGLE_CHANNEL ) {
             return_value.primary_radio.channelmode = SINGLE_CHANNEL;
         } else if ( conf_message.primary_radio_configuration().radio_mode()
-                                == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
+                                == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
             return_value.primary_radio.channelmode = DUAL_CHANNEL;
             return_value.primary_radio.secondary_channel
                 = protoChannelToChannel ( conf_message.primary_radio_configuration().secondary_radio_channel() );
@@ -489,7 +483,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
         NS_LOG_INFO("read config message primary radio channel mode: "
             << return_value.primary_radio.channelmode);
         if ( conf_message.primary_radio_configuration().radio_mode()
-                    == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
+                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
             NS_LOG_INFO("read config message primary radio secondary channel: "
                 << return_value.primary_radio.secondary_channel);
         }
@@ -514,10 +508,10 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
             << return_value.secondary_radio.primary_channel);
 
         if ( conf_message.secondary_radio_configuration().radio_mode()
-                    == ConfigureRadioMessage_RadioConfiguration_RadioMode_SINGLE_CHANNEL) {
+                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_SINGLE_CHANNEL) {
             return_value.secondary_radio.channelmode = SINGLE_CHANNEL;
         } else if ( conf_message.secondary_radio_configuration().radio_mode()
-                                    == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
+                                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
             return_value.secondary_radio.channelmode = DUAL_CHANNEL;
             return_value.secondary_radio.secondary_channel
                 = protoChannelToChannel(conf_message.secondary_radio_configuration().secondary_radio_channel());
@@ -528,7 +522,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
         NS_LOG_INFO("read config message secondary radio channel mode: "
             << return_value.secondary_radio.channelmode);
         if ( conf_message.primary_radio_configuration().radio_mode()
-                    == ConfigureRadioMessage_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
+                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
             NS_LOG_INFO("read config message secondary radio secondary channel: "
                 << return_value.secondary_radio.secondary_channel);
         }
@@ -537,13 +531,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
     return 0;
 }
 
-/**
- * Reads a sendMessage body from the channel
- *
- * @param return_value the struct to fill the data in
- * @return 0 if successful
- */
-int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
+int ClientServerChannel::readSendWifiMessage ( CSC_send_message &return_value ) {
     NS_LOG_FUNCTION(this);
     std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
     if ( !message_size ) { return -1; }
@@ -556,7 +544,7 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
 
-    SendMessageMessage send_message;
+    SendWifiMessage send_message;
     send_message.ParseFromCodedStream(&codedIn);
 
     return_value.time = send_message.time();
@@ -621,18 +609,9 @@ void ClientServerChannel::writeCommand(CommandMessage_CommandType cmd) {
     NS_LOG_LOGIC("write command send bytes: " << count);
 }
 
-/**
- * Writes a receiveMessage body onto the channel.
- *
- * @param time the simulation time at which the message receive occured
- * @param node_id the id of the receiving node
- * @param message_id the id of the received message
- * @param channel the receiver channel
- * @param rssi the rssi during the receive event
- */
-void ClientServerChannel::writeReceiveMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi) {
+void ClientServerChannel::writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi) {
     NS_LOG_FUNCTION(this << time << node_id << message_id << channel << rssi);
-    ReceiveMessage receive_message;
+    ReceiveWifiMessage receive_message;
     receive_message.set_time(time);
     receive_message.set_node_id(node_id);
     receive_message.set_message_id(message_id);

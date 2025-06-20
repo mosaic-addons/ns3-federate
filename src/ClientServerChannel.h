@@ -156,12 +156,22 @@ class ClientServerChannel {
 		 * @return RemoveNode message
 		 */
 		RemoveNode readRemoveNode(void);
+		
+		/**
+		 * Reads a ConfigureWifiRadio message from the channel
+		 *
+		 * @param return_value the struct to fill the data in
+		 * @return 0 if successful
+		 */
+		int readConfigureWifiRadio(CSC_config_message &return_value);
 
-		/** Reads a configuration message from the channel and returns it */
-		virtual int readConfigurationMessage(CSC_config_message &return_value);
-
-		/** Reads a send message command and returns the corresponding message struct */
-		virtual int readSendMessage(CSC_send_message &return_value);
+		/**
+		 * Reads a SendWifiMessage message from the channel
+		 *
+		 * @param return_value the struct to fill the data in
+		 * @return 0 if successful
+		 */
+		int readSendWifiMessage(CSC_send_message &return_value);
 
 		/** Reads TimeMessage from the channel and returns the contained time as a long */
 		virtual int64_t readTimeMessage();
@@ -177,8 +187,16 @@ class ClientServerChannel {
 		/** Request a time advance from the RTI */
 		virtual void writeTimeMessage(int64_t time);
 
-		/** Signal and hand a received Message to the RTI */
-		virtual void writeReceiveMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi);
+		/**
+		 * Writes a ReceiveWifiMessage message onto the channel.
+		 *
+		 * @param time the simulation time at which the message receive occured
+		 * @param node_id the id of the receiving node
+		 * @param message_id the id of the received message
+		 * @param channel the receiver channel
+		 * @param rssi the rssi during the receive event
+		 */
+		void writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RADIO_CHANNEL channel, int rssi);
 
 	private:
 		/** Initial server socket
