@@ -37,21 +37,6 @@ constexpr const int INVALID_SOCKET = -1;
  */
 namespace ClientServerChannelSpace {
 
-enum CMD {
-	CMD_UNDEF=-1,
-    CMD_INIT = 1,
-	CMD_SHUT_DOWN = 2,
-	CMD_SUCCESS = 41,
-    CMD_NEXT_EVENT = 21,
-    CMD_ADVANCE_TIME = 20,
-	CMD_END = 40,
-	CMD_UPDATE_NODE = 10,
-    CMD_CONF_RADIO = 31,
-    CMD_MSG_SEND = 30,
-	CMD_MSG_RECV = 22,
-	DEPRECATED_CMD_REMOVE_NODE = 11,
-};
-
 enum RADIO_NUMBER {
 	NO_RADIO=0,
 	SINGLE_RADIO=1,
@@ -165,7 +150,7 @@ class ClientServerChannel {
 		/*################## READING ####################*/
 
 		/** reads a command via protobuf and returns it */
-		virtual CMD	readCommand();
+		virtual CommandMessage_CommandType	readCommand();
 
 		/** reads an initialization message and returns it */
 		virtual int readInit(CSC_init_return &return_value);
@@ -185,7 +170,7 @@ class ClientServerChannel {
 		/*################## WRITING ####################*/
 
 		/** Byte protocol control method for writeCommand. */
-		virtual void writeCommand(CMD cmd);
+		virtual void writeCommand(CommandMessage_CommandType cmd);
 
 		/** Write a message containing a port number to the output */
 		virtual void writePort(uint32_t port);
@@ -205,12 +190,6 @@ class ClientServerChannel {
 
 		/** Working sock for communication. */
 		SOCKET sock;
-
-		/** Converts commands to protobuf-internal commands */
-		virtual CommandMessage_CommandType cmdToProtoCMD(CMD cmd);
-
-		/** Converts protobuf commands to CMD enum */
-		virtual CMD protoCMDToCMD(CommandMessage_CommandType cmd);
 
 		/** Reads a Varint from a socket and returns it */
 		virtual std::shared_ptr < uint32_t > readVarintPrefix(SOCKET sock);

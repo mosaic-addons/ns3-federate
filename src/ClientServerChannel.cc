@@ -41,20 +41,24 @@
 NS_LOG_COMPONENT_DEFINE("ClientServerChannel");
 
 namespace std {
-    ostream& operator<< ( ostream& out, ClientServerChannelSpace::CMD cmd ) {
+    ostream& operator<< ( ostream& out, ClientServerChannelSpace::CommandMessage_CommandType cmd ) {
         switch ( cmd ) {
-            case ClientServerChannelSpace::CMD::CMD_UNDEF: out << "CMD undefined"; break;
-            case ClientServerChannelSpace::CMD::CMD_INIT: out << "CMD init"; break;
-            case ClientServerChannelSpace::CMD::CMD_SHUT_DOWN: out << "CMD shut down"; break;
-            case ClientServerChannelSpace::CMD::CMD_SUCCESS: out << "CMD success"; break;
-            case ClientServerChannelSpace::CMD::CMD_NEXT_EVENT: out << "CMD next event"; break;
-            case ClientServerChannelSpace::CMD::CMD_ADVANCE_TIME: out << "CMD advance time"; break;
-            case ClientServerChannelSpace::CMD::CMD_END: out << "CMD end"; break;
-            case ClientServerChannelSpace::CMD::CMD_UPDATE_NODE: out << "CMD update node"; break;
-            case ClientServerChannelSpace::CMD::CMD_CONF_RADIO: out << "CMD conf radio"; break;
-            case ClientServerChannelSpace::CMD::CMD_MSG_SEND: out << "CMD message send"; break;
-            case ClientServerChannelSpace::CMD::CMD_MSG_RECV: out << "CMD message receive"; break;
-            case ClientServerChannelSpace::CMD::DEPRECATED_CMD_REMOVE_NODE: out << "DEPRECATED CMD remove node"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_UNDEF: out << "CommandType_UNDEF"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_INIT: out << "CommandType_INIT"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SHUT_DOWN: out << "CommandType_SHUT_DOWN"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SUCCESS: out << "CommandType_SUCCESS"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_NEXT_EVENT: out << "CommandType_NEXT_EVENT"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_ADVANCE_TIME: out << "CommandType_ADVANCE_TIME"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_END: out << "CommandType_END"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_ADD_NODE: out << "CommandType_ADD_NODE"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_UPDATE_NODE: out << "CommandType_UPDATE_NODE"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_REMOVE_NODE: out << "CommandType_REMOVE_NODE"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_CONF_WIFI_RADIO: out << "CommandType_CONF_WIFI_RADIO"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SEND_WIFI_MSG: out << "CommandType_SEND_WIFI_MSG"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_RECV_WIFI_MSG: out << "CommandType_RECV_WIFI_MSG"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_CONF_CELL_RADIO: out << "CommandType_CONF_CELL_RADIO"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SEND_CELL_MSG: out << "CommandType_SEND_CELL_MSG"; break;
+            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_RECV_CELL_MSG: out << "CommandType_RECV_CELL_MSG"; break;
         }
         return out;
     }
@@ -232,13 +236,13 @@ std::string debug_byte_array ( const char* buffer, const size_t buffer_size ) {
  *
  * TODO: return type should be maybe
  */
-CMD  ClientServerChannel::readCommand() {
+CommandMessage_CommandType ClientServerChannel::readCommand() {
     NS_LOG_FUNCTION(this);
     //Read the mandatory prefixed size
     const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
     if ( !message_size || *message_size < 0 ) {
         std::cerr << "ERROR: reading of mandatory message size failed!" << std::endl;
-        return CMD_UNDEF;
+        return CommandMessage_CommandType_UNDEF;
     }
     NS_LOG_LOGIC("read command announced message size: " << *message_size);
     //Allocate a fitting buffer and read message from stream
@@ -264,12 +268,12 @@ CMD  ClientServerChannel::readCommand() {
         res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
         if ( retries != 3 && res < 1 ) {
             std::cerr << "ERROR: socket is ready, but cannot receive any bytes (" << res << "). Message sent?" << std::endl;
-            return CMD_UNDEF;
+            return CommandMessage_CommandType_UNDEF;
         }
     }
     if ( res != *message_size ) {
         std::cerr << "ERROR: reading of message body failed! Socket not ready." << std::endl;
-        return CMD_UNDEF;
+        return CommandMessage_CommandType_UNDEF;
     }
     if ( *message_size > 0 ) {
         NS_LOG_LOGIC("message buffer as byte array: " << debug_byte_array ( message_buffer, *message_size ));
@@ -280,11 +284,11 @@ CMD  ClientServerChannel::readCommand() {
         CommandMessage commandMessage;
         commandMessage.ParseFromCodedStream(&codedIn);  //parse message
         //pick the needed data from the protobuf message class and return it
-        const CMD cmd = protoCMDToCMD(commandMessage.command_type());
+        const CommandMessage_CommandType cmd = commandMessage.command_type();
         NS_LOG_INFO("read command: " << cmd);
         return cmd;
     }
-    return CMD_UNDEF;
+    return CommandMessage_CommandType_UNDEF;
 }
 
 /**
@@ -525,7 +529,7 @@ int ClientServerChannel::readConfigurationMessage(CSC_config_message &return_val
                 << return_value.secondary_radio.secondary_channel);
         }
     }
-    writeCommand(CMD_SUCCESS);
+    writeCommand(CommandMessage_CommandType_SUCCESS);
 
     return 0;
 }
@@ -581,7 +585,7 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
         NS_LOG_ERROR("Address is missing.");
         exit(1);
     }
-    writeCommand(CMD_SUCCESS);
+    writeCommand(CommandMessage_CommandType_SUCCESS);
 
     return 0;
 }
@@ -596,10 +600,10 @@ int ClientServerChannel::readSendMessage ( CSC_send_message &return_value ) {
  *
  * @param cmd command to be written to ambassador
  */
-void ClientServerChannel::writeCommand(CMD cmd) {
+void ClientServerChannel::writeCommand(CommandMessage_CommandType cmd) {
     NS_LOG_FUNCTION(this << cmd);
     CommandMessage commandMessage;
-    commandMessage.set_command_type(cmdToProtoCMD(cmd));
+    commandMessage.set_command_type(cmd);
     int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(commandMessage.ByteSizeLong());
     NS_LOG_LOGIC("write command varint size: " << varintsize);
     int buffer_size = varintsize+commandMessage.ByteSizeLong();
@@ -732,42 +736,6 @@ std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) 
         }
     NS_LOG_LOGIC("readVarintPrefix return value: " << return_value);
     return std::make_shared < uint32_t > ( return_value );
-}
-
-CommandMessage_CommandType ClientServerChannel::cmdToProtoCMD(CMD cmd) {
-    switch(cmd) {
-        case CMD_UNDEF: return CommandMessage_CommandType_UNDEF;
-        case CMD_INIT: return CommandMessage_CommandType_INIT;
-        case CMD_SHUT_DOWN: return CommandMessage_CommandType_SHUT_DOWN;
-        case CMD_SUCCESS: return CommandMessage_CommandType_SUCCESS;
-        case CMD_NEXT_EVENT: return CommandMessage_CommandType_NEXT_EVENT;
-        case CMD_ADVANCE_TIME: return CommandMessage_CommandType_ADVANCE_TIME;
-        case CMD_END: return CommandMessage_CommandType_END;
-        case CMD_UPDATE_NODE: return CommandMessage_CommandType_UPDATE_NODE;
-        case CMD_CONF_RADIO: return CommandMessage_CommandType_CONF_RADIO;
-        case CMD_MSG_SEND: return CommandMessage_CommandType_MSG_SEND;
-        case CMD_MSG_RECV: return CommandMessage_CommandType_MSG_RECV;
-        case DEPRECATED_CMD_REMOVE_NODE: return CommandMessage_CommandType_DEPRECATED_REMOVE_NODE;
-        default: return CommandMessage_CommandType_UNDEF;
-    }
-}
-
-CMD ClientServerChannel::protoCMDToCMD(CommandMessage_CommandType cmd) {
-    switch(cmd) {
-        case CommandMessage_CommandType_UNDEF: return CMD_UNDEF;
-        case CommandMessage_CommandType_INIT: return CMD_INIT;
-        case CommandMessage_CommandType_SHUT_DOWN: return CMD_SHUT_DOWN;
-        case CommandMessage_CommandType_SUCCESS: return CMD_SUCCESS;
-        case CommandMessage_CommandType_NEXT_EVENT: return CMD_NEXT_EVENT;
-        case CommandMessage_CommandType_ADVANCE_TIME: return CMD_ADVANCE_TIME;
-        case CommandMessage_CommandType_END: return  CMD_END;
-        case CommandMessage_CommandType_UPDATE_NODE: return CMD_UPDATE_NODE;
-        case CommandMessage_CommandType_CONF_RADIO: return CMD_CONF_RADIO;
-        case CommandMessage_CommandType_MSG_SEND: return CMD_MSG_SEND;
-        case CommandMessage_CommandType_MSG_RECV: return CMD_MSG_RECV;
-        case CommandMessage_CommandType_DEPRECATED_REMOVE_NODE: return DEPRECATED_CMD_REMOVE_NODE;
-        default: return CMD_UNDEF;
-    }
 }
 
 RADIO_CHANNEL ClientServerChannel::protoChannelToChannel(RadioChannel protoChannel) {

@@ -48,7 +48,7 @@ namespace ns3 {
         NS_LOG_INFO("Initialize federateAmbassadorChannel");
         federateAmbassadorChannel.prepareConnection("0.0.0.0", port);
         federateAmbassadorChannel.connect();
-        federateAmbassadorChannel.writeCommand(CMD_INIT);
+        federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_INIT);
 
         /* Initialize ambassadorFederateChannel (mostly for RECEIVING) */
         NS_LOG_INFO("Initialize ambassadorFederateChannel");
@@ -59,16 +59,16 @@ namespace ns3 {
         }
         federateAmbassadorChannel.writePort(assignedPort);
         ambassadorFederateChannel.connect();
-        if (ambassadorFederateChannel.readCommand() == CMD_INIT) {
+        if (ambassadorFederateChannel.readCommand() == CommandMessage_CommandType_INIT) {
             CSC_init_return init_message;
             ambassadorFederateChannel.readInit(init_message);
             unsigned long long startTime = init_message.start_time;
             unsigned long long endTime = init_message.end_time;
             if (startTime >= 0 && endTime >= 0 && endTime >= startTime) {
-                ambassadorFederateChannel.writeCommand(CMD_SUCCESS);
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
             } else {
                 // AbstractNetworkAmbassador.java only checks if (CMD.SUCCESS != ...
-                ambassadorFederateChannel.writeCommand(CMD_SHUT_DOWN);
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SHUT_DOWN);
                 NS_LOG_ERROR("Did not receive meaningful times in first CMD_INIT");
                 exit(1);
             }
@@ -103,13 +103,13 @@ namespace ns3 {
 
     void MosaicNs3Server::dispatchCommand() {
         //read the commandId from the channel
-        CMD commandId = ambassadorFederateChannel.readCommand();
+        CommandMessage_CommandType commandId = ambassadorFederateChannel.readCommand();
         switch (commandId) {
-            case CMD_INIT:
+            case CommandMessage_CommandType_INIT:
                 //CMD_INIT is not permitted after the initialization of the MosaicNs3Server
                 NS_LOG_ERROR("Received CMD_INIT");
                 break;
-            case CMD_UPDATE_NODE:
+            case CommandMessage_CommandType_UPDATE_NODE:
             {
                 CSC_update_node_return update_node_message;
                 ambassadorFederateChannel.readUpdateNode(update_node_message);
@@ -139,12 +139,12 @@ namespace ns3 {
                         NS_LOG_DEBUG("Received REMOVE_NODES: mosNID=" << it->id << " tNext=" << tNext);
                     }
                 }
-                ambassadorFederateChannel.writeCommand(CMD_SUCCESS);
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
                 break;
             }
 
             // advance the next time step and run the simulation read the next time step
-            case CMD_ADVANCE_TIME:
+            case CommandMessage_CommandType_ADVANCE_TIME:
                 uint64_t advancedTime;
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
 
@@ -155,11 +155,11 @@ namespace ns3 {
                 }
 
                 //write the confirmation at the end of the sequence
-                federateAmbassadorChannel.writeCommand(CMD_END);
+                federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                 federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                 break;
 
-            case CMD_CONF_RADIO:
+            case CommandMessage_CommandType_CONF_WIFI_RADIO:
 
                 try {
                     CSC_config_message config_message;
@@ -190,7 +190,7 @@ namespace ns3 {
                 }
                 break;
 
-            case CMD_MSG_SEND:
+            case CommandMessage_CommandType_SEND_WIFI_MSG:
             {
                 try {
                     CSC_send_message send_message;
@@ -212,7 +212,7 @@ namespace ns3 {
                 break;
             }
 
-            case CMD_SHUT_DOWN:
+            case CommandMessage_CommandType_SHUT_DOWN:
                 NS_LOG_INFO("Received CMD_SHUT_DOWN");
                 m_nodeManager->OnShutdown();
                 NS_LOG_INFO("Disable log...");
@@ -229,12 +229,12 @@ namespace ns3 {
     }
 
     void MosaicNs3Server::writeNextTime(unsigned long long nextTime) {
-        federateAmbassadorChannel.writeCommand(CMD_NEXT_EVENT);
+        federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
     }
 
     void MosaicNs3Server::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID) {
-        federateAmbassadorChannel.writeCommand(CMD_MSG_RECV);
+        federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
         federateAmbassadorChannel.writeReceiveMessage(recvTime, nodeID, msgID, CCH, 0);
     }
 
