@@ -48,13 +48,6 @@ enum CHANNEL_MODE {
     DUAL_CHANNEL=2	/* Radio alternates between two channels */
 };
 
-enum UPDATE_NODE_TYPE {
-	UPDATE_ADD_RSU = 1,
-	UPDATE_ADD_VEHICLE = 2,
-	UPDATE_MOVE_NODE = 3,
-	UPDATE_REMOVE_NODE = 4
-};
-
 enum RADIO_CHANNEL {
 	SCH1 = 0,
 	SCH2 = 1,
@@ -70,12 +63,6 @@ enum RADIO_CHANNEL {
 struct CSC_init_return{
     int64_t start_time;
     int64_t end_time;
-};
-
-struct CSC_node_data{
-	int id;
-	double x;
-	double y;
 };
 
 struct CSC_radio_config{
@@ -95,12 +82,6 @@ struct CSC_config_message{
     RADIO_NUMBER num_radios;
     CSC_radio_config primary_radio;
     CSC_radio_config secondary_radio;
-};
-
-struct CSC_update_node_return{
-	UPDATE_NODE_TYPE type;
-	int64_t time;
-	std::vector<CSC_node_data> properties;
 };
 
 struct CSC_topo_address{
@@ -155,8 +136,26 @@ class ClientServerChannel {
 		/** reads an initialization message and returns it */
 		virtual int readInit(CSC_init_return &return_value);
 
-		/** reads a add RSU message and returns it */
-		virtual int readUpdateNode(CSC_update_node_return &return_value);
+		/**
+		 * Reads an AddNode message from the channel.
+		 *
+		 * @return AddNode message
+		 */
+		AddNode readAddNode(void);
+
+		/**
+		 * Reads an update Node message from the channel.
+		 *
+		 * @return UpdateNode message
+		 */
+		UpdateNode readUpdateNode(void);
+
+		/**
+		 * Reads an RemoveNode message from the channel.
+		 *
+		 * @return RemoveNode message
+		 */
+		RemoveNode readRemoveNode(void);
 
 		/** Reads a configuration message from the channel and returns it */
 		virtual int readConfigurationMessage(CSC_config_message &return_value);

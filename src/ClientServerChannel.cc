@@ -62,15 +62,6 @@ namespace std {
         }
         return out;
     }
-    ostream& operator<< ( ostream& out, ClientServerChannelSpace::UPDATE_NODE_TYPE type ) {
-        switch ( type ) {
-            case ClientServerChannelSpace::UPDATE_NODE_TYPE::UPDATE_ADD_RSU: out << "UPDATE add rsu"; break;
-            case ClientServerChannelSpace::UPDATE_NODE_TYPE::UPDATE_ADD_VEHICLE: out << "UPDATE add vehicle"; break;
-            case ClientServerChannelSpace::UPDATE_NODE_TYPE::UPDATE_MOVE_NODE: out << "UPDATE move node"; break;
-            case ClientServerChannelSpace::UPDATE_NODE_TYPE::UPDATE_REMOVE_NODE: out << "UPDATE remove node"; break;
-        }
-        return out;
-    }
     ostream& operator<< ( ostream& out, ClientServerChannelSpace::RADIO_NUMBER num ) {
         switch ( num ) {
             case ClientServerChannelSpace::RADIO_NUMBER::NO_RADIO: out << "RADIO_NUMBER no radio"; break;
@@ -321,67 +312,80 @@ int ClientServerChannel::readInit ( CSC_init_return &return_value ) {
     return 0;
 }
 
-/**
- * Reads an update Node message from the channel.
- *
- * @param return_value the struct to fill the data in
- * @return 0 if successful
- */
-int ClientServerChannel::readUpdateNode ( CSC_update_node_return &return_value ) {
+AddNode ClientServerChannel::readAddNode(void) {
     NS_LOG_FUNCTION(this);
-    const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
-    if ( !message_size ) { return -1; }
-    NS_LOG_LOGIC("read update note announced message size: " << *message_size);
-    if ( *message_size < 0 ) {
-        return 0;
+    const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
+    if (!message_size) { 
+        NS_LOG_ERROR("Cannot access message size");
+        exit(1);
     }
-
+    if (*message_size < 0) {
+        NS_LOG_ERROR("Message size smaller zero");
+        exit(1);
+    }
     char message_buffer[*message_size];
-    const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-    NS_LOG_LOGIC("read update node received message size: " << count);
-
-    if ( *message_size != count ) {
-        std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << count << " bytes!" << std::endl;
-        return -1;
+    const size_t count = recv(sock, message_buffer, *message_size, MSG_WAITALL);
+    if (*message_size != count) {
+        NS_LOG_ERROR("Expected " << *message_size << " bytes, but read " << count << " bytes");
+        exit(1);
     }
+    google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
+    google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
+    // TODO: code until here is duplicated in the following functions. dedup!
 
+    AddNode msg;
+    msg.ParseFromCodedStream (&codedIn);
+    return msg;
+}
+
+UpdateNode ClientServerChannel::readUpdateNode(void) {
+    NS_LOG_FUNCTION(this);
+    const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
+    if (!message_size) { 
+        NS_LOG_ERROR("Cannot access message size");
+        exit(1);
+    }
+    if (*message_size < 0) {
+        NS_LOG_ERROR("Message size smaller zero");
+        exit(1);
+    }
+    char message_buffer[*message_size];
+    const size_t count = recv(sock, message_buffer, *message_size, MSG_WAITALL);
+    if (*message_size != count) {
+        NS_LOG_ERROR("Expected " << *message_size << " bytes, but read " << count << " bytes");
+        exit(1);
+    }
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
 
-    UpdateNode update_message;
-    update_message.ParseFromCodedStream ( &codedIn );  //Parse message
+    UpdateNode msg;
+    msg.ParseFromCodedStream (&codedIn);
+    return msg;
+}
 
-    switch ( update_message.update_type() ) { //Convert the types from protobuf enum to our update message types
-        case UpdateNode_UpdateType_ADD_RSU: return_value.type = UPDATE_ADD_RSU; break;
-        case UpdateNode_UpdateType_ADD_VEHICLE: return_value.type = UPDATE_ADD_VEHICLE; break;
-        case UpdateNode_UpdateType_MOVE_NODE: return_value.type = UPDATE_MOVE_NODE; break;
-        case UpdateNode_UpdateType_REMOVE_NODE: return_value.type = UPDATE_REMOVE_NODE; break;
-        default:
-            std::cerr << "ERROR: update type unknown: " << update_message.update_type() << std::endl;
-            return_value.type = (UPDATE_NODE_TYPE)0; return 1;     //1 signals an error
+RemoveNode ClientServerChannel::readRemoveNode(void) {
+    NS_LOG_FUNCTION(this);
+    const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
+    if (!message_size) { 
+        NS_LOG_ERROR("Cannot access message size");
+        exit(1);
     }
-    NS_LOG_INFO("read update message update type " << return_value.type);
-
-    return_value.time = update_message.time();
-    NS_LOG_INFO("read update message update time " << return_value.time);
-
-    for ( size_t i = 0; i < update_message.properties_size(); i++ ) { //fill the update messages into our struct
-        UpdateNode_NodeData node_data = update_message.properties(i);
-        CSC_node_data returned_node_data;
-
-        returned_node_data.id = node_data.id();
-        returned_node_data.x = node_data.x();
-        returned_node_data.y = node_data.y();
-
-        NS_LOG_INFO("read update message update node index=" << i
-                                << " id=" << returned_node_data.id
-                                << " x=" << returned_node_data.x
-                                << " y=" << returned_node_data.y);
-
-        return_value.properties.push_back(returned_node_data);
+    if (*message_size < 0) {
+        NS_LOG_ERROR("Message size smaller zero");
+        exit(1);
     }
+    char message_buffer[*message_size];
+    const size_t count = recv(sock, message_buffer, *message_size, MSG_WAITALL);
+    if (*message_size != count) {
+        NS_LOG_ERROR("Expected " << *message_size << " bytes, but read " << count << " bytes");
+        exit(1);
+    }
+    google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
+    google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
 
-    return 0;
+    RemoveNode msg;
+    msg.ParseFromCodedStream (&codedIn);
+    return msg;
 }
 
 /**

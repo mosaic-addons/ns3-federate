@@ -109,42 +109,57 @@ namespace ns3 {
                 //CMD_INIT is not permitted after the initialization of the MosaicNs3Server
                 NS_LOG_ERROR("Received CMD_INIT");
                 break;
-            case CommandMessage_CommandType_UPDATE_NODE:
+
+            case CommandMessage_CommandType_ADD_NODE:
             {
-                CSC_update_node_return update_node_message;
-                ambassadorFederateChannel.readUpdateNode(update_node_message);
-                Time tNext = NanoSeconds(update_node_message.time);
+                AddNode message = ambassadorFederateChannel.readAddNode();
+                Time tNext = NanoSeconds(message.time());
                 Time tDelay = tNext - m_sim->Now();
-                for (std::vector<CSC_node_data>::iterator it = update_node_message.properties.begin(); it != update_node_message.properties.end(); ++it) {
 
-                    if (update_node_message.type == UPDATE_ADD_RSU) {
-
-                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
-                        NS_LOG_DEBUG("Received ADD_RSU: mosNID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
-
-                    } else if (update_node_message.type == UPDATE_ADD_VEHICLE) {
-
-                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
-                        NS_LOG_DEBUG("Received ADD_VEHICLE: mosNID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
-
-                    } else if (update_node_message.type == UPDATE_MOVE_NODE) {
-
-                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, it->id, Vector(it->x, it->y, 0.0)));
-                        NS_LOG_DEBUG("Received MOVE_NODES: mosNID=" << it->id << " posx=" << it->x << " posy=" << it->y << " tNext=" << tNext);
-
-                    } else if (update_node_message.type == UPDATE_REMOVE_NODE) {
-
-                        //It is not allowed to delete a node during the simulation step -> the node will be deactivated
-                        m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::DeactivateNode, m_nodeManager, it->id));
-                        NS_LOG_DEBUG("Received REMOVE_NODES: mosNID=" << it->id << " tNext=" << tNext);
-                    }
+                if (message.type() == AddNode_NodeType_RADIO_NODE) {
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
+                    NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " posx=" << message.x() << " posy=" << message.y() << " tNext=" << tNext);
+                } else if (message.type() == AddNode_NodeType_WIRED_NODE) {
+                    // m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, message.node_id()));
+                    NS_LOG_DEBUG("Received ADD_WIRED_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
+                } else {
+                    NS_LOG_ERROR("Received unhandeled ADD_..._NODE message");
+                    m_closeConnection = true;
+                    return;
                 }
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
                 break;
             }
+            case CommandMessage_CommandType_UPDATE_NODE:
+            {
+                UpdateNode message = ambassadorFederateChannel.readUpdateNode();
+                Time tNext = NanoSeconds(message.time());
+                Time tDelay = tNext - m_sim->Now();
 
+                for ( size_t i = 0; i < message.properties_size(); i++ ) { //fill the update messages into our struct
+                    UpdateNode_NodeData node_data = message.properties(i);
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, node_data.id(), Vector(node_data.x(), node_data.y(), node_data.z())));
+                    NS_LOG_DEBUG("Received UPDATE_NODE(S): mosNID=" << node_data.id() << " posx=" << node_data.x() << " posy=" << node_data.y() << " tNext=" << tNext);
+                }
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
+                break;
+            }
+            case CommandMessage_CommandType_REMOVE_NODE:
+            {
+                RemoveNode message = ambassadorFederateChannel.readRemoveNode();
+                Time tNext = NanoSeconds(message.time());
+                Time tDelay = tNext - m_sim->Now();
+                
+                // It is not allowed to delete a node during the simulation step -> the node will be deactivated
+                m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::DeactivateNode, m_nodeManager, message.node_id()));
+                NS_LOG_DEBUG("Received REMOVE_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
+
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
+                break;
+            }
             // advance the next time step and run the simulation read the next time step
             case CommandMessage_CommandType_ADVANCE_TIME:
+
                 uint64_t advancedTime;
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
 
@@ -209,8 +224,6 @@ namespace ns3 {
                 }
                 break;
             }
-
-
             case CommandMessage_CommandType_CONF_CELL_RADIO:
 
                 try {
