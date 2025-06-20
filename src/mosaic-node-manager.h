@@ -130,6 +130,8 @@ namespace ns3 {
         MosaicNs3Server *m_serverPtr;
         std::map<uint32_t, uint32_t> m_mosaic2nsdrei;
         std::map<uint32_t, uint32_t> m_nsdrei2mosaic;
+        std::unordered_map<uint32_t, bool> m_isCellRadioConfigured;
+        std::unordered_map<uint32_t, bool> m_isWifiRadioConfigured;
         std::unordered_map<uint32_t, bool> m_isDeactivated;
 
         /** Helpers **/

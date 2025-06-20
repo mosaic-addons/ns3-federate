@@ -448,6 +448,12 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
+        if (m_isWifiRadioConfigured[nodeId]) {
+            NS_LOG_ERROR("Cannot configure WIFI interface multiple times. Ignoring.");
+            return;
+        }
+        m_isWifiRadioConfigured[nodeId] = true;
+
         NS_LOG_INFO("[node=" << nodeId << "] txPow=" << transmitPower << " ip=" << ip);
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
@@ -472,8 +478,6 @@ namespace ns3 {
                 wavePhy->SetTxPowerEnd(txDBm);
             }
         }
-
-        // FIXME: Somehow do the following logic only exactly once, with first config message.
 
         // Devices are 0:Loopback 1:Wifi 2:LTE
         Ptr<NetDevice> device = node->GetDevice(1);
@@ -501,6 +505,13 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
+        if (m_isCellRadioConfigured[nodeId]) {
+            NS_LOG_ERROR("Cannot configure CELL interface multiple times. Ignoring.");
+            // When applying this multiple times (with different IPs) then currently the routing will break...
+            return;
+        }
+        m_isCellRadioConfigured[nodeId] = true;
+
         NS_LOG_INFO("[node=" << nodeId << "] ip=" << ip);
 
         /* check for valid IP, required to match routing configuration */
@@ -519,9 +530,6 @@ namespace ns3 {
             return;
         }
         ssa->Enable();
-
-        // FIXME: Somehow do the following logic only exactly once, with first config message.
-        // When applying this multiple times (with different IPs) then routing might break or require fixes...
 
         // Devices are 0:Loopback 1:Wifi 2:LTE
         Ptr<NetDevice> device = node->GetDevice(2);
