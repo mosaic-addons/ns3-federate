@@ -178,25 +178,24 @@ namespace ns3 {
             case CommandMessage_CommandType_CONF_WIFI_RADIO:
             {
                 try {
-                    CSC_config_message config_message;
-                    ambassadorFederateChannel.readConfigureWifiRadio(config_message);
-                    Time tNext = NanoSeconds(config_message.time);
+                    ConfigureWifiRadio message = ambassadorFederateChannel.readConfigureWifiRadio();
+                    Time tNext = NanoSeconds(message.time());
                     Time tDelay = tNext - m_sim->Now();
                     double transmitPower = -1;
                     bool radioTurnedOn = false;
                     Ipv4Address ip;
 
-                    if (config_message.num_radios == SINGLE_RADIO) {
+                    if (message.radio_number() == ConfigureWifiRadio_RadioNumber_SINGLE_RADIO) {
                         radioTurnedOn = true; 
-                        transmitPower = config_message.primary_radio.tx_power;
-                        ip.Set(config_message.primary_radio.ip_address);
+                        transmitPower = message.primary_radio_configuration().transmission_power();
+                        ip.Set(message.primary_radio_configuration().ip_address());
                     } else {
                         NS_LOG_ERROR("Currently only SINGLE_RADIO is supported");
                         // other modes currently not supported, other modes turn off radio
                     }
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, config_message.node_id, radioTurnedOn, transmitPower, ip));
-                    NS_LOG_DEBUG("Received CONF_WIFI_RADIO: mosNID=" << config_message.node_id << " tNext=" << tNext);
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, message.external_id(), radioTurnedOn, transmitPower, ip));
+                    NS_LOG_DEBUG("Received CONF_WIFI_RADIO: mosNID=" << message.external_id() << " tNext=" << tNext);
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");
@@ -232,20 +231,19 @@ namespace ns3 {
             case CommandMessage_CommandType_CONF_CELL_RADIO:
             {
                 try {
-                    CSC_config_message config_message;
-                    ambassadorFederateChannel.readConfigureWifiRadio(config_message);
-                    Time tNext = NanoSeconds(config_message.time);
+                    ConfigureWifiRadio message = ambassadorFederateChannel.readConfigureWifiRadio();
+                    Time tNext = NanoSeconds(message.time());
                     Time tDelay = tNext - m_sim->Now();
                     bool radioTurnedOn = false;
                     Ipv4Address ip;
 
-                    if (config_message.num_radios == SINGLE_RADIO) {
+                    if (message.radio_number() == ConfigureWifiRadio_RadioNumber_SINGLE_RADIO) {
                         radioTurnedOn = true; 
-                        ip.Set(config_message.primary_radio.ip_address);
+                        ip.Set(message.primary_radio_configuration().ip_address());
                     }
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, config_message.node_id, radioTurnedOn, ip));
-                    NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << config_message.node_id << " tNext=" << tNext);
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.external_id(), radioTurnedOn, ip));
+                    NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << message.external_id() << " tNext=" << tNext);
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");

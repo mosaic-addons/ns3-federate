@@ -37,17 +37,6 @@ constexpr const int INVALID_SOCKET = -1;
  */
 namespace ClientServerChannelSpace {
 
-enum RADIO_NUMBER {
-	NO_RADIO=0,
-	SINGLE_RADIO=1,
-	DUAL_RADIO=2
-};
-
-enum CHANNEL_MODE {
-	SINGLE_CHANNEL=1,		/* Radio stays on one channel the whole time */
-    DUAL_CHANNEL=2	/* Radio alternates between two channels */
-};
-
 enum RADIO_CHANNEL {
 	SCH1 = 0,
 	SCH2 = 1,
@@ -63,25 +52,6 @@ enum RADIO_CHANNEL {
 struct CSC_init_return{
     int64_t start_time;
     int64_t end_time;
-};
-
-struct CSC_radio_config{
-	bool turnedOn;
-	uint32_t ip_address;
-	uint32_t subnet;
-	double tx_power;
-	CHANNEL_MODE channelmode;
-	RADIO_CHANNEL primary_channel;
-	RADIO_CHANNEL secondary_channel;
-};
-
-struct CSC_config_message{
-	int64_t time;
-    int msg_id;
-    int node_id;
-    RADIO_NUMBER num_radios;
-    CSC_radio_config primary_radio;
-    CSC_radio_config secondary_radio;
 };
 
 struct CSC_topo_address{
@@ -163,7 +133,7 @@ class ClientServerChannel {
 		 * @param return_value the struct to fill the data in
 		 * @return 0 if successful
 		 */
-		int readConfigureWifiRadio(CSC_config_message &return_value);
+		ConfigureWifiRadio readConfigureWifiRadio(void);
 
 		/**
 		 * Reads a SendWifiMessage message from the channel

@@ -62,36 +62,7 @@ namespace std {
         }
         return out;
     }
-    ostream& operator<< ( ostream& out, ClientServerChannelSpace::RADIO_NUMBER num ) {
-        switch ( num ) {
-            case ClientServerChannelSpace::RADIO_NUMBER::NO_RADIO: out << "RADIO_NUMBER no radio"; break;
-            case ClientServerChannelSpace::RADIO_NUMBER::SINGLE_RADIO: out << "RADIO_NUMBER single radio"; break;
-            case ClientServerChannelSpace::RADIO_NUMBER::DUAL_RADIO: out << "RADIO_NUMBER dual radio"; break;
-        }
-        return out;
-    }
-    ostream& operator<< ( ostream& out, ClientServerChannelSpace::CHANNEL_MODE mode ) {
-        switch ( mode ) {
-            case ClientServerChannelSpace::CHANNEL_MODE::SINGLE_CHANNEL: out << "CHANNEL_MODE single channel"; break;
-            case ClientServerChannelSpace::CHANNEL_MODE::DUAL_CHANNEL: out << "CHANNEL_MODE dual channel"; break;
-        }
-        return out;
-    }
-    ostream& operator<< ( ostream& out, ClientServerChannelSpace::RADIO_CHANNEL channel ) {
-        switch ( channel ) {
-            case ClientServerChannelSpace::RADIO_CHANNEL::SCH1: out << "RADIO_CHANNEL sch1"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::SCH2: out << "RADIO_CHANNEL sch2"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::SCH3: out << "RADIO_CHANNEL sch3"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::SCH4: out << "RADIO_CHANNEL sch4"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::SCH5: out << "RADIO_CHANNEL sch5"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::SCH6: out << "RADIO_CHANNEL sch6"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::CCH: out << "RADIO_CHANNEL cch"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::CELL: out << "RADIO_CHANNEL cell"; break;
-            case ClientServerChannelSpace::RADIO_CHANNEL::UNDEF_CHANNEL: out << "RADIO_CHANNEL undef"; break;
-        }
-        return out;
-    }
-
+    
 } // namespace std
 
 namespace ClientServerChannelSpace {
@@ -414,121 +385,29 @@ int64_t ClientServerChannel::readTimeMessage() {
     return time;
 }
 
-int ClientServerChannel::readConfigureWifiRadio(CSC_config_message &return_value) {
+ConfigureWifiRadio ClientServerChannel::readConfigureWifiRadio(void) {
     NS_LOG_FUNCTION(this);
-    const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
-    if ( !message_size ) { return -1; }
-    NS_LOG_LOGIC("read config announced message size: " << *message_size);
-
+    const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
+    if (!message_size) { 
+        NS_LOG_ERROR("Cannot access message size");
+        exit(1);
+    }
+    if (*message_size < 0) {
+        NS_LOG_ERROR("Message size smaller zero");
+        exit(1);
+    }
     char message_buffer[*message_size];
-    const size_t count = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
-    NS_LOG_LOGIC("read config received message size: " << count);
-
+    const size_t count = recv(sock, message_buffer, *message_size, MSG_WAITALL);
+    if (*message_size != count) {
+        NS_LOG_ERROR("Expected " << *message_size << " bytes, but read " << count << " bytes");
+        exit(1);
+    }
     google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
     google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
 
-    ConfigureWifiRadio conf_message;
-    conf_message.ParseFromCodedStream ( &codedIn );
-
-    return_value.time = conf_message.time();
-    return_value.msg_id = conf_message.message_id();
-    return_value.node_id = conf_message.external_id();
-
-    NS_LOG_INFO("read config message time: " << return_value.time);
-    NS_LOG_INFO("read config message msg id: " << return_value.msg_id);
-    NS_LOG_INFO("read config message node id: " << return_value.node_id);
-
-    if ( conf_message.radio_number() == ConfigureWifiRadio_RadioNumber_SINGLE_RADIO ) {
-        return_value.num_radios = SINGLE_RADIO;
-    } else if ( conf_message.radio_number() == ConfigureWifiRadio_RadioNumber_DUAL_RADIO ) {
-        return_value.num_radios = DUAL_RADIO;
-    } else if ( conf_message.radio_number() == ConfigureWifiRadio_RadioNumber_NO_RADIO ) {
-        return_value.num_radios = NO_RADIO;
-    } else {
-        NS_LOG_ERROR("Unexpected State.");
-        exit(1);
-    }
-    NS_LOG_INFO("read config message num_radios: " << return_value.num_radios);
-
-    if ( return_value.num_radios == SINGLE_RADIO || return_value.num_radios == DUAL_RADIO ) {
-        return_value.primary_radio.turnedOn = conf_message.primary_radio_configuration().receiving_messages();
-        return_value.primary_radio.ip_address = conf_message.primary_radio_configuration().ip_address();
-        return_value.primary_radio.subnet = conf_message.primary_radio_configuration().subnet_address();
-        return_value.primary_radio.tx_power = conf_message.primary_radio_configuration().transmission_power();
-        return_value.primary_radio.primary_channel
-            = protoChannelToChannel ( conf_message.primary_radio_configuration().primary_radio_channel() );
-        NS_LOG_INFO("read config message primary radio turned on: "
-            << std::boolalpha << return_value.primary_radio.turnedOn);
-        NS_LOG_INFO("read config message primary radio ip address: "
-            << uint32_to_ip ( return_value.primary_radio.ip_address ));
-        NS_LOG_INFO("read config message primary radio subnet: "
-            << uint32_to_ip ( return_value.primary_radio.subnet ));
-        NS_LOG_INFO("read config message primary radio tx_power: "
-            << return_value.primary_radio.tx_power);
-        NS_LOG_INFO("read config message primary radio primary channel: "
-            << return_value.primary_radio.primary_channel);
-
-        if ( conf_message.primary_radio_configuration().radio_mode()
-                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_SINGLE_CHANNEL ) {
-            return_value.primary_radio.channelmode = SINGLE_CHANNEL;
-        } else if ( conf_message.primary_radio_configuration().radio_mode()
-                                == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-            return_value.primary_radio.channelmode = DUAL_CHANNEL;
-            return_value.primary_radio.secondary_channel
-                = protoChannelToChannel ( conf_message.primary_radio_configuration().secondary_radio_channel() );
-        } else {
-            NS_LOG_ERROR("Unexpected State.");
-            exit(1);
-        }
-        NS_LOG_INFO("read config message primary radio channel mode: "
-            << return_value.primary_radio.channelmode);
-        if ( conf_message.primary_radio_configuration().radio_mode()
-                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-            NS_LOG_INFO("read config message primary radio secondary channel: "
-                << return_value.primary_radio.secondary_channel);
-        }
-    }
-
-    if(return_value.num_radios == DUAL_RADIO) {
-        return_value.secondary_radio.turnedOn = conf_message.secondary_radio_configuration().receiving_messages();
-        return_value.secondary_radio.ip_address = conf_message.secondary_radio_configuration().ip_address();
-        return_value.secondary_radio.subnet = conf_message.secondary_radio_configuration().subnet_address();
-        return_value.secondary_radio.tx_power = conf_message.secondary_radio_configuration().transmission_power();
-        return_value.secondary_radio.primary_channel
-            = protoChannelToChannel ( conf_message.secondary_radio_configuration().primary_radio_channel() );
-        NS_LOG_INFO("read config message secondary radio turned on: "
-            << std::boolalpha <<  return_value.secondary_radio.turnedOn);
-        NS_LOG_INFO("read config message secondary radio ip address: "
-            << uint32_to_ip ( return_value.secondary_radio.ip_address ));
-        NS_LOG_INFO("read config message secondary radio subnet: "
-            << uint32_to_ip ( return_value.secondary_radio.subnet ));
-        NS_LOG_INFO("read config message secondary radio tx_power: "
-            << return_value.secondary_radio.tx_power);
-        NS_LOG_INFO("read config message secondary radio primary channel: "
-            << return_value.secondary_radio.primary_channel);
-
-        if ( conf_message.secondary_radio_configuration().radio_mode()
-                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_SINGLE_CHANNEL) {
-            return_value.secondary_radio.channelmode = SINGLE_CHANNEL;
-        } else if ( conf_message.secondary_radio_configuration().radio_mode()
-                                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-            return_value.secondary_radio.channelmode = DUAL_CHANNEL;
-            return_value.secondary_radio.secondary_channel
-                = protoChannelToChannel(conf_message.secondary_radio_configuration().secondary_radio_channel());
-        } else {
-            NS_LOG_ERROR("Unexpected State.");
-            exit(1);
-        }
-        NS_LOG_INFO("read config message secondary radio channel mode: "
-            << return_value.secondary_radio.channelmode);
-        if ( conf_message.primary_radio_configuration().radio_mode()
-                    == ConfigureWifiRadio_RadioConfiguration_RadioMode_DUAL_CHANNEL) {
-            NS_LOG_INFO("read config message secondary radio secondary channel: "
-                << return_value.secondary_radio.secondary_channel);
-        }
-    }
-
-    return 0;
+    ConfigureWifiRadio message;
+    message.ParseFromCodedStream ( &codedIn );
+    return message;
 }
 
 int ClientServerChannel::readSendWifiMessage ( CSC_send_message &return_value ) {
