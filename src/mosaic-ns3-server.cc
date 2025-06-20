@@ -182,19 +182,17 @@ namespace ns3 {
                     Time tNext = NanoSeconds(message.time());
                     Time tDelay = tNext - m_sim->Now();
                     double transmitPower = -1;
-                    bool radioTurnedOn = false;
                     Ipv4Address ip;
 
                     if (message.radio_number() == ConfigureWifiRadio_RadioNumber_SINGLE_RADIO) {
-                        radioTurnedOn = true; 
                         transmitPower = message.primary_radio_configuration().transmission_power();
                         ip.Set(message.primary_radio_configuration().ip_address());
                     } else {
                         NS_LOG_ERROR("Currently only SINGLE_RADIO is supported");
-                        // other modes currently not supported, other modes turn off radio
+                        exit(1);
                     }
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, message.node_id(), radioTurnedOn, transmitPower, ip));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, message.node_id(), transmitPower, ip));
                     NS_LOG_DEBUG("Received CONF_WIFI_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 } catch (int e) {
@@ -235,7 +233,7 @@ namespace ns3 {
                     Ipv4Address ip;
                     ip.Set(message.ip_address());
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), true, ip));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), ip));
                     NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 } catch (int e) {

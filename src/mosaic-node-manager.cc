@@ -421,23 +421,34 @@ namespace ns3 {
         }
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
+
+        /* deactivate Wifi */
+        // Devices are 0:Loopback 1:Wifi 2:LTE
         Ptr<WifiNetDevice> netDev = DynamicCast<WifiNetDevice> (node->GetDevice(1));
-        
         if (netDev == nullptr) {
             NS_LOG_ERROR("Node " << nodeId << " has no WifiNetDevice");
             return;
         }
         netDev->GetPhy()->SetOffMode();
         
+        /* deactivate App */
+        Ptr<Application> app = node->GetApplication(0);
+        Ptr<MosaicProxyApp> ssa = app->GetObject<MosaicProxyApp>();
+        if (!ssa) {
+            NS_LOG_ERROR("No app found on node " << nodeId << " !");
+            return;
+        }
+        ssa->Disable();
+        
         m_isDeactivated[nodeId] = true;
     }
 
-    void MosaicNodeManager::ConfigureWifiRadio(uint32_t mosaicNodeId, bool radioTurnedOn, double transmitPower, Ipv4Address ip) {
+    void MosaicNodeManager::ConfigureWifiRadio(uint32_t mosaicNodeId, double transmitPower, Ipv4Address ip) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] radioTurnedOn="<< radioTurnedOn << " txPow=" << transmitPower << " ip=" << ip);
+        NS_LOG_INFO("[node=" << nodeId << "] txPow=" << transmitPower << " ip=" << ip);
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<Application> app = node->GetApplication(0);
@@ -446,56 +457,51 @@ namespace ns3 {
             NS_LOG_ERROR("No app found on node " << nodeId << " !");
             return;
         }
-        if (radioTurnedOn) {
-            ssa->Enable();
-            if (transmitPower > -1) {
-                Ptr<WifiNetDevice> netDev = DynamicCast<WifiNetDevice> (node->GetDevice(1));
-                if (netDev == nullptr) {
-                    NS_LOG_ERROR("Inconsistency: no matching NetDevice found on node while configuring");
-                    return;
-                }                        
-                Ptr<YansWifiPhy> wavePhy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
-                NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << wavePhy);
-                if (wavePhy != 0) {
-                    double txDBm = 10 * log10(transmitPower);
-                    wavePhy->SetTxPowerStart(txDBm);
-                    wavePhy->SetTxPowerEnd(txDBm);
-                }
+        ssa->Enable();
+        if (transmitPower > -1) {
+            Ptr<WifiNetDevice> netDev = DynamicCast<WifiNetDevice> (node->GetDevice(1));
+            if (netDev == nullptr) {
+                NS_LOG_ERROR("Inconsistency: no matching NetDevice found on node while configuring");
+                return;
+            }                        
+            Ptr<YansWifiPhy> wavePhy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
+            NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << wavePhy);
+            if (wavePhy != 0) {
+                double txDBm = 10 * log10(transmitPower);
+                wavePhy->SetTxPowerStart(txDBm);
+                wavePhy->SetTxPowerEnd(txDBm);
             }
-
-            // FIXME: Somehow do the following logic only exactly once, with first config message.
-
-            // Devices are 0:Loopback 1:Wifi 2:LTE
-            Ptr<NetDevice> device = node->GetDevice(1);
-            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
-            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
-
-            // Additionally assign an extra IPv4 Address (without ipv4 helper)
-            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
-            ipv4proto->AddAddress(ifIndex, ipv4Addr);
-
-            // logging
-            std::stringstream ss;
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
-                << " dev=" << node->GetDevice(ifIndex) 
-                << " wifiAddr=" << ss.str()
-            );
-
-        } else {
-            ssa->Disable();
         }
+
+        // FIXME: Somehow do the following logic only exactly once, with first config message.
+
+        // Devices are 0:Loopback 1:Wifi 2:LTE
+        Ptr<NetDevice> device = node->GetDevice(1);
+        Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+        int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
+
+        // Additionally assign an extra IPv4 Address (without ipv4 helper)
+        Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
+        ipv4proto->AddAddress(ifIndex, ipv4Addr);
+
+        // logging
+        std::stringstream ss;
+        for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+            Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+            ss << "|" << iaddr.GetLocal ();
+        }
+        NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
+            << " dev=" << node->GetDevice(ifIndex) 
+            << " wifiAddr=" << ss.str()
+        );
     }
 
-    void MosaicNodeManager::ConfigureCellRadio(uint32_t mosaicNodeId, bool radioTurnedOn, Ipv4Address ip) {
+    void MosaicNodeManager::ConfigureCellRadio(uint32_t mosaicNodeId, Ipv4Address ip) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] radioTurnedOn="<< radioTurnedOn << " ip=" << ip);
+        NS_LOG_INFO("[node=" << nodeId << "] ip=" << ip);
 
         /* check for valid IP, required to match routing configuration */
         bool partOf10 = ip.CombineMask("255.0.0.0").Get() == Ipv4Address("10.0.0.0").Get();
@@ -512,42 +518,37 @@ namespace ns3 {
             NS_LOG_ERROR("No app found on node " << nodeId << " !");
             return;
         }
-        if (radioTurnedOn) {
-            ssa->Enable();
+        ssa->Enable();
 
-            // FIXME: Somehow do the following logic only exactly once, with first config message.
-            // When applying this multiple times (with different IPs) then routing might break or require fixes...
+        // FIXME: Somehow do the following logic only exactly once, with first config message.
+        // When applying this multiple times (with different IPs) then routing might break or require fixes...
 
-            // Devices are 0:Loopback 1:Wifi 2:LTE
-            Ptr<NetDevice> device = node->GetDevice(2);
-            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
-            uint32_t ifIndex = device->GetIfIndex ();
+        // Devices are 0:Loopback 1:Wifi 2:LTE
+        Ptr<NetDevice> device = node->GetDevice(2);
+        Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+        uint32_t ifIndex = device->GetIfIndex ();
 
-            // Additionally assign an extra IPv4 Address (without ipv4 helper)
-            // ATTENTION: This currently requires changes in NoBackhaulEpcHelper::ActivateEpsBearer to fully work
-            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
-            ipv4proto->AddAddress(ifIndex, ipv4Addr);
+        // Additionally assign an extra IPv4 Address (without ipv4 helper)
+        // ATTENTION: This currently requires changes in NoBackhaulEpcHelper::ActivateEpsBearer to fully work
+        Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
+        ipv4proto->AddAddress(ifIndex, ipv4Addr);
 
-            // logging
-            std::stringstream ss;
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId() << "]"
-                << " dev=" << device 
-                << " lteAddr=" << ss.str()
-                << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
-                << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
-            );
-
-            NS_LOG_INFO("Attach UE to specific eNB...");
-            NS_LOG_INFO("ATTENTION: This requires about 21ms to fully connect");
-            // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
-            Ptr<Node> node = NodeList::GetNode(GetNs3NodeId(mosaicNodeId));
-            m_lteHelper->Attach (device, m_enbDevices.Get(0));
-        } else {
-            ssa->Disable();
+        // logging
+        std::stringstream ss;
+        for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+            Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+            ss << "|" << iaddr.GetLocal ();
         }
+        NS_LOG_DEBUG("[node=" << node->GetId() << "]"
+            << " dev=" << device 
+            << " lteAddr=" << ss.str()
+            << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
+            << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
+        );
+
+        NS_LOG_INFO("Attach UE to specific eNB...");
+        NS_LOG_INFO("ATTENTION: This requires about 21ms to fully connect");
+        // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
+        m_lteHelper->Attach (device, m_enbDevices.Get(0));
     }
 }
