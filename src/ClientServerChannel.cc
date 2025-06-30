@@ -433,7 +433,7 @@ SendWifiMessage ClientServerChannel::readSendWifiMessage(void) {
     SendWifiMessage message;
     message.ParseFromCodedStream(&codedIn);
 
-    if (message.has_topo_address() ) {
+    if (message.has_topological_address() ) {
         // all good
     } else if (message.has_rectangle_address() ) {
         NS_LOG_ERROR("Not yet implemented.");

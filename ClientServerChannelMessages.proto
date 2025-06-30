@@ -144,7 +144,7 @@ message SendWifiMessage {
     required uint32 message_id = 4;
     required uint64 length = 5;
     
-    message TopoAddress {
+    message TopologicalAddress {
         required uint32 ip_address = 1;
         optional uint32 ttl = 2;
     }
@@ -162,7 +162,7 @@ message SendWifiMessage {
         required double radius = 4;
     }
     oneof address {
-        TopoAddress topo_address = 6;
+        TopologicalAddress topological_address = 6;
         GeoRectangleAddress rectangle_address = 7;
         GeoCircleAddress circle_address = 8;
     }   

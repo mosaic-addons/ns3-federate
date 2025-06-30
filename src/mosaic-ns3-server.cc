@@ -207,7 +207,7 @@ namespace ns3 {
             {
                 try {
                     SendWifiMessage message = ambassadorFederateChannel.readSendWifiMessage();
-                    Ipv4Address ip(message.topo_address().ip_address());
+                    Ipv4Address ip(message.topological_address().ip_address());
 
                     Time tNext = NanoSeconds(message.time());
                     // ns3 does not like to send packets at time zero, use 1ns instead
