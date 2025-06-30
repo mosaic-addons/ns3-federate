@@ -511,10 +511,6 @@ void ClientServerChannel::writeCommand(CommandMessage_CommandType cmd) {
     commandMessage.SerializeToCodedStream(&codedOut);
 
     const size_t count = send ( sock, message_buffer, message_size, 0 );
-    if (message_size != count) {
-        NS_LOG_ERROR("Expected " << message_size << " bytes, but wrote " << count << " bytes");
-        exit(1);
-    }
 }
 
 void ClientServerChannel::writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RadioChannel channel, int rssi) {
@@ -557,10 +553,6 @@ void ClientServerChannel::writeTimeMessage(int64_t time) {
     time_message.SerializeToCodedStream ( &codedOut );
 
     const size_t count = send ( sock, message_buffer, message_size, 0 );
-    if (message_size != count) {
-        NS_LOG_ERROR("Expected " << message_size << " bytes, but wrote " << count << " bytes");
-        exit(1);
-    }
 }
 
 void ClientServerChannel::writePort(uint32_t port) {
