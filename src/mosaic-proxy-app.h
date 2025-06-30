@@ -42,9 +42,9 @@ namespace ns3 {
 
         void SetNodeManager(MosaicNodeManager* nodeManager);
 
-        void SetSockets(void);
+        void SetSockets(int outDevice);
         
-        void TransmitPacket(Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLength);
+        void TransmitPacket(Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength);
         
         void Enable();
         
@@ -61,6 +61,7 @@ namespace ns3 {
 
         Ptr<Socket> m_socket{nullptr};
                 
+        int m_outDevice = 0;
         uint16_t m_sendCount = 0;
         uint64_t m_recvCount = 0;
 

@@ -65,32 +65,33 @@ namespace ns3 {
         m_active = false;
     }
 
-    void MosaicProxyApp::SetSockets(void) {
+    void MosaicProxyApp::SetSockets(int outDevice) {
         NS_LOG_FUNCTION(GetNode()->GetId());
 
-        if (!m_socket) {
-
-            m_socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
-            InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
-            m_socket->Bind(local);
-            // HACK: always use LTE interface for outgoing messages
-            if(GetNode()->GetNDevices() == 3) {
-                // if multiple netDevices: bind socket to last device
-                m_socket->BindToNetDevice (GetNode()->GetDevice(2));
-            }
-            m_socket->SetAllowBroadcast(true);
-
-            m_socket->SetRecvCallback(MakeCallback(&MosaicProxyApp::Receive, this));
-        } else {
-            NS_FATAL_ERROR("creation attempt of a socket for MosaicProxyApp that has already a socket active");
+        if (m_socket) {
+            NS_FATAL_ERROR("Ignore creation attempt of a socket for MosaicProxyApp that has already a socket active. ");
             return;
         }
+
+        m_socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
+        InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
+        m_socket->Bind(local);
+        if(GetNode()->GetNDevices() == 3) {
+            // Devices are 0:Loopback 1:Wifi 2:LTE
+            m_socket->BindToNetDevice (GetNode()->GetDevice(outDevice));
+        } else {
+            NS_LOG_WARN("Installing app on node which has not exactly 3 devices...");
+        }
+        m_socket->SetAllowBroadcast(true);
+        m_socket->SetRecvCallback(MakeCallback(&MosaicProxyApp::Receive, this));
+        m_outDevice = outDevice;
     }
 
-    void MosaicProxyApp::TransmitPacket(Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLength) {
-        NS_LOG_FUNCTION(GetNode()->GetId() << dstAddr << channel << msgID << payLength);
+    void MosaicProxyApp::TransmitPacket(Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength) {
+        NS_LOG_FUNCTION(GetNode()->GetId() << dstAddr << msgID << payLength);
 
         if (!m_active) {
+            NS_LOG_WARN("[node=" << GetNode()->GetId() << "." << m_outDevice << "] This app is disabled but should transmit a packet. Ignore.");
             return;
         }
 
@@ -101,17 +102,15 @@ namespace ns3 {
         packet->AddByteTag(msgIDTag);
 
         m_sendCount++;
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength << " PacketID=" << packet->GetUid() << " PacketCount=" << m_sendCount);
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid());
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength << " PacketID=" << packet->GetUid() << " PacketCount=" << m_sendCount);
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid());
         LogComponentEnable ("TrafficControlLayer", (LogLevel)(LOG_DEBUG | LOG_PREFIX_NODE));
-
-        // TODO: use channel 
 
         //call the socket of this node to send the packet
         InetSocketAddress ipSA = InetSocketAddress(dstAddr, m_port);
         int result = m_socket->SendTo(packet, 0, ipSA);
         if (result == -1) {
-            NS_LOG_ERROR("[node=" << GetNode()->GetId() << "] Sending packet failed!");
+            NS_LOG_ERROR("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Sending packet failed!");
             exit(1);
         }
     }
@@ -123,11 +122,12 @@ namespace ns3 {
     void MosaicProxyApp::Receive(Ptr<Socket> socket) {
         NS_LOG_FUNCTION(GetNode()->GetId());
         if (!m_active) {
+            NS_LOG_WARN("[node=" << GetNode()->GetId() << "." << m_outDevice << "] This app is disabled but it received a packet. Ignore.");
             return;
         }
 
         Ptr<Packet> packet;
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Start receiving...");
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Start receiving...");
         packet = socket->Recv();
 
         m_recvCount++;
@@ -138,13 +138,12 @@ namespace ns3 {
         if (packet->FindFirstMatchingByteTag(Tag)) {
             //send the MsgID
             msgID = Tag.GetFlowId();
-            //find the message and send it back
         } else {
             NS_LOG_ERROR("Error, message has no msgIdTag");
             msgID = -1;
         }
 
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
+        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
         LogComponentDisable ("TrafficControlLayer", LOG_DEBUG);
 
         if (m_nodeManager != 0) {
@@ -155,7 +154,7 @@ namespace ns3 {
             /* Add one slash, to enable this test 
             std::cout << std::endl;
             Ipv4Address ip("7.0.0.4");
-            TransmitPacket(ip, ClientServerChannelSpace::RADIO_CHANNEL::CELL, 1234, 124);
+            TransmitPacket(ip, 1234, 124);
             //*/
         }
     }
