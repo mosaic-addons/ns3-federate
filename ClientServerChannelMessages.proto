@@ -102,7 +102,6 @@ enum RadioChannel {
     PROTO_SCH5 = 5;
     PROTO_SCH6 = 6;
     PROTO_UNDEF = 7;
-    PROTO_CELL = 8;
 }
 
 /*
@@ -187,4 +186,18 @@ message ConfigureCellRadio {
     required uint32 node_id = 2;
     required uint32 ip_address = 3;
     required uint32 subnet_address = 4; // unused, placeholder
+}
+
+message SendCellMessage {
+    required int64 time = 1;
+    required uint32 node_id = 2;
+    required uint32 message_id = 3;
+    required uint64 length = 4;
+
+    message TopologicalAddress {
+        required uint32 ip_address = 1;
+    }
+    oneof address {
+        TopologicalAddress topological_address = 5;
+    }
 }

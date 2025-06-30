@@ -127,6 +127,13 @@ class ClientServerChannel {
 		 */
 		ConfigureCellRadio readConfigureCellRadio(void);
 
+		/**
+		 * Reads a SendCellMessage message from the channel
+		 *
+		 * @return SendCellMessage message
+		 */
+		SendCellMessage readSendCellMessage(void);
+
 		/** Reads TimeMessage from the channel and returns the contained time as a long */
 		virtual int64_t readTimeMessage();
 

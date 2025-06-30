@@ -215,8 +215,8 @@ namespace ns3 {
                         tNext = NanoSeconds(1);
                     }
                     Time tDelay = tNext - m_sim->Now();
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendMsg, m_nodeManager, message.node_id(), ip, message.channel_id(), message.message_id(), message.length()));
-                    NS_LOG_DEBUG("Received CMD_MSG_SEND: mosNID=" << message.node_id() << " id=" << message.message_id() << " sendTime=" << message.time() << " length=" << message.length());
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendWifiMsg, m_nodeManager, message.node_id(), ip, message.channel_id(), message.message_id(), message.length()));
+                    NS_LOG_DEBUG("Received SEND_WIFI_MSG: mosNID=" << message.node_id() << " id=" << message.message_id() << " sendTime=" << message.time() << " length=" << message.length());
                 } catch (int e) {
                     NS_LOG_ERROR("Error while sending message");
                 }
@@ -241,6 +241,27 @@ namespace ns3 {
                     m_closeConnection = true;
                 }
                 
+                ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
+                break;
+            }
+            case CommandMessage_CommandType_SEND_CELL_MSG:
+            {
+                try {
+                    SendCellMessage message = ambassadorFederateChannel.readSendCellMessage();
+                    Ipv4Address ip(message.topological_address().ip_address());
+
+                    Time tNext = NanoSeconds(message.time());
+                    // ns3 does not like to send packets at time zero, use 1ns instead
+                    if (tNext == NanoSeconds(0)) {
+                        tNext = NanoSeconds(1);
+                    }
+                    Time tDelay = tNext - m_sim->Now();
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendCellMsg, m_nodeManager, message.node_id(), ip, message.message_id(), message.length()));
+                    NS_LOG_DEBUG("Received SEND_CELL_MSG: mosNID=" << message.node_id() << " id=" << message.message_id() << " sendTime=" << message.time() << " length=" << message.length());
+                } catch (int e) {
+                    NS_LOG_ERROR("Error while sending message");
+                }
+
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
                 break;
             }

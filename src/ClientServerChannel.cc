@@ -449,7 +449,6 @@ SendWifiMessage ClientServerChannel::readSendWifiMessage(void) {
     return message;
 }
 
-
 ConfigureCellRadio ClientServerChannel::readConfigureCellRadio(void) {
     NS_LOG_FUNCTION(this);
     const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
@@ -472,6 +471,37 @@ ConfigureCellRadio ClientServerChannel::readConfigureCellRadio(void) {
 
     ConfigureCellRadio message;
     message.ParseFromCodedStream ( &codedIn );
+    return message;
+}
+
+SendCellMessage ClientServerChannel::readSendCellMessage(void) {
+    NS_LOG_FUNCTION(this);
+    const std::shared_ptr < uint32_t > message_size = readVarintPrefix(sock);
+    if (!message_size) { 
+        NS_LOG_ERROR("Cannot access message size");
+        exit(1);
+    }
+    if (*message_size < 0) {
+        NS_LOG_ERROR("Message size smaller zero");
+        exit(1);
+    }
+    char message_buffer[*message_size];
+    const size_t count = recv(sock, message_buffer, *message_size, MSG_WAITALL);
+    if (*message_size != count) {
+        NS_LOG_ERROR("Expected " << *message_size << " bytes, but read " << count << " bytes");
+        exit(1);
+    }
+    google::protobuf::io::ArrayInputStream arrayIn ( message_buffer, *message_size );
+    google::protobuf::io::CodedInputStream codedIn ( &arrayIn );
+
+    SendCellMessage message;
+    message.ParseFromCodedStream(&codedIn);
+
+    if (!message.has_topological_address()) {
+        NS_LOG_ERROR("Address is missing.");
+        exit(1);
+    }
+
     return message;
 }
 

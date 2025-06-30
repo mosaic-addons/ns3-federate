@@ -95,7 +95,7 @@ namespace ns3 {
         void ConfigureCellRadio(uint32_t mosaicNodeId, Ipv4Address ip);
 
         /**
-         * @brief start the sending of a message on a node
+         * @brief start the sending of a wifi message on a node
          *
          * @param mosaicNodeId id of the node
          * @param dstAddr the IPv4 destination address
@@ -103,7 +103,17 @@ namespace ns3 {
          * @param msgID the msgID of the message
          * @param payLenght the lenght of the message
          */
-        void SendMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLenght);
+        void SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLenght);
+
+        /**
+         * @brief start the sending of a cell message on a node
+         *
+         * @param mosaicNodeId id of the node
+         * @param dstAddr the IPv4 destination address
+         * @param msgID the msgID of the message
+         * @param payLenght the lenght of the message
+         */
+        void SendCellMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, uint32_t msgID, uint32_t payLenght);
 
         bool ActivateNode(uint32_t mosaicNodeId);
 
