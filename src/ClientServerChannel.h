@@ -37,16 +37,6 @@ constexpr const int INVALID_SOCKET = -1;
  */
 namespace ClientServerChannelSpace {
 
-struct CSC_init_return{
-    int64_t start_time;
-    int64_t end_time;
-};
-
-struct CSC_topo_address{
-	uint32_t ip_address;
-	int ttl;
-};
-
 class ClientServerChannel {
 
 	public:
@@ -60,7 +50,7 @@ class ClientServerChannel {
 		 *
 		 * Closes existing network connections.
 		 */
-		virtual ~ClientServerChannel();
+		~ClientServerChannel();
 
 		/**
 		 * Provides server socket to listen for incoming connections from ns3 Ambassador
@@ -69,21 +59,37 @@ class ClientServerChannel {
 		 * @param port port to listen on for incoming connections. If no port is given, a random port is assigned.
 		 * @return assigned port number
 		 */
-		virtual int	prepareConnection(std::string host, uint32_t port);
+		int	prepareConnection(std::string host, uint32_t port);
 
 		/**
 		 * @brief Accepts a connection (blocking)
 		 * The resulting connection is stored in the working socket
 		 */
-		virtual void connect();
+		void connect();
 
 		/*################## READING ####################*/
 
-		/** reads a command via protobuf and returns it */
-		virtual CommandMessage_CommandType	readCommand();
+		/**
+		 * Gets command from NS3 Ambassador to select dedicated action.
+		 *
+		 * @return command from Ambassador
+		 *
+		 */
+		CommandMessage_CommandType readCommand();
+		
+		/**
+		 * Reads an InitMessage from the Channel
+		 *
+		 * @return InitMessage message
+		 */
+		InitMessage readInitMessage();
 
-		/** reads an initialization message and returns it */
-		virtual int readInit(CSC_init_return &return_value);
+		/**
+		 * Reads a TimeMessage from the channel
+		 *
+		 * @return the time as long
+		 */
+		int64_t readTimeMessage();
 
 		/**
 		 * Reads an AddNode message from the channel.
@@ -134,19 +140,29 @@ class ClientServerChannel {
 		 */
 		SendCellMessage readSendCellMessage(void);
 
-		/** Reads TimeMessage from the channel and returns the contained time as a long */
-		virtual int64_t readTimeMessage();
-
 		/*################## WRITING ####################*/
 
-		/** Byte protocol control method for writeCommand. */
-		virtual void writeCommand(CommandMessage_CommandType cmd);
+		/**
+		 * Sends own control commands to ambassador
+		 * Such control commands must be written onto the channel before every data body
+		 *
+		 * @param cmd command to be written to ambassador
+		 */
+		void writeCommand(CommandMessage_CommandType cmd);
 
-		/** Write a message containing a port number to the output */
-		virtual void writePort(uint32_t port);
+		/**
+		 * Sends port to ambassador. Write a message containing a port number to the output
+		 *
+		 * @param port port
+		 */
+		void writePort(uint32_t port);
 
-		/** Request a time advance from the RTI */
-		virtual void writeTimeMessage(int64_t time);
+		/**
+		 * Writes a time onto the channel and thereby request a time advance from the RTI
+		 *
+		 * @param time the time to write
+		 */
+		void writeTimeMessage(int64_t time);
 
 		/**
 		 * Writes a ReceiveWifiMessage message onto the channel.
@@ -169,8 +185,15 @@ class ClientServerChannel {
 		/** Working sock for communication. */
 		SOCKET sock;
 
-		/** Reads a Varint from a socket and returns it */
-		virtual std::shared_ptr < uint32_t > readVarintPrefix(SOCKET sock);
+		/**
+		 * @brief Reads a variable length integer from the socket and returns it
+		 *
+		 * Protobuf messages are not self delimiting and have thus to be prefixed with the length of the message.
+		 * When sent from Java, before every message there will be a variable length integer sent.
+		 * This method reads such an integer of variable length
+		 *
+		 */
+		std::shared_ptr < uint32_t > readVarintPrefix(SOCKET sock);
 };
 
 } // namespace ClientServerChannelSpace

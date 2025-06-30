@@ -60,11 +60,8 @@ namespace ns3 {
         federateAmbassadorChannel.writePort(assignedPort);
         ambassadorFederateChannel.connect();
         if (ambassadorFederateChannel.readCommand() == CommandMessage_CommandType_INIT) {
-            CSC_init_return init_message;
-            ambassadorFederateChannel.readInit(init_message);
-            unsigned long long startTime = init_message.start_time;
-            unsigned long long endTime = init_message.end_time;
-            if (startTime >= 0 && endTime >= 0 && endTime >= startTime) {
+            InitMessage message = ambassadorFederateChannel.readInitMessage();
+            if (message.start_time() >= 0 && message.end_time() >= 0 && message.end_time() >= message.start_time()) {
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
             } else {
                 // AbstractNetworkAmbassador.java only checks if (CMD.SUCCESS != ...
