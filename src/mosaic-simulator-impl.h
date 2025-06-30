@@ -104,4 +104,4 @@ namespace ns3 {
 
     };
 } // namespace ns3
-#endif /* DEFAULT_SIMULATOR_IMPL_H */
+#endif /* MOSAIC_SIMULATOR_IMPL_H */

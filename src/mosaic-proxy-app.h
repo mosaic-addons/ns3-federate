@@ -27,7 +27,6 @@
 #include "ns3/data-rate.h"
 
 #include "mosaic-node-manager.h"
-#include "ClientServerChannel.h"
 
 namespace ns3 {
 

@@ -20,7 +20,7 @@
  *
  */
 
-#include "ClientServerChannel.h"
+#include "client-server-channel.h"
 
 #include <arpa/inet.h>
 #include <google/protobuf/message.h>

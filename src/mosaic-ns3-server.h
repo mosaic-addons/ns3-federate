@@ -23,7 +23,7 @@
 #ifndef MOSAIC_NS3_SERVER_H
 #define MOSAIC_NS3_SERVER_H
 
-#include "ClientServerChannel.h"
+#include "client-server-channel.h"
 #include "mosaic-node-manager.h"
 
 #include <atomic>
@@ -90,5 +90,5 @@ namespace ns3 {
         Ptr<MosaicNodeManager> m_nodeManager;
         Ptr<MosaicSimulatorImpl> m_sim;
     };
-}
-#endif
+} // namespace ns3
+#endif /* MOSAIC_NS3_SERVER_H */

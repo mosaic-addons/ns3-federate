@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef __CLIENTSERVERCHANNEL_H__
-#define __CLIENTSERVERCHANNEL_H__
+#ifndef CLIENT_SERVER_CHANNEL_H
+#define CLIENT_SERVER_CHANNEL_H
 
 #undef NaN
 #include "ClientServerChannelMessages.pb.h"
@@ -197,4 +197,4 @@ class ClientServerChannel {
 };
 
 } // namespace ClientServerChannelSpace
-#endif
+#endif /* CLIENT_SERVER_CHANNEL_H */

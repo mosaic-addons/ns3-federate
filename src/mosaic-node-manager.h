@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef MOSAICNODEMANAGER_H
-#define MOSAICNODEMANAGER_H
+#ifndef MOSAIC_NODE_MANAGER_H
+#define MOSAIC_NODE_MANAGER_H
 
 #include <unordered_map>
 
@@ -44,7 +44,7 @@
 #include "ns3/ipv4-address-helper.h"
 #include "ns3/mobility-helper.h"
 
-#include "ClientServerChannel.h"
+#include "client-server-channel.h"
 
 namespace ns3 {
 
@@ -177,5 +177,5 @@ namespace ns3 {
         NetDeviceContainer m_enbDevices;
         NodeContainer m_radioNodes;
     };
-}
-#endif
+} // namespace ns3
+#endif /* MOSAIC_NODE_MANAGER_H */
