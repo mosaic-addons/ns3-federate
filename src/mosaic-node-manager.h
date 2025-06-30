@@ -79,10 +79,19 @@ namespace ns3 {
         /**
          * @brief update the node position
          *
-         * @param nodeId id of the node
+         * @param mosaicNodeId id of the node
          * @param position the new node position as a Vector
          */
         void UpdateNodePosition(uint32_t mosaicNodeId, Vector position);
+        
+        /**
+         * @brief Remove the node as good as possible
+         * It is not allowed to delete a node during the simulation.
+         * The node will be deactivated as good as possible.
+         *
+         * @param mosaicNodeId id of the node
+         */
+        void RemoveNode(uint32_t mosaicNodeId);
 
         /**
          * @brief Evaluates configuration message and applies it to the node
@@ -114,10 +123,6 @@ namespace ns3 {
          * @param payLenght the lenght of the message
          */
         void SendCellMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, uint32_t msgID, uint32_t payLenght);
-
-        bool ActivateNode(uint32_t mosaicNodeId);
-
-        void DeactivateNode(uint32_t mosaicNodeId);
 
         void AddRecvPacket(unsigned long long recvTime, uint32_t ns3NodeId, int msgID);
 

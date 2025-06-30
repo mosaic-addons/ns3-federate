@@ -147,8 +147,7 @@ namespace ns3 {
                 Time tNext = NanoSeconds(message.time());
                 Time tDelay = tNext - m_sim->Now();
                 
-                // It is not allowed to delete a node during the simulation step -> the node will be deactivated
-                m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::DeactivateNode, m_nodeManager, message.node_id()));
+                m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::RemoveNode, m_nodeManager, message.node_id()));
                 NS_LOG_DEBUG("Received REMOVE_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
