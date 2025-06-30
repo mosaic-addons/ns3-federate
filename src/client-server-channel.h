@@ -174,6 +174,15 @@ class ClientServerChannel {
 		 * @param rssi the rssi during the receive event
 		 */
 		void writeReceiveWifiMessage(uint64_t time, int node_id, int message_id, RadioChannel channel, int rssi);
+		
+		/**
+		 * Writes a ReceiveCellMessage message onto the channel.
+		 *
+		 * @param time the simulation time at which the message receive occured
+		 * @param node_id the id of the receiving node
+		 * @param message_id the id of the received message
+		 */
+		void writeReceiveCellMessage(uint64_t time, int node_id, int message_id);
 
 	private:
 		/** Initial server socket

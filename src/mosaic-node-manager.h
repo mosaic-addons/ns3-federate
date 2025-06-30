@@ -124,7 +124,9 @@ namespace ns3 {
          */
         void SendCellMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, uint32_t msgID, uint32_t payLenght);
 
-        void AddRecvPacket(unsigned long long recvTime, uint32_t ns3NodeId, int msgID);
+        void RecvWifiMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID);
+
+        void RecvCellMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID);
 
         // Must be public to be accessible by ns-3 object creation routine
         uint16_t m_numRadioNodes;

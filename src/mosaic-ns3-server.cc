@@ -282,11 +282,16 @@ namespace ns3 {
         federateAmbassadorChannel.writeTimeMessage(nextTime);
     }
 
-    void MosaicNs3Server::AddRecvPacket(unsigned long long recvTime, int nodeID, int msgID) {
+    void MosaicNs3Server::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
         federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, RadioChannel::PROTO_CCH, 0);
         // FIXME: Channel is hardcoded
         // FIXME: RSSI is hardcoded
+    }
+
+    void MosaicNs3Server::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_CELL_MSG);
+        federateAmbassadorChannel.writeReceiveCellMessage(recvTime, nodeID, msgID);
     }
 
 } //END Namespace

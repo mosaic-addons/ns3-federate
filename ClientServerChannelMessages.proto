@@ -201,3 +201,9 @@ message SendCellMessage {
         TopologicalAddress topological_address = 5;
     }
 }
+
+message ReceiveCellMessage {
+    required int64 time = 1;
+    required uint32 node_id = 2;
+    required uint32 message_id = 3;
+}

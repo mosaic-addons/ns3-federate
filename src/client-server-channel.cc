@@ -538,6 +538,29 @@ void ClientServerChannel::writeReceiveWifiMessage(uint64_t time, int node_id, in
     }
 }
 
+void ClientServerChannel::writeReceiveCellMessage(uint64_t time, int node_id, int message_id) {
+    NS_LOG_FUNCTION(this << time << node_id << message_id);
+    ReceiveCellMessage message;
+    message.set_time(time);
+    message.set_node_id(node_id);
+    message.set_message_id(message_id);
+
+    int varintsize = google::protobuf::io::CodedOutputStream::VarintSize32(message.ByteSizeLong());
+    int message_size = varintsize + message.ByteSizeLong();
+
+    char message_buffer[message_size];
+    google::protobuf::io::ArrayOutputStream arrayOut ( message_buffer, message_size );
+    google::protobuf::io::CodedOutputStream codedOut ( &arrayOut );
+    codedOut.WriteVarint32 ( message.ByteSizeLong() );
+    message.SerializeToCodedStream ( &codedOut );
+
+    const size_t count = send ( sock, message_buffer, message_size, 0 );
+    if (message_size != count) {
+        NS_LOG_ERROR("Expected " << message_size << " bytes, but wrote " << count << " bytes");
+        exit(1);
+    }
+}
+
 void ClientServerChannel::writeTimeMessage(int64_t time) {
     NS_LOG_FUNCTION(this << time);
     TimeMessage time_message;

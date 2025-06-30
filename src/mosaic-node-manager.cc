@@ -285,12 +285,12 @@ namespace ns3 {
             Ptr<Node> node = m_radioNodes.Get(i);
 
             Ptr<MosaicProxyApp> wifiApp = CreateObject<MosaicProxyApp>();
-            wifiApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::AddRecvPacket, this));
+            wifiApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvWifiMsg, this));
             node->AddApplication(wifiApp);
             wifiApp->SetSockets(1);
 
             Ptr<MosaicProxyApp> cellApp = CreateObject<MosaicProxyApp>();
-            cellApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::AddRecvPacket, this));
+            cellApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvCellMsg, this));
             node->AddApplication(cellApp);
             cellApp->SetSockets(2);
         }
@@ -579,13 +579,23 @@ namespace ns3 {
         app->TransmitPacket(dstAddr, msgID, payLength);
     }
 
-    void MosaicNodeManager::AddRecvPacket(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
+    void MosaicNodeManager::RecvWifiMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
         if (m_isDeactivated[ns3NodeId]) {
             return;
         }
         uint32_t nodeId = GetMosaicNodeId(ns3NodeId);
         
-        m_serverPtr->AddRecvPacket(recvTime, nodeId, msgID);
+        m_serverPtr->writeReceiveWifiMessage(recvTime, nodeId, msgID);
+    }
+
+
+    void MosaicNodeManager::RecvCellMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
+        if (m_isDeactivated[ns3NodeId]) {
+            return;
+        }
+        uint32_t nodeId = GetMosaicNodeId(ns3NodeId);
+        
+        m_serverPtr->writeReceiveCellMessage(recvTime, nodeId, msgID);
     }
 }
 

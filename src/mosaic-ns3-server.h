@@ -63,20 +63,28 @@ namespace ns3 {
         void run();
 
         /**
-         * @brief add a packet to the receive-list
-         *
-         * @param recvTime  time of the receipt
-         * @param pack  pointer of the packet
-         * @param nodeID    id of the node
-         * @param msgID the id of the message
-         */
-        void AddRecvPacket(unsigned long long recvTime, int nodeID, int msgID);
-
-        /**
          * @brief write the next Time to the channel
          * @param nextTime the next simulation step
          */
         void writeNextTime(unsigned long long nextTime);
+
+        /**
+         * @brief write ReceiveWifiMessage to the channel
+         *
+         * @param recvTime  time of the receipt
+         * @param nodeID    id of the node
+         * @param msgID     id of the message
+         */
+        void writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID);
+
+        /**
+         * @brief write ReceiveCellMessage to the channel
+         *
+         * @param recvTime  time of the receipt
+         * @param nodeID    id of the node
+         * @param msgID     id of the message
+         */
+        void writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID);
 
     private:
 
