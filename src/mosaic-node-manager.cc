@@ -295,8 +295,8 @@ namespace ns3 {
             cellApp->SetSockets(2);
         }
 
-        NS_LOG_INFO("Schedule manual handovers...");
-        m_lteHelper->HandoverRequest (Seconds (3.000), lteDevices.Get (1), m_enbDevices.Get (0), m_enbDevices.Get (1));
+        // NS_LOG_INFO("Schedule manual handovers...");
+        // m_lteHelper->HandoverRequest (Seconds (3.000), lteDevices.Get (1), m_enbDevices.Get (0), m_enbDevices.Get (1));
     }
 
     void MosaicNodeManager::OnShutdown() {
