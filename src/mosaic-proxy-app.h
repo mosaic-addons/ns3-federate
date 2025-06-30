@@ -40,7 +40,7 @@ namespace ns3 {
 
         static TypeId GetTypeId(void);
 
-        void SetNodeManager(MosaicNodeManager* nodeManager);
+        void SetRecvCallback(Callback<void, unsigned long long, uint32_t, int> cb);
 
         void SetSockets(int outDevice);
         
@@ -67,8 +67,9 @@ namespace ns3 {
 
         bool m_active = false;
 
-        MosaicNodeManager* m_nodeManager;
+        Callback<void, unsigned long long, uint32_t, int> m_recvCallback;
     };
+
 } // namespace ns3
 
 #endif   /* MOSAIC_PROXY_APP_H */

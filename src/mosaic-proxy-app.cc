@@ -47,13 +47,15 @@ namespace ns3 {
         return tid;
     }
 
-    void MosaicProxyApp::SetNodeManager(MosaicNodeManager* nodeManager) {
-        m_nodeManager = nodeManager;
+    void MosaicProxyApp::SetRecvCallback(Callback<void, unsigned long long, uint32_t, int> cb) {
+        NS_LOG_FUNCTION (this << &cb);
+        m_recvCallback = cb;
     }
 
     void MosaicProxyApp::DoDispose(void) {
         NS_LOG_FUNCTION_NOARGS();
         m_socket = 0;
+        m_recvCallback = MakeNullCallback<void, unsigned long long, uint32_t, int> ();
         Application::DoDispose();
     }
 
@@ -146,11 +148,11 @@ namespace ns3 {
         NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
         LogComponentDisable ("TrafficControlLayer", LOG_DEBUG);
 
-        if (m_nodeManager != 0) {
-            //report the received messages to the MosaicNs3Server instance
-            m_nodeManager->AddRecvPacket(Simulator::Now().GetNanoSeconds(), packet, GetNode()->GetId(), msgID);
+        if (!m_recvCallback.IsNull()) {
+            m_recvCallback(Simulator::Now().GetNanoSeconds(), GetNode()->GetId(), msgID);
         } else {
-            // as server (currently m_nodeManager == 0): ping pong a packet back to fixed IP
+            NS_LOG_ERROR("Received a packet but have no possibility to forward up. Ignore.");
+            // as server: ping pong a packet back to fixed IP
             /* Add one slash, to enable this test 
             std::cout << std::endl;
             Ipv4Address ip("7.0.0.4");

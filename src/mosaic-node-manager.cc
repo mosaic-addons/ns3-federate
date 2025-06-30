@@ -87,7 +87,7 @@ namespace ns3 {
         {
             Ptr<Node> node = m_wiredNodes.Get(i);
             Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
-            // app->SetNodeManager(this);
+            // app->SetRecvCallback(...);
             node->AddApplication(app);
             app->SetSockets(-1);
             app->Enable();
@@ -285,12 +285,12 @@ namespace ns3 {
             Ptr<Node> node = m_radioNodes.Get(i);
 
             Ptr<MosaicProxyApp> wifiApp = CreateObject<MosaicProxyApp>();
-            wifiApp->SetNodeManager(this);
+            wifiApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::AddRecvPacket, this));
             node->AddApplication(wifiApp);
             wifiApp->SetSockets(1);
 
             Ptr<MosaicProxyApp> cellApp = CreateObject<MosaicProxyApp>();
-            cellApp->SetNodeManager(this);
+            cellApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::AddRecvPacket, this));
             node->AddApplication(cellApp);
             cellApp->SetSockets(2);
         }
@@ -415,13 +415,13 @@ namespace ns3 {
         app->TransmitPacket(dstAddr, msgID, payLength);
     }
 
-    void MosaicNodeManager::AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID) {
+    void MosaicNodeManager::AddRecvPacket(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
         if (m_isDeactivated[ns3NodeId]) {
             return;
         }
         uint32_t nodeId = GetMosaicNodeId(ns3NodeId);
         
-        m_serverPtr->AddRecvPacket(recvTime, pack, nodeId, msgID);
+        m_serverPtr->AddRecvPacket(recvTime, nodeId, msgID);
     }
 
     void MosaicNodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {

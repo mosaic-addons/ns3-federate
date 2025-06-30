@@ -119,7 +119,7 @@ namespace ns3 {
 
         void DeactivateNode(uint32_t mosaicNodeId);
 
-        void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, uint32_t ns3NodeId, int msgID);
+        void AddRecvPacket(unsigned long long recvTime, uint32_t ns3NodeId, int msgID);
 
         // Must be public to be accessible by ns-3 object creation routine
         uint16_t m_numRadioNodes;

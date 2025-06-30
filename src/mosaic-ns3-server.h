@@ -70,7 +70,7 @@ namespace ns3 {
          * @param nodeID    id of the node
          * @param msgID the id of the message
          */
-        void AddRecvPacket(unsigned long long recvTime, Ptr<Packet> pack, int nodeID, int msgID);
+        void AddRecvPacket(unsigned long long recvTime, int nodeID, int msgID);
 
         /**
          * @brief write the next Time to the channel
