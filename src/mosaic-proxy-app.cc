@@ -124,7 +124,8 @@ namespace ns3 {
     void MosaicProxyApp::Receive(Ptr<Socket> socket) {
         NS_LOG_FUNCTION(GetNode()->GetId());
         if (!m_active) {
-            NS_LOG_WARN("[node=" << GetNode()->GetId() << "." << m_outDevice << "] This app is disabled but it received a packet. Ignore.");
+            // This happens e.g. for wifi broadcasts on un-initialized ns3 nodes (aka unused by mosaic)
+            // NS_LOG_WARN("[node=" << GetNode()->GetId() << "." << m_outDevice << "] This app is disabled but it received a packet. Ignore.");
             return;
         }
 
