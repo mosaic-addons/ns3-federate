@@ -356,7 +356,7 @@ namespace ns3 {
 
         /* install application */
         Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
-        // app->SetRecvCallback(...);
+        app->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvCellMsg, this));
         node->AddApplication(app);
         app->SetSockets(3); // see MosaicProxyApp::TranslateNumberToIndex
     }
