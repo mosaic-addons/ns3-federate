@@ -314,6 +314,7 @@ namespace ns3 {
                 NS_LOG_INFO("Activate radio node " << mosaicNodeId << "->" << node->GetId());
                 m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
                 m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
+                m_isRadioNode[node->GetId()] = true;
                 break;
             }
         }
@@ -337,6 +338,7 @@ namespace ns3 {
         NS_LOG_INFO("Create wired node " << mosaicNodeId << "->" << node->GetId());
         m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
         m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
+        m_isWiredNode[node->GetId()] = true;
         m_backboneNodes.Add (node);
 
         /* install internet stack */
@@ -402,29 +404,26 @@ namespace ns3 {
         Ptr<Node> node = NodeList::GetNode(nodeId);
 
         /* deactivate Wifi */
-        // Devices are 0:Loopback 1:Wifi 2:LTE
-        Ptr<WifiNetDevice> netDev = DynamicCast<WifiNetDevice> (node->GetDevice(1));
-        if (netDev == nullptr) {
-            NS_LOG_ERROR("Node " << nodeId << " has no WifiNetDevice");
-            return;
+        if (m_isRadioNode[nodeId]) {
+            // Devices are 0:Loopback 1:Wifi 2:LTE
+            Ptr<WifiNetDevice> netDev = DynamicCast<WifiNetDevice> (node->GetDevice(1));
+            if (netDev == nullptr) {
+                NS_LOG_ERROR("Node " << nodeId << " has no WifiNetDevice");
+                return;
+            }
+            netDev->GetPhy()->SetOffMode();
         }
-        netDev->GetPhy()->SetOffMode();
         
-        /* deactivate App */
-        Ptr<MosaicProxyApp> wifiApp = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
-        if (!wifiApp) {
-            NS_LOG_ERROR("No wifi app found on node " << nodeId << " !");
-            exit(1);
+        /* deactivate Apps */
+        int numApps = m_isRadioNode[nodeId] ? 2 : 1;
+        for (uint32_t i = 0; i < numApps; i++ ) {
+            Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+            if (!app) {
+                NS_LOG_ERROR("No app with index=" << i << " found on node " << nodeId << " !");
+                exit(1);
+            }
+            app->Disable();
         }
-        wifiApp->Disable();
-
-        Ptr<MosaicProxyApp> cellApp = DynamicCast<MosaicProxyApp> (node->GetApplication(1));
-        if (!cellApp) {
-            NS_LOG_ERROR("No cell app found on node " << nodeId << " !");
-            exit(1);
-        }
-        cellApp->Disable();
-
 
         m_isDeactivated[nodeId] = true;
     }
@@ -439,6 +438,8 @@ namespace ns3 {
             return;
         }
         m_isWifiRadioConfigured[nodeId] = true;
+
+        NS_ASSERT_MSG(!m_isRadioNode[nodeId], "Cannot have a wifi interface on a wired node.");
 
         NS_LOG_INFO("[node=" << nodeId << "] txPow=" << transmitPower << " ip=" << ip);
         
@@ -498,60 +499,71 @@ namespace ns3 {
         m_isCellRadioConfigured[nodeId] = true;
 
         NS_LOG_INFO("[node=" << nodeId << "] ip=" << ip);
+        Ptr<Node> node = NodeList::GetNode(nodeId);
 
         /* check for valid IP, required to match routing configuration */
         bool partOf10 = ip.CombineMask("255.0.0.0").Get() == Ipv4Address("10.0.0.0").Get();
-        NS_ASSERT_MSG(partOf10, "The ip for radio nodes must be part of 10.0.0.0/8 network.");
         bool partOf105 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.5.0.0").Get();
-        // NS_ASSERT_MSG(!partOf105, "The ip for radio nodes must not be part of 10.5.0.0/16 network.");
-        // bool partOf106 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.6.0.0").Get();
-        // NS_ASSERT_MSG(!partOf106, "The ip for radio nodes must not be part of 10.6.0.0/16 network.");
-        if (partOf105) {
-            Ptr<Node> node = NodeList::GetNode(nodeId);
-            Ptr<MosaicProxyApp> cellApp = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+        bool partOf106 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.6.0.0").Get();
+        NS_ASSERT_MSG(partOf10, "The ip for all nodes must be part of 10.0.0.0/8 network.");
+
+        if (m_isRadioNode[nodeId]) {
+
+            NS_ASSERT_MSG(!partOf105, "The ip for radio nodes must not be part of 10.5.0.0/16 network.");
+            NS_ASSERT_MSG(!partOf106, "The ip for radio nodes must not be part of 10.6.0.0/16 network.");
+
+            /* activate application */
+            Ptr<MosaicProxyApp> cellApp = DynamicCast<MosaicProxyApp> (node->GetApplication(1));
             if (!cellApp) {
                 NS_LOG_ERROR("No cell app found on node " << nodeId << " !");
                 exit(1);
             }
             cellApp->Enable();
-            return;
-        }
 
-        Ptr<Node> node = NodeList::GetNode(nodeId);
-        Ptr<MosaicProxyApp> cellApp = DynamicCast<MosaicProxyApp> (node->GetApplication(1));
-        if (!cellApp) {
-            NS_LOG_ERROR("No cell app found on node " << nodeId << " !");
+            // Devices are 0:Loopback 1:Wifi 2:LTE
+            Ptr<NetDevice> device = node->GetDevice(2);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+            uint32_t ifIndex = device->GetIfIndex ();
+
+            // Additionally assign an extra IPv4 Address (without ipv4 helper)
+            // ATTENTION: This currently requires changes in NoBackhaulEpcHelper::ActivateEpsBearer to fully work
+            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
+            ipv4proto->AddAddress(ifIndex, ipv4Addr);
+
+            // logging
+            std::stringstream ss;
+            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+                ss << "|" << iaddr.GetLocal ();
+            }
+            NS_LOG_DEBUG("[node=" << node->GetId() << "]"
+                << " dev=" << device 
+                << " lteAddr=" << ss.str()
+                << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
+                << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
+            );
+
+            NS_LOG_INFO("Attach UE to specific eNB...");
+            NS_LOG_INFO("ATTENTION: This requires about 21ms to fully connect");
+            // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
+            m_lteHelper->Attach (device, m_enbDevices.Get(0));
+
+        } else if (m_isWiredNode[nodeId]) {
+
+            NS_ASSERT_MSG(partOf105 || partOf106, "The ip for wired nodes must be part of 10.5.0.0/16 or 10.6.0.0/16 network.");
+
+            /* activate application */
+            Ptr<MosaicProxyApp> csmaApp = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+            if (!csmaApp) {
+                NS_LOG_ERROR("No csma app found on node " << nodeId << " !");
+                exit(1);
+            }
+            csmaApp->Enable();
+
+        } else {
+            NS_LOG_ERROR("Invalid State: Node has to be either radio or wired node.");
             exit(1);
         }
-        cellApp->Enable();
-
-        // Devices are 0:Loopback 1:Wifi 2:LTE
-        Ptr<NetDevice> device = node->GetDevice(2);
-        Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
-        uint32_t ifIndex = device->GetIfIndex ();
-
-        // Additionally assign an extra IPv4 Address (without ipv4 helper)
-        // ATTENTION: This currently requires changes in NoBackhaulEpcHelper::ActivateEpsBearer to fully work
-        Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
-        ipv4proto->AddAddress(ifIndex, ipv4Addr);
-
-        // logging
-        std::stringstream ss;
-        for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-            Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-            ss << "|" << iaddr.GetLocal ();
-        }
-        NS_LOG_DEBUG("[node=" << node->GetId() << "]"
-            << " dev=" << device 
-            << " lteAddr=" << ss.str()
-            << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
-            << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
-        );
-
-        NS_LOG_INFO("Attach UE to specific eNB...");
-        NS_LOG_INFO("ATTENTION: This requires about 21ms to fully connect");
-        // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
-        m_lteHelper->Attach (device, m_enbDevices.Get(0));
     }
 
     void MosaicNodeManager::SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLength) {
