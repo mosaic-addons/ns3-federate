@@ -115,7 +115,7 @@ namespace ns3 {
 
                 if (message.type() == AddNode_NodeType_RADIO_NODE) {
                     m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
-                    NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " posx=" << message.x() << " posy=" << message.y() << " tNext=" << tNext);
+                    NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
                 } else if (message.type() == AddNode_NodeType_WIRED_NODE) {
                     // m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, message.node_id()));
                     NS_LOG_DEBUG("Received ADD_WIRED_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
@@ -136,7 +136,7 @@ namespace ns3 {
                 for ( size_t i = 0; i < message.properties_size(); i++ ) { //fill the update messages into our struct
                     UpdateNode_NodeData node_data = message.properties(i);
                     m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, node_data.id(), Vector(node_data.x(), node_data.y(), node_data.z())));
-                    NS_LOG_DEBUG("Received UPDATE_NODE(S): mosNID=" << node_data.id() << " posx=" << node_data.x() << " posy=" << node_data.y() << " tNext=" << tNext);
+                    NS_LOG_DEBUG("Received UPDATE_NODE(S): mosNID=" << node_data.id() << " pos(x=" << node_data.x() << " y=" << node_data.y() << " z=" << node_data.z() << ") tNext=" << tNext);
                 }
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
                 break;

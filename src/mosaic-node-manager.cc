@@ -388,7 +388,7 @@ namespace ns3 {
             return;
         }
 
-        NS_LOG_INFO("[node=" << nodeId << "] x=" << position.x << " y=" << position.y);
+        NS_LOG_INFO("[node=" << nodeId << "] x=" << position.x << " y=" << position.y << " z=" << position.z);
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<MobilityModel> mobModel = node->GetObject<MobilityModel> ();

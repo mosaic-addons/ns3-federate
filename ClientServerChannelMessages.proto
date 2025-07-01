@@ -72,7 +72,7 @@ message AddNode {
     required int32 node_id = 3;
     required double x = 4;
     required double y = 5;
-    optional double z = 6;
+    required double z = 6;
 }
 
 message UpdateNode {
@@ -81,7 +81,7 @@ message UpdateNode {
         required int32 id = 1;
         required double x = 2;
         required double y = 3;
-        optional double z = 4;
+        required double z = 4;
     }
     repeated NodeData properties = 2;
 }
