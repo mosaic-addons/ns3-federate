@@ -13,7 +13,7 @@ fi
 
 ns3Version="3.36.1"
 
-make -j1
+make -j1 || exit 1
 
 LD_LIBRARY_PATH=/home/georg/ns-allinone-$ns3Version/ns-$ns3Version/build/lib\
     ./bin/Debug/ns3-federate\
