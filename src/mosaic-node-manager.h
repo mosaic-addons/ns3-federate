@@ -69,12 +69,19 @@ namespace ns3 {
         void OnShutdown(void);
 
         /**
-         * @brief create a new node
+         * @brief create a new radio node
          *
          * @param mosaicNodeId id of the node
          * @param position the new node position as a Vector
          */
-        void CreateMosaicNode(uint32_t mosaicNodeId, Vector position);
+        void CreateRadioNode(uint32_t mosaicNodeId, Vector position);
+
+        /**
+         * @brief create a new wired node
+         *
+         * @param mosaicNodeId id of the node
+         */
+        void CreateWiredNode(uint32_t mosaicNodeId);
 
         /**
          * @brief update the node position
@@ -130,7 +137,6 @@ namespace ns3 {
 
         // Must be public to be accessible by ns-3 object creation routine
         uint16_t m_numRadioNodes;
-        uint16_t m_numWiredNodes;
 
     private:
 
@@ -172,7 +178,6 @@ namespace ns3 {
         MobilityHelper m_mobilityHelper;
 
         /** Nodes and Devices **/
-        NodeContainer m_wiredNodes;
         NodeContainer m_backboneNodes;
         NetDeviceContainer m_backboneDevices;
         NodeContainer m_enbNodes;

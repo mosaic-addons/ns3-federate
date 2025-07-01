@@ -45,10 +45,6 @@ namespace ns3 {
                 UintegerValue(10),
                 MakeUintegerAccessor(&MosaicNodeManager::m_numRadioNodes),
                 MakeUintegerChecker<uint16_t> ())
-                .AddAttribute("numWiredNodes", "Number of server nodes in the backbone",
-                UintegerValue(1),
-                MakeUintegerAccessor(&MosaicNodeManager::m_numWiredNodes),
-                MakeUintegerChecker<uint16_t> ())
                 ;
         return tid;
     }
@@ -79,50 +75,20 @@ namespace ns3 {
         NS_LOG_INFO("Initialize Node Infrastructure...");
         m_serverPtr = serverPtr;
 
-        NS_LOG_INFO("Setup server's...");
-        m_wiredNodes.Create(m_numWiredNodes);
-        m_internetHelper.Install (m_wiredNodes);
-        NS_LOG_INFO("Install MosaicProxyApp application");
-        for (uint32_t i = 0; i < m_wiredNodes.GetN(); ++i)
-        {
-            Ptr<Node> node = m_wiredNodes.Get(i);
-            Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
-            // app->SetRecvCallback(...);
-            node->AddApplication(app);
-            app->SetSockets(-1);
-            app->Enable();
-        }
-
         NS_LOG_INFO("Setup core...");
         Ptr<Node> pgw = m_epcHelper->GetPgwNode ();
         Ptr<Node> sgw = m_epcHelper->GetSgwNode ();
 
         NS_LOG_INFO("Setup backbone connection...");
         m_backboneNodes.Add (pgw);
-        m_backboneNodes.Add (m_wiredNodes);
         m_backboneDevices = m_csmaHelper.Install(m_backboneNodes);
-        Ipv4InterfaceContainer coreIpIfaces = m_backboneAddressHelper.Assign (m_backboneDevices);
+        m_backboneAddressHelper.Assign (m_backboneDevices);
 
         NS_LOG_INFO("Configure routing...");
         // add routing for PGW
         Ptr<Ipv4StaticRouting> pgwStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
         // Devices are 0:Loopback 1:TunDevice 2:SGW 3:backbone
         pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1); 
-
-        // routing and logging for servers
-        for (uint32_t u = 1; u < m_backboneNodes.GetN (); ++u)
-        {
-            Ptr<Node> node = m_backboneNodes.Get(u);
-            Ptr<NetDevice> device = m_backboneDevices.Get(u);
-            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
-            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
-
-            // add routing for servers
-            Ptr<Ipv4StaticRouting> serverStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
-            serverStaticRouting->SetDefaultRoute (Ipv4Address("5.0.0.1"), ifIndex); 
-            // We cannot use any IP address of PGW (that worked with point-to-point, but not anymore)
-            // We have to use the IP address of PGW that is actually connected to the CSMA, in order for ARP to function properly
-        }
 
         NS_LOG_INFO("Do logging...");
 
@@ -152,31 +118,7 @@ namespace ns3 {
         sgw->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&pgwRouting));
         NS_LOG_LOGIC(sgwRouting.str());
 
-        // [node=3] see no-backhaul-epc-helper:m_mme ... MME network element
-        
-        // logging for servers
-        for (uint32_t u = 1; u < m_backboneNodes.GetN (); ++u)
-        {
-            Ptr<Node> node = m_backboneNodes.Get(u);
-            Ptr<NetDevice> device = m_backboneDevices.Get(u);
-            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
-            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
-
-            // logging
-            std::stringstream ss;
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
-                << " dev=" << node->GetDevice(ifIndex) 
-                << " csmaAddr=" << ss.str()
-            );
-        }
-        std::stringstream serverRouting;
-        serverRouting << "Server routing:" << std::endl;
-        m_wiredNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
-        NS_LOG_LOGIC(serverRouting.str());
+        // [node=2] see no-backhaul-epc-helper:m_mme ... MME network element
         
         // TODO: this has to come from RTI interaction or configuration file
         NS_LOG_INFO("Setup eNodeB's...");
@@ -302,8 +244,10 @@ namespace ns3 {
     void MosaicNodeManager::OnShutdown() {
         NS_LOG_FUNCTION (this);
 
+        uint32_t usedMobileNodes = m_mosaic2nsdrei.size() - (m_backboneNodes.GetN() - 1);
+
         NS_LOG_DEBUG("Print IP assignment for all used mobileNodes");
-        for (uint32_t u = 0; u < m_mosaic2nsdrei.size(); ++u)
+        for (uint32_t u = 0; u < usedMobileNodes; ++u)
         {
             Ptr<Node> node = m_radioNodes.Get(u);
             NS_LOG_DEBUG("[node=" << node->GetId () << "]");
@@ -332,7 +276,7 @@ namespace ns3 {
             NS_LOG_INFO("Have m_mosaic2nsdrei");
             for(const auto& elem : m_mosaic2nsdrei)
             {
-               NS_LOG_INFO(elem.first << " : " << elem.second);
+               NS_LOG_INFO(elem.first << "->" << elem.second);
             }
             NS_LOG_INFO("END m_mosaic2nsdrei");
             exit(1);
@@ -347,7 +291,7 @@ namespace ns3 {
             NS_LOG_INFO("Have m_nsdrei2mosaic");
             for(const auto& elem : m_nsdrei2mosaic)
             {
-               NS_LOG_INFO(elem.first << " : " << elem.second);
+               NS_LOG_INFO(elem.first << "<-" << elem.second);
             }
             NS_LOG_INFO("END m_nsdrei2mosaic");
             exit(1);
@@ -356,7 +300,7 @@ namespace ns3 {
         return res;
     }
 
-    void MosaicNodeManager::CreateMosaicNode(uint32_t mosaicNodeId, Vector position) {
+    void MosaicNodeManager::CreateRadioNode(uint32_t mosaicNodeId, Vector position) {
         if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
             NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
             exit(1);
@@ -367,7 +311,7 @@ namespace ns3 {
             Ptr<Node> node = m_radioNodes.Get(i);
             if (m_nsdrei2mosaic.find(node->GetId()) == m_nsdrei2mosaic.end()){
                 // the node is not used yet, add it to the lookup tables
-                NS_LOG_INFO("Activate node " << mosaicNodeId << "->" << node->GetId());
+                NS_LOG_INFO("Activate radio node " << mosaicNodeId << "->" << node->GetId());
                 m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
                 m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
                 break;
@@ -380,6 +324,60 @@ namespace ns3 {
         }
 
         UpdateNodePosition(mosaicNodeId, position);
+    }
+
+    void MosaicNodeManager::CreateWiredNode(uint32_t mosaicNodeId) {
+        if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
+            NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
+            exit(1);
+        }
+
+        /* create node */
+        Ptr<Node> node = CreateObject<Node>();
+        NS_LOG_INFO("Create wired node " << mosaicNodeId << "->" << node->GetId());
+        m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
+        m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
+        m_backboneNodes.Add (node);
+
+        /* install internet stack */
+        m_internetHelper.Install (node);
+        Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+
+        /* install csma device */
+        Ptr<CsmaChannel> ch = DynamicCast<CsmaChannel>(m_backboneDevices.Get(0)->GetChannel());
+        Ptr<NetDevice> device = m_csmaHelper.Install(node, ch).Get(0);
+        m_backboneDevices.Add (device);
+        m_backboneAddressHelper.Assign (device);
+        int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device); // has to be done after m_backboneAddressHelper
+
+        /* add routing */
+        Ptr<Ipv4StaticRouting> serverStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
+        serverStaticRouting->SetDefaultRoute (Ipv4Address("5.0.0.1"), ifIndex); 
+        // We cannot use any IP address of PGW (that worked with point-to-point, but not anymore)
+        // We have to use the IP address of PGW that is actually connected to the CSMA, in order for ARP to function properly
+
+        /* install application */
+        Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
+        // app->SetRecvCallback(...);
+        node->AddApplication(app);
+        app->SetSockets(3); // see MosaicProxyApp::TranslateNumberToIndex
+
+        /* do logging */
+        std::stringstream ss;
+        NS_ASSERT_MSG(ifIndex >= 0, "No valid interface index given.");
+        for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+            Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+            ss << "|" << iaddr.GetLocal ();
+        }
+        NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
+            << " dev=" << node->GetDevice(ifIndex) 
+            << " csmaAddr=" << ss.str()
+        );
+
+        std::stringstream serverRouting;
+        serverRouting << "Server routing:" << std::endl;
+        node->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
+        NS_LOG_LOGIC(serverRouting.str());
     }
 
     void MosaicNodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {
@@ -505,9 +503,19 @@ namespace ns3 {
         bool partOf10 = ip.CombineMask("255.0.0.0").Get() == Ipv4Address("10.0.0.0").Get();
         NS_ASSERT_MSG(partOf10, "The ip for radio nodes must be part of 10.0.0.0/8 network.");
         bool partOf105 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.5.0.0").Get();
-        NS_ASSERT_MSG(!partOf105, "The ip for radio nodes must not be part of 10.5.0.0/16 network.");
-        bool partOf106 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.6.0.0").Get();
-        NS_ASSERT_MSG(!partOf106, "The ip for radio nodes must not be part of 10.6.0.0/16 network.");
+        // NS_ASSERT_MSG(!partOf105, "The ip for radio nodes must not be part of 10.5.0.0/16 network.");
+        // bool partOf106 = ip.CombineMask("255.255.0.0").Get() == Ipv4Address("10.6.0.0").Get();
+        // NS_ASSERT_MSG(!partOf106, "The ip for radio nodes must not be part of 10.6.0.0/16 network.");
+        if (partOf105) {
+            Ptr<Node> node = NodeList::GetNode(nodeId);
+            Ptr<MosaicProxyApp> cellApp = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+            if (!cellApp) {
+                NS_LOG_ERROR("No cell app found on node " << nodeId << " !");
+                exit(1);
+            }
+            cellApp->Enable();
+            return;
+        }
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<MosaicProxyApp> cellApp = DynamicCast<MosaicProxyApp> (node->GetApplication(1));

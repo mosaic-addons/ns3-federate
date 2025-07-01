@@ -67,6 +67,21 @@ namespace ns3 {
         m_active = false;
     }
 
+    int MosaicProxyApp::TranslateNumberToIndex(int outDevice) {
+        // Expected Input is 1:Wifi 2:LTE 3:Csma
+        // Radio Devices are 0:Loopback 1:Wifi 2:LTE
+        // Wired Devices are 0:Loopback 1:Csma
+        switch (outDevice){
+            case 1: 
+                return 1;
+            case 2: 
+                return 2;
+            case 3: 
+                return 1;
+            default: return -1;
+        }
+    }
+
     void MosaicProxyApp::SetSockets(int outDevice) {
         NS_LOG_FUNCTION(GetNode()->GetId());
 
@@ -78,11 +93,9 @@ namespace ns3 {
         m_socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
         InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
         m_socket->Bind(local);
-        if(GetNode()->GetNDevices() == 3) {
-            // Devices are 0:Loopback 1:Wifi 2:LTE
-            m_socket->BindToNetDevice (GetNode()->GetDevice(outDevice));
-        } else {
-            NS_LOG_WARN("Installing app on node which has not exactly 3 devices...");
+        if(outDevice > 0) {
+            int outDeviceIndex = TranslateNumberToIndex(outDevice);
+            m_socket->BindToNetDevice (GetNode()->GetDevice(outDeviceIndex));
         }
         m_socket->SetAllowBroadcast(true);
         m_socket->SetRecvCallback(MakeCallback(&MosaicProxyApp::Receive, this));
@@ -153,11 +166,13 @@ namespace ns3 {
             m_recvCallback(Simulator::Now().GetNanoSeconds(), GetNode()->GetId(), msgID);
         } else {
             NS_LOG_ERROR("Received a packet but have no possibility to forward up. Ignore.");
-            // as server: ping pong a packet back to fixed IP
+        }
+
+        if (m_outDevice == 3 && msgID == 1) {
+            // ping pong a packet back to fixed IP
             /* Add one slash, to enable this test 
-            std::cout << std::endl;
-            Ipv4Address ip("7.0.0.4");
-            TransmitPacket(ip, 1234, 124);
+            Ipv4Address ip("10.3.0.20");
+            TransmitPacket(ip, msgID, 1234);
             //*/
         }
     }

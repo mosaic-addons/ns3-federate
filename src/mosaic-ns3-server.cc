@@ -114,10 +114,10 @@ namespace ns3 {
                 Time tDelay = tNext - m_sim->Now();
 
                 if (message.type() == AddNode_NodeType_RADIO_NODE) {
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
                     NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
                 } else if (message.type() == AddNode_NodeType_WIRED_NODE) {
-                    // m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateMosaicNode, m_nodeManager, message.node_id()));
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateWiredNode, m_nodeManager, message.node_id()));
                     NS_LOG_DEBUG("Received ADD_WIRED_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
                 } else {
                     NS_LOG_ERROR("Received unhandeled ADD_..._NODE message");

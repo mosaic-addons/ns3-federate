@@ -56,6 +56,8 @@ namespace ns3 {
 
     private:
 
+        int TranslateNumberToIndex(int outDevice);
+
         void Receive(Ptr<Socket> socket);
 
         Ptr<Socket> m_socket{nullptr};
