@@ -88,7 +88,9 @@ namespace ns3 {
         // add routing for PGW
         Ptr<Ipv4StaticRouting> pgwStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (pgw->GetObject<Ipv4> ());
         // Devices are 0:Loopback 1:TunDevice 2:SGW 3:backbone
-        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1); 
+        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.0.0.0"), "255.0.0.0", 1);
+        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.5.0.0"), "255.255.0.0", 3);
+        pgwStaticRouting->AddNetworkRouteTo (Ipv4Address("10.6.0.0"), "255.255.0.0", 3);
 
         NS_LOG_INFO("Do logging...");
 
@@ -352,34 +354,11 @@ namespace ns3 {
         m_backboneAddressHelper.Assign (device);
         int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device); // has to be done after m_backboneAddressHelper
 
-        /* add routing */
-        Ptr<Ipv4StaticRouting> serverStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
-        serverStaticRouting->SetDefaultRoute (Ipv4Address("5.0.0.1"), ifIndex); 
-        // We cannot use any IP address of PGW (that worked with point-to-point, but not anymore)
-        // We have to use the IP address of PGW that is actually connected to the CSMA, in order for ARP to function properly
-
         /* install application */
         Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
         // app->SetRecvCallback(...);
         node->AddApplication(app);
         app->SetSockets(3); // see MosaicProxyApp::TranslateNumberToIndex
-
-        /* do logging */
-        std::stringstream ss;
-        NS_ASSERT_MSG(ifIndex >= 0, "No valid interface index given.");
-        for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-            Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-            ss << "|" << iaddr.GetLocal ();
-        }
-        NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
-            << " dev=" << node->GetDevice(ifIndex) 
-            << " csmaAddr=" << ss.str()
-        );
-
-        std::stringstream serverRouting;
-        serverRouting << "Server routing:" << std::endl;
-        node->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
-        NS_LOG_LOGIC(serverRouting.str());
     }
 
     void MosaicNodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {
@@ -525,12 +504,13 @@ namespace ns3 {
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             uint32_t ifIndex = device->GetIfIndex ();
 
-            // Additionally assign an extra IPv4 Address (without ipv4 helper)
+            /* assign extra IPv4 Address (without ipv4 helper) */
             // ATTENTION: This currently requires changes in NoBackhaulEpcHelper::ActivateEpsBearer to fully work
+            // On CSMA with ARP this would not work: 10.5.x.x and 10.6.x.x messages have to be sent directly to the default gateway, without searching the receiver via ARP
             Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
             ipv4proto->AddAddress(ifIndex, ipv4Addr);
 
-            // logging
+            /* do logging */
             std::stringstream ss;
             for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
                 Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
@@ -559,6 +539,40 @@ namespace ns3 {
                 exit(1);
             }
             csmaApp->Enable();
+
+            // Devices are 0:Loopback 1:Csma
+            Ptr<NetDevice> device = node->GetDevice(1);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+            uint32_t ifIndex = device->GetIfIndex ();
+
+            /* assign extra IPv4 Address (without ipv4 helper) */
+            // Require netmask 255.255.0.0 such that address like 10.3. is not requested via ARP (and subsequently dropped)
+            // Downside of this network separation: messages from 10.5. to 10.6. will always be relayed by the PGW
+            Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.255.0.0"); 
+            ipv4proto->AddAddress(ifIndex, ipv4Addr);
+
+            /* add routing */
+            Ptr<Ipv4StaticRouting> serverStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
+            serverStaticRouting->SetDefaultRoute (Ipv4Address("5.0.0.1"), ifIndex); 
+            // We cannot use any IP address of PGW (that worked with point-to-point, but not anymore)
+            // We have to use the IP address of PGW that is actually connected to the CSMA, in order for ARP to function properly
+
+            /* do logging */
+            std::stringstream ss;
+            NS_ASSERT_MSG(ifIndex >= 0, "No valid interface index given.");
+            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
+                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
+                ss << "|" << iaddr.GetLocal ();
+            }
+            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
+                << " dev=" << node->GetDevice(ifIndex) 
+                << " csmaAddr=" << ss.str()
+            );
+
+            std::stringstream serverRouting;
+            serverRouting << "Server routing:" << std::endl;
+            node->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
+            NS_LOG_LOGIC(serverRouting.str());
 
         } else {
             NS_LOG_ERROR("Invalid State: Node has to be either radio or wired node.");
