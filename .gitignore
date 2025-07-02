@@ -23,4 +23,4 @@ ns3-federate.make
 
 src/Mosaic/model/ClientServerChannel*
 ClientServerChannelMessages.pb.*
-ns3_federate_config*.xml
+ns3_federate_config_*.xml
