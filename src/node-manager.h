@@ -117,9 +117,9 @@ namespace ns3 {
          * @param dstAddr the IPv4 destination address
          * @param channel the channel where to send the message on
          * @param msgID the msgID of the message
-         * @param payLenght the lenght of the message
+         * @param payLength the length of the message
          */
-        void SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, RadioChannel channel, uint32_t msgID, uint32_t payLenght);
+        void SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, RadioChannel channel, uint32_t msgID, uint32_t payLength);
 
         /**
          * @brief start the sending of a cell message on a node
@@ -127,9 +127,9 @@ namespace ns3 {
          * @param mosaicNodeId id of the node
          * @param dstAddr the IPv4 destination address
          * @param msgID the msgID of the message
-         * @param payLenght the lenght of the message
+         * @param payLength the length of the message
          */
-        void SendCellMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, uint32_t msgID, uint32_t payLenght);
+        void SendCellMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength);
 
         void RecvWifiMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID);
 
