@@ -196,7 +196,7 @@ CommandMessage_CommandType ClientServerChannel::readCommand() {
     //Read the mandatory prefixed size
     const std::shared_ptr < uint32_t > message_size = readVarintPrefix ( sock );
     if ( !message_size || *message_size < 0 ) {
-        std::cerr << "ERROR: reading of mandatory message size failed!" << std::endl;
+        NS_LOG_ERROR("Reading of mandatory message size failed!");
         return CommandMessage_CommandType_UNDEF;
     }
     NS_LOG_LOGIC("read command announced message size: " << *message_size);
@@ -205,7 +205,7 @@ CommandMessage_CommandType ClientServerChannel::readCommand() {
     size_t res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
     NS_LOG_LOGIC("readCommand recv result: " << res);
     if ( *message_size > 0 && res != *message_size ) {
-        std::cerr << "ERROR: expected " << *message_size << " bytes, but red " << res << " bytes. poll ... " << std::endl;
+        NS_LOG_ERROR("ERROR: expected " << *message_size << " bytes, but read " << res << " bytes. poll ... ");
         struct pollfd socks[1];
         socks[0].fd = sock;
         socks[0].events = POLLRDNORM | POLLERR;
@@ -222,12 +222,12 @@ CommandMessage_CommandType ClientServerChannel::readCommand() {
         } while ( poll_res < 1 );
         res = recv ( sock, message_buffer, *message_size, MSG_WAITALL );
         if ( retries != 3 && res < 1 ) {
-            std::cerr << "ERROR: socket is ready, but cannot receive any bytes (" << res << "). Message sent?" << std::endl;
+            NS_LOG_ERROR("ERROR: socket is ready, but cannot receive any bytes (" << res << "). Message sent?");
             return CommandMessage_CommandType_UNDEF;
         }
     }
     if ( res != *message_size ) {
-        std::cerr << "ERROR: reading of message body failed! Socket not ready." << std::endl;
+        NS_LOG_ERROR("ERROR: reading of message body failed! Socket not ready.");
         return CommandMessage_CommandType_UNDEF;
     }
     if ( *message_size > 0 ) {

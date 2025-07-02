@@ -41,6 +41,7 @@ namespace ns3 {
 
         m_nodeManager = CreateObject<NodeManager>();
         m_nodeManager->Configure(this);
+        
         m_closeConnection = false;
 
         /* Initialize federateAmbassadorChannel (mostly for SENDING) */

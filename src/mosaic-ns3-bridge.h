@@ -95,8 +95,9 @@ namespace ns3 {
 
         ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
         std::atomic_bool m_closeConnection;
-        Ptr<NodeManager> m_nodeManager;
+        
         Ptr<ExtendedSimulatorImpl> m_sim;
+        Ptr<NodeManager> m_nodeManager;
     };
 } // namespace ns3
 #endif /* MOSAIC_NS3_BRIDGE_H */
