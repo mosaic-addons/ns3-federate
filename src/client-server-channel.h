@@ -35,7 +35,7 @@ constexpr const int INVALID_SOCKET = -1;
 /**
  * Abstraction of socket communication between Ambassador and Federate (e.g. ns-3 or OMNeT++).
  */
-namespace ClientServerChannelSpace {
+namespace ns3 {
 
 class ClientServerChannel {
 
@@ -205,5 +205,5 @@ class ClientServerChannel {
 		std::shared_ptr < uint32_t > readVarintPrefix(SOCKET sock);
 };
 
-} // namespace ClientServerChannelSpace
+} // namespace ns3
 #endif /* CLIENT_SERVER_CHANNEL_H */

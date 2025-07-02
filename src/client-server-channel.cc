@@ -41,31 +41,31 @@
 NS_LOG_COMPONENT_DEFINE("ClientServerChannel");
 
 namespace std {
-    ostream& operator<< ( ostream& out, ClientServerChannelSpace::CommandMessage_CommandType cmd ) {
+    ostream& operator<< ( ostream& out, ns3::CommandMessage_CommandType cmd ) {
         switch ( cmd ) {
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_UNDEF: out << "CommandType_UNDEF"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_INIT: out << "CommandType_INIT"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SHUT_DOWN: out << "CommandType_SHUT_DOWN"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SUCCESS: out << "CommandType_SUCCESS"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_NEXT_EVENT: out << "CommandType_NEXT_EVENT"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_ADVANCE_TIME: out << "CommandType_ADVANCE_TIME"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_END: out << "CommandType_END"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_ADD_NODE: out << "CommandType_ADD_NODE"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_UPDATE_NODE: out << "CommandType_UPDATE_NODE"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_REMOVE_NODE: out << "CommandType_REMOVE_NODE"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_CONF_WIFI_RADIO: out << "CommandType_CONF_WIFI_RADIO"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SEND_WIFI_MSG: out << "CommandType_SEND_WIFI_MSG"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_RECV_WIFI_MSG: out << "CommandType_RECV_WIFI_MSG"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_CONF_CELL_RADIO: out << "CommandType_CONF_CELL_RADIO"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_SEND_CELL_MSG: out << "CommandType_SEND_CELL_MSG"; break;
-            case ClientServerChannelSpace::CommandMessage_CommandType::CommandMessage_CommandType_RECV_CELL_MSG: out << "CommandType_RECV_CELL_MSG"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_UNDEF: out << "CommandType_UNDEF"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_INIT: out << "CommandType_INIT"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_SHUT_DOWN: out << "CommandType_SHUT_DOWN"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_SUCCESS: out << "CommandType_SUCCESS"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_NEXT_EVENT: out << "CommandType_NEXT_EVENT"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_ADVANCE_TIME: out << "CommandType_ADVANCE_TIME"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_END: out << "CommandType_END"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_ADD_NODE: out << "CommandType_ADD_NODE"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_UPDATE_NODE: out << "CommandType_UPDATE_NODE"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_REMOVE_NODE: out << "CommandType_REMOVE_NODE"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_CONF_WIFI_RADIO: out << "CommandType_CONF_WIFI_RADIO"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_SEND_WIFI_MSG: out << "CommandType_SEND_WIFI_MSG"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_RECV_WIFI_MSG: out << "CommandType_RECV_WIFI_MSG"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_CONF_CELL_RADIO: out << "CommandType_CONF_CELL_RADIO"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_SEND_CELL_MSG: out << "CommandType_SEND_CELL_MSG"; break;
+            case ns3::CommandMessage_CommandType::CommandMessage_CommandType_RECV_CELL_MSG: out << "CommandType_RECV_CELL_MSG"; break;
         }
         return out;
     }
     
 } // namespace std
 
-namespace ClientServerChannelSpace {
+namespace ns3 {
 
 std::string uint32_to_ip ( const unsigned int ip ) {
     unsigned char bytes[4];
@@ -630,4 +630,4 @@ std::shared_ptr < uint32_t > ClientServerChannel::readVarintPrefix(SOCKET sock) 
     return std::make_shared < uint32_t > ( return_value );
 }
 
-} // namespace ClientServerChannelSpace
+} // namespace ns3

@@ -93,7 +93,7 @@ namespace ns3 {
          */
         void dispatchCommand();
 
-        ClientServerChannelSpace::ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
+        ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
         std::atomic_bool m_closeConnection;
         Ptr<MosaicNodeManager> m_nodeManager;
         Ptr<MosaicSimulatorImpl> m_sim;

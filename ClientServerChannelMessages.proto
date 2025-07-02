@@ -13,7 +13,7 @@
 
 syntax = "proto2";
 
-package ClientServerChannelSpace;
+package ns3; // C++ namespace
 
 option java_package = "org.eclipse.mosaic.lib.coupling";
 option java_outer_classname = "ClientServerChannelProtos";

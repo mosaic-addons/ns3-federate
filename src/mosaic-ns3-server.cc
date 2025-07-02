@@ -27,7 +27,6 @@
 NS_LOG_COMPONENT_DEFINE("MosaicNs3Server");
 
 namespace ns3 {
-    using namespace ClientServerChannelSpace;
 
     MosaicNs3Server::MosaicNs3Server(int port, int cmdPort) {
         std::cout << "Starting ns3 federate on port=" << port << " cmdPort=" << cmdPort << std::endl;
@@ -294,4 +293,4 @@ namespace ns3 {
         federateAmbassadorChannel.writeReceiveCellMessage(recvTime, nodeID, msgID);
     }
 
-} //END Namespace
+} // namespace ns3

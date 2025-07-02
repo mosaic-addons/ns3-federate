@@ -580,7 +580,7 @@ namespace ns3 {
         }
     }
 
-    void MosaicNodeManager::SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLength) {
+    void MosaicNodeManager::SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, RadioChannel channel, uint32_t msgID, uint32_t payLength) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -631,5 +631,5 @@ namespace ns3 {
         
         m_serverPtr->writeReceiveCellMessage(recvTime, nodeId, msgID);
     }
-}
+} // namespace ns3
 
