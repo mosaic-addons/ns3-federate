@@ -20,7 +20,7 @@
  *
  */
 
-#include "mosaic-proxy-app.h"
+#include "proxy-app.h"
 
 #include "ns3/uinteger.h"
 #include "ns3/double.h"
@@ -28,46 +28,46 @@
 #include "ns3/udp-socket-factory.h"
 #include "ns3/log.h"
 
-NS_LOG_COMPONENT_DEFINE("MosaicProxyApp");
+NS_LOG_COMPONENT_DEFINE("ProxyApp");
 
 namespace ns3 {
 
-    NS_OBJECT_ENSURE_REGISTERED(MosaicProxyApp);
+    NS_OBJECT_ENSURE_REGISTERED(ProxyApp);
 
-    TypeId MosaicProxyApp::GetTypeId(void) {
-        static TypeId tid = TypeId("ns3::MosaicProxyApp")
+    TypeId ProxyApp::GetTypeId(void) {
+        static TypeId tid = TypeId("ns3::ProxyApp")
                 .SetParent<Application> ()
-                .AddConstructor<MosaicProxyApp> ()
+                .AddConstructor<ProxyApp> ()
                 .AddAttribute("Port", "The socket port for messages",
                 UintegerValue(8010),
-                MakeUintegerAccessor(&MosaicProxyApp::m_port),
+                MakeUintegerAccessor(&ProxyApp::m_port),
                 MakeUintegerChecker<uint16_t> ())
                 ;
 
         return tid;
     }
 
-    void MosaicProxyApp::SetRecvCallback(Callback<void, unsigned long long, uint32_t, int> cb) {
+    void ProxyApp::SetRecvCallback(Callback<void, unsigned long long, uint32_t, int> cb) {
         NS_LOG_FUNCTION (this << &cb);
         m_recvCallback = cb;
     }
 
-    void MosaicProxyApp::DoDispose(void) {
+    void ProxyApp::DoDispose(void) {
         NS_LOG_FUNCTION_NOARGS();
         m_socket = 0;
         m_recvCallback = MakeNullCallback<void, unsigned long long, uint32_t, int> ();
         Application::DoDispose();
     }
 
-    void MosaicProxyApp::Enable(void) {
+    void ProxyApp::Enable(void) {
         m_active = true;
     }
 
-    void MosaicProxyApp::Disable(void) {
+    void ProxyApp::Disable(void) {
         m_active = false;
     }
 
-    int MosaicProxyApp::TranslateNumberToIndex(int outDevice) {
+    int ProxyApp::TranslateNumberToIndex(int outDevice) {
         // Expected Input is 1:Wifi 2:LTE 3:Csma
         // Radio Devices are 0:Loopback 1:Wifi 2:LTE
         // Wired Devices are 0:Loopback 1:Csma
@@ -82,11 +82,11 @@ namespace ns3 {
         }
     }
 
-    void MosaicProxyApp::SetSockets(int outDevice) {
+    void ProxyApp::SetSockets(int outDevice) {
         NS_LOG_FUNCTION(GetNode()->GetId());
 
         if (m_socket) {
-            NS_FATAL_ERROR("Ignore creation attempt of a socket for MosaicProxyApp that has already a socket active. ");
+            NS_FATAL_ERROR("Ignore creation attempt of a socket for ProxyApp that has already a socket active. ");
             return;
         }
 
@@ -98,11 +98,11 @@ namespace ns3 {
             m_socket->BindToNetDevice (GetNode()->GetDevice(outDeviceIndex));
         }
         m_socket->SetAllowBroadcast(true);
-        m_socket->SetRecvCallback(MakeCallback(&MosaicProxyApp::Receive, this));
+        m_socket->SetRecvCallback(MakeCallback(&ProxyApp::Receive, this));
         m_outDevice = outDevice;
     }
 
-    void MosaicProxyApp::TransmitPacket(Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength) {
+    void ProxyApp::TransmitPacket(Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength) {
         NS_LOG_FUNCTION(GetNode()->GetId() << dstAddr << msgID << payLength);
 
         if (!m_active) {
@@ -132,9 +132,9 @@ namespace ns3 {
 
     /*
      * @brief Receive a packet from the socket
-     * This method is called by the callback which is defined in the method MosaicProxyApp::SetSockets
+     * This method is called by the callback which is defined in the method ProxyApp::SetSockets
      */
-    void MosaicProxyApp::Receive(Ptr<Socket> socket) {
+    void ProxyApp::Receive(Ptr<Socket> socket) {
         NS_LOG_FUNCTION(GetNode()->GetId());
         if (!m_active) {
             // This happens e.g. for wifi broadcasts on un-initialized ns3 nodes (aka unused by mosaic)

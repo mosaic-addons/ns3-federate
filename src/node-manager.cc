@@ -20,7 +20,7 @@
  *
  */
 
-#include "mosaic-node-manager.h"
+#include "node-manager.h"
 
 #include "ns3/node-list.h"
 #include "ns3/wifi-net-device.h"
@@ -28,28 +28,28 @@
 #include "ns3/lte-ue-rrc.h"
 
 #include "mosaic-ns3-server.h" 
-#include "mosaic-proxy-app.h"
+#include "proxy-app.h"
 
-NS_LOG_COMPONENT_DEFINE("MosaicNodeManager");
+NS_LOG_COMPONENT_DEFINE("NodeManager");
 
 namespace ns3 {
     
-    NS_OBJECT_ENSURE_REGISTERED(MosaicNodeManager);
+    NS_OBJECT_ENSURE_REGISTERED(NodeManager);
 
-    TypeId MosaicNodeManager::GetTypeId(void) {
-        static TypeId tid = TypeId("ns3::MosaicNodeManager")
+    TypeId NodeManager::GetTypeId(void) {
+        static TypeId tid = TypeId("ns3::NodeManager")
                 .SetParent<Object>()
-                .AddConstructor<MosaicNodeManager>()
+                .AddConstructor<NodeManager>()
                 // Attributes are only set _after_ constructor ran
                 .AddAttribute("numRadioNodes", "Number of mobile and stationary radio nodes",
                 UintegerValue(10),
-                MakeUintegerAccessor(&MosaicNodeManager::m_numRadioNodes),
+                MakeUintegerAccessor(&NodeManager::m_numRadioNodes),
                 MakeUintegerChecker<uint16_t> ())
                 ;
         return tid;
     }
 
-    MosaicNodeManager::MosaicNodeManager() 
+    NodeManager::NodeManager() 
       : m_backboneAddressHelper("5.0.0.0", "255.0.0.0"),
         m_wifiAddressHelper("6.0.0.0", "255.0.0.0", "0.0.0.2") {
 
@@ -71,7 +71,7 @@ namespace ns3 {
         m_csmaHelper.SetChannelAttribute("Delay", TimeValue(NanoSeconds(6560)));
     }
 
-    void MosaicNodeManager::Configure(MosaicNs3Server* serverPtr) {
+    void NodeManager::Configure(MosaicNs3Server* serverPtr) {
         NS_LOG_INFO("Initialize Node Infrastructure...");
         m_serverPtr = serverPtr;
 
@@ -223,18 +223,18 @@ namespace ns3 {
         m_radioNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
         NS_LOG_LOGIC(ss.str());
 
-        NS_LOG_INFO("Install MosaicProxyApp applications...");
+        NS_LOG_INFO("Install ProxyApp applications...");
         for (uint32_t i = 0; i < m_radioNodes.GetN(); ++i)
         {
             Ptr<Node> node = m_radioNodes.Get(i);
 
-            Ptr<MosaicProxyApp> wifiApp = CreateObject<MosaicProxyApp>();
-            wifiApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvWifiMsg, this));
+            Ptr<ProxyApp> wifiApp = CreateObject<ProxyApp>();
+            wifiApp->SetRecvCallback(MakeCallback(&NodeManager::RecvWifiMsg, this));
             node->AddApplication(wifiApp);
             wifiApp->SetSockets(1);
 
-            Ptr<MosaicProxyApp> cellApp = CreateObject<MosaicProxyApp>();
-            cellApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvCellMsg, this));
+            Ptr<ProxyApp> cellApp = CreateObject<ProxyApp>();
+            cellApp->SetRecvCallback(MakeCallback(&NodeManager::RecvCellMsg, this));
             node->AddApplication(cellApp);
             cellApp->SetSockets(2);
         }
@@ -243,7 +243,7 @@ namespace ns3 {
         // m_lteHelper->HandoverRequest (Seconds (3.000), lteDevices.Get (1), m_enbDevices.Get (0), m_enbDevices.Get (1));
     }
 
-    void MosaicNodeManager::OnShutdown() {
+    void NodeManager::OnShutdown() {
         NS_LOG_FUNCTION (this);
 
         uint32_t usedMobileNodes = m_mosaic2nsdrei.size() - (m_backboneNodes.GetN() - 1);
@@ -272,7 +272,7 @@ namespace ns3 {
         NS_LOG_LOGIC(ss.str());
     }
 
-    uint32_t MosaicNodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
+    uint32_t NodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
         if (m_mosaic2nsdrei.find(mosaicNodeId) == m_mosaic2nsdrei.end()){
             NS_LOG_ERROR("Node ID " << mosaicNodeId << " not found in m_mosaic2nsdrei");
             NS_LOG_INFO("Have m_mosaic2nsdrei");
@@ -287,7 +287,7 @@ namespace ns3 {
         return res;
     }
 
-    uint32_t MosaicNodeManager::GetMosaicNodeId(uint32_t ns3NodeId) {
+    uint32_t NodeManager::GetMosaicNodeId(uint32_t ns3NodeId) {
         if (m_nsdrei2mosaic.find(ns3NodeId) == m_nsdrei2mosaic.end()){
             NS_LOG_ERROR("Node ID " << ns3NodeId << " not found in m_nsdrei2mosaic");
             NS_LOG_INFO("Have m_nsdrei2mosaic");
@@ -302,7 +302,7 @@ namespace ns3 {
         return res;
     }
 
-    void MosaicNodeManager::CreateRadioNode(uint32_t mosaicNodeId, Vector position) {
+    void NodeManager::CreateRadioNode(uint32_t mosaicNodeId, Vector position) {
         if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
             NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
             exit(1);
@@ -329,7 +329,7 @@ namespace ns3 {
         UpdateNodePosition(mosaicNodeId, position);
     }
 
-    void MosaicNodeManager::CreateWiredNode(uint32_t mosaicNodeId) {
+    void NodeManager::CreateWiredNode(uint32_t mosaicNodeId) {
         if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
             NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
             exit(1);
@@ -355,13 +355,13 @@ namespace ns3 {
         int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device); // has to be done after m_backboneAddressHelper
 
         /* install application */
-        Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
-        app->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvCellMsg, this));
+        Ptr<ProxyApp> app = CreateObject<ProxyApp>();
+        app->SetRecvCallback(MakeCallback(&NodeManager::RecvCellMsg, this));
         node->AddApplication(app);
-        app->SetSockets(3); // see MosaicProxyApp::TranslateNumberToIndex
+        app->SetSockets(3); // see ProxyApp::TranslateNumberToIndex
     }
 
-    void MosaicNodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {
+    void NodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -374,7 +374,7 @@ namespace ns3 {
         mobModel->SetPosition(position);
     }
 
-    void MosaicNodeManager::RemoveNode(uint32_t mosaicNodeId) {
+    void NodeManager::RemoveNode(uint32_t mosaicNodeId) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -396,7 +396,7 @@ namespace ns3 {
         /* deactivate Apps */
         int numApps = m_isRadioNode[nodeId] ? 2 : 1;
         for (uint32_t i = 0; i < numApps; i++ ) {
-            Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+            Ptr<ProxyApp> app = DynamicCast<ProxyApp> (node->GetApplication(0));
             if (!app) {
                 NS_LOG_ERROR("No app with index=" << i << " found on node " << nodeId << " !");
                 exit(1);
@@ -407,7 +407,7 @@ namespace ns3 {
         m_isDeactivated[nodeId] = true;
     }
 
-    void MosaicNodeManager::ConfigureWifiRadio(uint32_t mosaicNodeId, double transmitPower, Ipv4Address ip) {
+    void NodeManager::ConfigureWifiRadio(uint32_t mosaicNodeId, double transmitPower, Ipv4Address ip) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -423,7 +423,7 @@ namespace ns3 {
         NS_LOG_INFO("[node=" << nodeId << "] txPow=" << transmitPower << " ip=" << ip);
         
         Ptr<Node> node = NodeList::GetNode(nodeId);
-        Ptr<MosaicProxyApp> wifiApp = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+        Ptr<ProxyApp> wifiApp = DynamicCast<ProxyApp> (node->GetApplication(0));
         if (!wifiApp) {
             NS_LOG_ERROR("No wifi app found on node " << nodeId << " !");
             exit(1);
@@ -465,7 +465,7 @@ namespace ns3 {
         );
     }
 
-    void MosaicNodeManager::ConfigureCellRadio(uint32_t mosaicNodeId, Ipv4Address ip) {
+    void NodeManager::ConfigureCellRadio(uint32_t mosaicNodeId, Ipv4Address ip) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -492,7 +492,7 @@ namespace ns3 {
             NS_ASSERT_MSG(!partOf106, "The ip for radio nodes must not be part of 10.6.0.0/16 network.");
 
             /* activate application */
-            Ptr<MosaicProxyApp> cellApp = DynamicCast<MosaicProxyApp> (node->GetApplication(1));
+            Ptr<ProxyApp> cellApp = DynamicCast<ProxyApp> (node->GetApplication(1));
             if (!cellApp) {
                 NS_LOG_ERROR("No cell app found on node " << nodeId << " !");
                 exit(1);
@@ -533,7 +533,7 @@ namespace ns3 {
             NS_ASSERT_MSG(partOf105 || partOf106, "The ip for wired nodes must be part of 10.5.0.0/16 or 10.6.0.0/16 network.");
 
             /* activate application */
-            Ptr<MosaicProxyApp> csmaApp = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+            Ptr<ProxyApp> csmaApp = DynamicCast<ProxyApp> (node->GetApplication(0));
             if (!csmaApp) {
                 NS_LOG_ERROR("No csma app found on node " << nodeId << " !");
                 exit(1);
@@ -580,7 +580,7 @@ namespace ns3 {
         }
     }
 
-    void MosaicNodeManager::SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, RadioChannel channel, uint32_t msgID, uint32_t payLength) {
+    void NodeManager::SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, RadioChannel channel, uint32_t msgID, uint32_t payLength) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -588,16 +588,16 @@ namespace ns3 {
         NS_LOG_INFO("[node=" << nodeId << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength);
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
-        Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(0));
+        Ptr<ProxyApp> app = DynamicCast<ProxyApp> (node->GetApplication(0));
         if (app == nullptr) {
-            NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, MosaicProxyApp is missing");
+            NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, ProxyApp is missing");
             return;
         }
         // TODO: use channel 
         app->TransmitPacket(dstAddr, msgID, payLength);
     }
 
-    void MosaicNodeManager::SendCellMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength) {
+    void NodeManager::SendCellMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -605,15 +605,15 @@ namespace ns3 {
         NS_LOG_INFO("[node=" << nodeId << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength);
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
-        Ptr<MosaicProxyApp> app = DynamicCast<MosaicProxyApp> (node->GetApplication(1));
+        Ptr<ProxyApp> app = DynamicCast<ProxyApp> (node->GetApplication(1));
         if (app == nullptr) {
-            NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, MosaicProxyApp is missing");
+            NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, ProxyApp is missing");
             return;
         }
         app->TransmitPacket(dstAddr, msgID, payLength);
     }
 
-    void MosaicNodeManager::RecvWifiMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
+    void NodeManager::RecvWifiMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
         if (m_isDeactivated[ns3NodeId]) {
             return;
         }
@@ -623,7 +623,7 @@ namespace ns3 {
     }
 
 
-    void MosaicNodeManager::RecvCellMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
+    void NodeManager::RecvCellMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID) {
         if (m_isDeactivated[ns3NodeId]) {
             return;
         }

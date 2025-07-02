@@ -20,22 +20,22 @@
  *
  */
 
-#ifndef MOSAIC_PROXY_APP_H
-#define MOSAIC_PROXY_APP_H
+#ifndef PROXY_APP_H
+#define PROXY_APP_H
 
 #include "ns3/application.h"
 #include "ns3/data-rate.h"
 
-#include "mosaic-node-manager.h"
+#include "node-manager.h"
 
 namespace ns3 {
 
-    class MosaicProxyApp : public Application {
+    class ProxyApp : public Application {
     public:
 
-        MosaicProxyApp() = default;
+        ProxyApp() = default;
 
-        virtual ~MosaicProxyApp() = default;
+        virtual ~ProxyApp() = default;
 
         static TypeId GetTypeId(void);
 
@@ -73,4 +73,4 @@ namespace ns3 {
 
 } // namespace ns3
 
-#endif   /* MOSAIC_PROXY_APP_H */
+#endif   /* PROXY_APP_H */

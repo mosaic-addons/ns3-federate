@@ -35,7 +35,7 @@
 
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE("MosaicStarter");
+NS_LOG_COMPONENT_DEFINE("MainClass");
 
 static LogLevel ParseLogLevel(const std::string & levelString) {
     //Taken from ns-3 environment parsing of log level
@@ -151,7 +151,7 @@ int main(int argc, char *argv[]) {
     int cmdPort = 0;
     std::string configFile = "ns3_federate_config.xml";
 
-    MosaicNodeManager::GetTypeId();
+    NodeManager::GetTypeId();
     CommandLine cmd("ns3-federate");
     cmd.Usage("Mosaic ns-3 federate.");
     cmd.AddValue("cmdPort", "the command port", cmdPort);
@@ -160,7 +160,7 @@ int main(int argc, char *argv[]) {
     cmd.Parse(argc, argv);
 
     GlobalValue::Bind("SchedulerType", StringValue("ns3::ListScheduler"));
-    GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
+    GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::ExtendedSimulatorImpl"));
     if (access(configFile.c_str(), F_OK) == -1) {
         std::cerr << "Could not open configuration file \"" << configFile << "\"" << std::endl;
         return 1;

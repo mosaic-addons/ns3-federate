@@ -22,7 +22,7 @@
 
 #include "mosaic-ns3-server.h"
 
-#include "mosaic-simulator-impl.h"
+#include "extended-simulator-impl.h"
 
 NS_LOG_COMPONENT_DEFINE("MosaicNs3Server");
 
@@ -31,15 +31,15 @@ namespace ns3 {
     MosaicNs3Server::MosaicNs3Server(int port, int cmdPort) {
         std::cout << "Starting ns3 federate on port=" << port << " cmdPort=" << cmdPort << std::endl;
 
-        m_sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
+        m_sim = DynamicCast<ExtendedSimulatorImpl> (Simulator::GetImplementation());
         if (nullptr == m_sim) {
-            NS_LOG_ERROR("Could not find MosaicSimulatorImpl");
+            NS_LOG_ERROR("Could not find ExtendedSimulatorImpl");
             m_closeConnection = true;
             return;
         }
         m_sim->AttachNS3Server(this);
 
-        m_nodeManager = CreateObject<MosaicNodeManager>();
+        m_nodeManager = CreateObject<NodeManager>();
         m_nodeManager->Configure(this);
         m_closeConnection = false;
 
@@ -113,10 +113,10 @@ namespace ns3 {
                 Time tDelay = tNext - m_sim->Now();
 
                 if (message.type() == AddNode_NodeType_RADIO_NODE) {
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
                     NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
                 } else if (message.type() == AddNode_NodeType_WIRED_NODE) {
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::CreateWiredNode, m_nodeManager, message.node_id()));
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateWiredNode, m_nodeManager, message.node_id()));
                     NS_LOG_DEBUG("Received ADD_WIRED_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
                 } else {
                     NS_LOG_ERROR("Received unhandeled ADD_..._NODE message");
@@ -134,7 +134,7 @@ namespace ns3 {
 
                 for ( size_t i = 0; i < message.properties_size(); i++ ) { //fill the update messages into our struct
                     UpdateNode_NodeData node_data = message.properties(i);
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, node_data.id(), Vector(node_data.x(), node_data.y(), node_data.z())));
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::UpdateNodePosition, m_nodeManager, node_data.id(), Vector(node_data.x(), node_data.y(), node_data.z())));
                     NS_LOG_DEBUG("Received UPDATE_NODE(S): mosNID=" << node_data.id() << " pos(x=" << node_data.x() << " y=" << node_data.y() << " z=" << node_data.z() << ") tNext=" << tNext);
                 }
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
@@ -146,7 +146,7 @@ namespace ns3 {
                 Time tNext = NanoSeconds(message.time());
                 Time tDelay = tNext - m_sim->Now();
                 
-                m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::RemoveNode, m_nodeManager, message.node_id()));
+                m_sim->Schedule(tDelay, MakeEvent(&NodeManager::RemoveNode, m_nodeManager, message.node_id()));
                 NS_LOG_DEBUG("Received REMOVE_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
@@ -187,7 +187,7 @@ namespace ns3 {
                         exit(1);
                     }
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureWifiRadio, m_nodeManager, message.node_id(), transmitPower, ip));
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::ConfigureWifiRadio, m_nodeManager, message.node_id(), transmitPower, ip));
                     NS_LOG_DEBUG("Received CONF_WIFI_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 } catch (int e) {
@@ -210,7 +210,7 @@ namespace ns3 {
                         tNext = NanoSeconds(1);
                     }
                     Time tDelay = tNext - m_sim->Now();
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendWifiMsg, m_nodeManager, message.node_id(), ip, message.channel_id(), message.message_id(), message.length()));
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::SendWifiMsg, m_nodeManager, message.node_id(), ip, message.channel_id(), message.message_id(), message.length()));
                     NS_LOG_DEBUG("Received SEND_WIFI_MSG: mosNID=" << message.node_id() << " id=" << message.message_id() << " sendTime=" << message.time() << " length=" << message.length());
                 } catch (int e) {
                     NS_LOG_ERROR("Error while sending message");
@@ -228,7 +228,7 @@ namespace ns3 {
                     Ipv4Address ip;
                     ip.Set(message.ip_address());
 
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), ip));
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), ip));
                     NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
 
                 } catch (int e) {
@@ -251,7 +251,7 @@ namespace ns3 {
                         tNext = NanoSeconds(1);
                     }
                     Time tDelay = tNext - m_sim->Now();
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::SendCellMsg, m_nodeManager, message.node_id(), ip, message.message_id(), message.length()));
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::SendCellMsg, m_nodeManager, message.node_id(), ip, message.message_id(), message.length()));
                     NS_LOG_DEBUG("Received SEND_CELL_MSG: mosNID=" << message.node_id() << " id=" << message.message_id() << " sendTime=" << message.time() << " length=" << message.length());
                 } catch (int e) {
                     NS_LOG_ERROR("Error while sending message");

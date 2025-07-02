@@ -24,14 +24,14 @@
 #define MOSAIC_NS3_SERVER_H
 
 #include "client-server-channel.h"
-#include "mosaic-node-manager.h"
+#include "node-manager.h"
 
 #include <atomic>
 
 namespace ns3 {
 
     // Forward declaration to prevent circular dependency
-    class MosaicSimulatorImpl;
+    class ExtendedSimulatorImpl;
 
     /**
      * @brief The central class of the MOSAIC-NS3 coupling
@@ -95,8 +95,8 @@ namespace ns3 {
 
         ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
         std::atomic_bool m_closeConnection;
-        Ptr<MosaicNodeManager> m_nodeManager;
-        Ptr<MosaicSimulatorImpl> m_sim;
+        Ptr<NodeManager> m_nodeManager;
+        Ptr<ExtendedSimulatorImpl> m_sim;
     };
 } // namespace ns3
 #endif /* MOSAIC_NS3_SERVER_H */

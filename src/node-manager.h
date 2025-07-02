@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef MOSAIC_NODE_MANAGER_H
-#define MOSAIC_NODE_MANAGER_H
+#ifndef NODE_MANAGER_H
+#define NODE_MANAGER_H
 
 #include <unordered_map>
 
@@ -52,17 +52,17 @@ namespace ns3 {
     class MosaicNs3Server;
 
     /**
-     * @class MosaicNodeManager
-     * @brief The class MosaicNodeManager manages the creation, the initial 
+     * @class NodeManager
+     * @brief The class NodeManager manages the creation, the initial 
      * placement, and the position updates of ns3 nodes. It also manages the
      * node ID translation between MOSAIC and NS3 domain.
      */
-    class MosaicNodeManager : public Object {
+    class NodeManager : public Object {
     public:
         static TypeId GetTypeId(void);
 
-        MosaicNodeManager();
-        virtual ~MosaicNodeManager() = default;
+        NodeManager();
+        virtual ~NodeManager() = default;
 
         void Configure(MosaicNs3Server* serverPtr);
 
@@ -187,4 +187,4 @@ namespace ns3 {
         NodeContainer m_radioNodes;
     };
 } // namespace ns3
-#endif /* MOSAIC_NODE_MANAGER_H */
+#endif /* NODE_MANAGER_H */
