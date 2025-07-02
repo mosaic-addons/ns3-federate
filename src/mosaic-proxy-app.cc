@@ -168,12 +168,12 @@ namespace ns3 {
             NS_LOG_ERROR("Received a packet but have no possibility to forward up. Ignore.");
         }
 
+        /* Add one slash, to enable this development test 
         if (m_outDevice == 3 && msgID == 1) {
             // ping pong a packet back to fixed IP
-            /* Add one slash, to enable this test 
-            Ipv4Address ip("10.3.0.20");
-            TransmitPacket(ip, msgID, 1234);
-            //*/
+            Ipv4Address dst("10.3.0.20");
+            TransmitPacket(dst, msgID, 1234);
         }
+        //*/
     }
 } // namespace ns3
