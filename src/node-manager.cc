@@ -27,7 +27,7 @@
 #include "ns3/lte-ue-net-device.h"
 #include "ns3/lte-ue-rrc.h"
 
-#include "mosaic-ns3-server.h" 
+#include "mosaic-ns3-bridge.h" 
 #include "proxy-app.h"
 
 NS_LOG_COMPONENT_DEFINE("NodeManager");
@@ -71,7 +71,7 @@ namespace ns3 {
         m_csmaHelper.SetChannelAttribute("Delay", TimeValue(NanoSeconds(6560)));
     }
 
-    void NodeManager::Configure(MosaicNs3Server* serverPtr) {
+    void NodeManager::Configure(MosaicNs3Bridge* serverPtr) {
         NS_LOG_INFO("Initialize Node Infrastructure...");
         m_serverPtr = serverPtr;
 

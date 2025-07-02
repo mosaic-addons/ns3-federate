@@ -20,15 +20,15 @@
  *
  */
 
-#include "mosaic-ns3-server.h"
+#include "mosaic-ns3-bridge.h"
 
 #include "extended-simulator-impl.h"
 
-NS_LOG_COMPONENT_DEFINE("MosaicNs3Server");
+NS_LOG_COMPONENT_DEFINE("MosaicNs3Bridge");
 
 namespace ns3 {
 
-    MosaicNs3Server::MosaicNs3Server(int port, int cmdPort) {
+    MosaicNs3Bridge::MosaicNs3Bridge(int port, int cmdPort) {
         std::cout << "Starting ns3 federate on port=" << port << " cmdPort=" << cmdPort << std::endl;
 
         m_sim = DynamicCast<ExtendedSimulatorImpl> (Simulator::GetImplementation());
@@ -37,7 +37,7 @@ namespace ns3 {
             m_closeConnection = true;
             return;
         }
-        m_sim->AttachNS3Server(this);
+        m_sim->AttachBridge(this);
 
         m_nodeManager = CreateObject<NodeManager>();
         m_nodeManager->Configure(this);
@@ -75,11 +75,11 @@ namespace ns3 {
         NS_LOG_INFO("Created new connection on port " << port);
     }
 
-    MosaicNs3Server::~MosaicNs3Server() {
+    MosaicNs3Bridge::~MosaicNs3Bridge() {
         m_closeConnection = true;
     }
 
-    void MosaicNs3Server::run() {
+    void MosaicNs3Bridge::run() {
         try {
             if (m_closeConnection) {
                 return;                
@@ -97,12 +97,12 @@ namespace ns3 {
         NS_LOG_INFO("Finishing server.... ");
     }
 
-    void MosaicNs3Server::dispatchCommand() {
+    void MosaicNs3Bridge::dispatchCommand() {
         //read the commandId from the channel
         CommandMessage_CommandType commandId = ambassadorFederateChannel.readCommand();
         switch (commandId) {
             case CommandMessage_CommandType_INIT:
-                //CMD_INIT is not permitted after the initialization of the MosaicNs3Server
+                //CMD_INIT is not permitted after the initialization of the MosaicNs3Bridge
                 NS_LOG_ERROR("Received CMD_INIT");
                 break;
 
@@ -276,19 +276,19 @@ namespace ns3 {
         }
     }
 
-    void MosaicNs3Server::writeNextTime(unsigned long long nextTime) {
+    void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
     }
 
-    void MosaicNs3Server::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
+    void MosaicNs3Bridge::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
         federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, RadioChannel::PROTO_CCH, 0);
         // FIXME: Channel is hardcoded
         // FIXME: RSSI is hardcoded
     }
 
-    void MosaicNs3Server::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
+    void MosaicNs3Bridge::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_CELL_MSG);
         federateAmbassadorChannel.writeReceiveCellMessage(recvTime, nodeID, msgID);
     }

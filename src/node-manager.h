@@ -49,7 +49,7 @@
 namespace ns3 {
 
     //Forward declaration to prevent circular dependency
-    class MosaicNs3Server;
+    class MosaicNs3Bridge;
 
     /**
      * @class NodeManager
@@ -64,7 +64,7 @@ namespace ns3 {
         NodeManager();
         virtual ~NodeManager() = default;
 
-        void Configure(MosaicNs3Server* serverPtr);
+        void Configure(MosaicNs3Bridge* serverPtr);
 
         void OnShutdown(void);
 
@@ -150,7 +150,7 @@ namespace ns3 {
          */
         uint32_t GetMosaicNodeId(uint32_t ns3NodeId);
 
-        MosaicNs3Server *m_serverPtr;
+        MosaicNs3Bridge *m_serverPtr;
         std::map<uint32_t, uint32_t> m_mosaic2nsdrei;
         std::map<uint32_t, uint32_t> m_nsdrei2mosaic;
         std::unordered_map<uint32_t, bool> m_isRadioNode;

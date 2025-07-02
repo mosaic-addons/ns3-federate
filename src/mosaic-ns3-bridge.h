@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef MOSAIC_NS3_SERVER_H
-#define MOSAIC_NS3_SERVER_H
+#ifndef MOSAIC_NS3_BRIDGE_H
+#define MOSAIC_NS3_BRIDGE_H
 
 #include "client-server-channel.h"
 #include "node-manager.h"
@@ -36,29 +36,29 @@ namespace ns3 {
     /**
      * @brief The central class of the MOSAIC-NS3 coupling
      */
-    class MosaicNs3Server {
+    class MosaicNs3Bridge {
     public:
-        MosaicNs3Server() = delete;
+        MosaicNs3Bridge() = delete;
 
         /**
-         * @brief Constructor: initialize the MosaicNs3Server, listen on port and wait for CMD_INIT
+         * @brief Constructor: initialize the MosaicNs3Bridge, listen on port and wait for CMD_INIT
          *
          * @param port    port for sending channel
          * @param cmdPort port of command channel, for receiving the commands from MOSAIC
          */
-        MosaicNs3Server(int port, int cmdPort);  
+        MosaicNs3Bridge(int port, int cmdPort);  
 
         /**
          * @brief Destructor
          */
-        ~MosaicNs3Server();      
+        ~MosaicNs3Bridge();      
 
         /**
          * @brief main loop of simulation, call to start simulation
          *
          * NS3 Magic: a specialized entry-point is needed to create this class from a end-user function. The call of the constructor is forbidden by the NS3.
          * this function is called by the starter function and obtains the whole simulation
-         * the function will call the dispatcher after the initialization of MosaicNs3Server and the creation of the first dummy event
+         * the function will call the dispatcher after the initialization of MosaicNs3Bridge and the creation of the first dummy event
          */
         void run();
 
@@ -99,4 +99,4 @@ namespace ns3 {
         Ptr<ExtendedSimulatorImpl> m_sim;
     };
 } // namespace ns3
-#endif /* MOSAIC_NS3_SERVER_H */
+#endif /* MOSAIC_NS3_BRIDGE_H */

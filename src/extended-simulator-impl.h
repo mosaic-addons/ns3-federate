@@ -30,7 +30,7 @@
 #include "ns3/event-impl.h"
 #include "ns3/ptr.h"
 
-#include "mosaic-ns3-server.h"
+#include "mosaic-ns3-bridge.h"
 
 namespace ns3 {
 
@@ -53,11 +53,11 @@ namespace ns3 {
         static TypeId GetTypeId(void);
 
         /**
-         * @brief Attach the instance of the MOSAIC server to the object of this class
+         * @brief Attach the instance of the MOSAIC bridge to the object of this class
          *
          * @param instance the MOSAIC server instance
          */
-        void AttachNS3Server(MosaicNs3Server* instance);
+        void AttachBridge(MosaicNs3Bridge* instance);
         
         virtual EventId Schedule(Time const &time, EventImpl *event);
         virtual void Destroy();
@@ -100,7 +100,7 @@ namespace ns3 {
         // number of events that have been inserted but not yet scheduled,
         // not counting the "destroy" events; this is used for validation
         int m_unscheduledEvents;
-        MosaicNs3Server* m_server;
+        MosaicNs3Bridge* m_mosaicNs3Bridge;
 
     };
 } // namespace ns3

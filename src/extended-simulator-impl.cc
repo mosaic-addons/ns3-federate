@@ -164,7 +164,7 @@ namespace ns3 {
         m_uid++;
         m_unscheduledEvents++;
         m_events->Insert(ev);
-        m_server->writeNextTime(ev.key.m_ts);
+        m_mosaicNs3Bridge->writeNextTime(ev.key.m_ts);
 
         return EventId(event, ev.key.m_ts, ev.key.m_context, ev.key.m_uid);
     }
@@ -180,7 +180,7 @@ namespace ns3 {
         m_uid++;
         m_unscheduledEvents++;
         m_events->Insert(ev);
-        m_server->writeNextTime(ev.key.m_ts);
+        m_mosaicNs3Bridge->writeNextTime(ev.key.m_ts);
     }
 
     EventId ExtendedSimulatorImpl::ScheduleNow(EventImpl *event) {
@@ -292,8 +292,8 @@ namespace ns3 {
         return m_currentContext;
     }
 
-    void ExtendedSimulatorImpl::AttachNS3Server(MosaicNs3Server* server) {
-        m_server = server;
+    void ExtendedSimulatorImpl::AttachBridge(MosaicNs3Bridge* instance) {
+        m_mosaicNs3Bridge = instance;
     }
 
 } // namespace ns3

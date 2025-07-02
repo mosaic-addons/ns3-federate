@@ -31,7 +31,7 @@
 #include "ns3/core-module.h"
 #include "ns3/config-store.h"
 
-#include "mosaic-ns3-server.h"
+#include "mosaic-ns3-bridge.h"
 
 using namespace ns3;
 
@@ -174,8 +174,8 @@ int main(int argc, char *argv[]) {
     SetLogLevels(configFile);
 
     try {
-        MosaicNs3Server server(port, cmdPort);
-        server.run();
+        MosaicNs3Bridge instance(port, cmdPort);
+        instance.run();
     } catch (int e) {
         NS_LOG_ERROR("Caught exception [" << e << "]. Exiting ns-3 federate ");
         return 1;
