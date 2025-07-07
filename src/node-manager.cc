@@ -196,9 +196,11 @@ namespace ns3 {
                 } 
             }
         }
-        std::stringstream ss;
-        nodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
-        NS_LOG_LOGIC(ss.str());
+        if (nodes.GetN() > 0) {
+            std::stringstream ss;
+            nodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
+            NS_LOG_LOGIC(ss.str());
+        }
     }
 
     uint32_t NodeManager::GetNs3NodeId(uint32_t mosaicNodeId) {
