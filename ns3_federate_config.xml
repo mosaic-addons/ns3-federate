@@ -45,7 +45,7 @@
 
     <!-- Federate settings -->
     <default name="ns3::ProxyApp::Port" value="8010"/>
-    <default name="ns3::NodeManager::numRadioNodes" value="5"/>
+    <default name="ns3::NodeManager::numExtraRadioNodes" value="5"/>
 
     <!-- LTE settings -->
     <!-- <default name="ns3::LteHelper::HandoverAlgorithm" value="ns3::A3RsrpHandoverAlgorithm"/> -->

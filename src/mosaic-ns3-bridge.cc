@@ -115,7 +115,11 @@ namespace ns3 {
                 Time tDelay = tNext - m_sim->Now();
 
                 if (message.type() == AddNode_NodeType_RADIO_NODE) {
-                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::ActivateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
+                    if (!m_didRunOnStart) {
+                        m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
+                    } else {
+                        m_sim->Schedule(tDelay, MakeEvent(&NodeManager::ActivateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
+                    }
                     NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
                 } else if (message.type() == AddNode_NodeType_WIRED_NODE) {
                     m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateWiredNode, m_nodeManager, message.node_id()));

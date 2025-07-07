@@ -156,7 +156,7 @@ namespace ns3 {
         void RecvCellMsg(unsigned long long recvTime, uint32_t ns3NodeId, int msgID);
 
         // Must be public to be accessible by ns-3 object creation routine
-        uint16_t m_numRadioNodes;
+        uint16_t m_numExtraRadioNodes;
 
     private:
 
@@ -169,6 +169,11 @@ namespace ns3 {
          * @brief translate the Ns3 node IDs to MOSAIC node IDs
          */
         uint32_t GetMosaicNodeId(uint32_t ns3NodeId);
+
+        /**
+         * @brief Create a radio node and return it
+         */ 
+        Ptr<Node> CreateRadioNodeHelper(void);
 
         /**
          * @brief Print important information about device/interface configuration
@@ -210,7 +215,7 @@ namespace ns3 {
         NodeContainer m_enbNodes;
         NetDeviceContainer m_enbDevices;
         NodeContainer m_radioNodes;
-        NodeContainer m_dynamicRadioNodes;
+        NodeContainer m_extraRadioNodes;
     };
 } // namespace ns3
 #endif /* NODE_MANAGER_H */
