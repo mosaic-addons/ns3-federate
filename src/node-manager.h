@@ -66,7 +66,19 @@ namespace ns3 {
 
         void Configure(MosaicNs3Bridge* serverPtr);
 
+        /**
+         * @brief this function is called just before leaving simulation time zero
+         */
+        void OnStart(void);
+
         void OnShutdown(void);
+
+        /**
+         * @brief create a new eNodeB
+         *
+         * @param position the new node position as a Vector
+         */
+        void CreateNodeB(Vector position);
 
         /**
          * @brief create a new radio node

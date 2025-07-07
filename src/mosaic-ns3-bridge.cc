@@ -43,6 +43,7 @@ namespace ns3 {
         m_nodeManager->Configure(this);
         
         m_closeConnection = false;
+        m_didRunOnStart = false;
 
         /* Initialize federateAmbassadorChannel (mostly for SENDING) */
         NS_LOG_INFO("Initialize federateAmbassadorChannel");
@@ -119,6 +120,9 @@ namespace ns3 {
                 } else if (message.type() == AddNode_NodeType_WIRED_NODE) {
                     m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateWiredNode, m_nodeManager, message.node_id()));
                     NS_LOG_DEBUG("Received ADD_WIRED_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
+                } else if (message.type() == AddNode_NodeType_NODE_B) {
+                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateNodeB, m_nodeManager, Vector(message.x(), message.y(), message.z())));
+                    NS_LOG_DEBUG("Received ADD_NODE_B: pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
                 } else {
                     NS_LOG_ERROR("Received unhandeled ADD_..._NODE message");
                     m_closeConnection = true;
@@ -158,6 +162,11 @@ namespace ns3 {
 
                 uint64_t advancedTime;
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
+
+                if (advancedTime > 0 && !m_didRunOnStart) {
+                    m_nodeManager->OnStart();
+                    m_didRunOnStart = true;
+                }
 
                 // NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime); // LTE schedules events every 1ms
                 //run the simulation while the time of the next event is smaller than the next time step

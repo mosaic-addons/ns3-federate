@@ -66,9 +66,13 @@ namespace ns3 {
         // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
         m_epcHelper = CreateObject<PointToPointEpcHelper> (); 
         m_lteHelper->SetEpcHelper (m_epcHelper);
+        m_lteHelper->Initialize ();
         // Wired
         m_csmaHelper.SetChannelAttribute("DataRate", StringValue("100Gb/s"));
         m_csmaHelper.SetChannelAttribute("Delay", TimeValue(NanoSeconds(6560)));
+        
+        /* enable for debugging null-pointer-exceptions (log spam!)*/
+        // m_lteHelper->EnableLogComponents();
     }
 
     void NodeManager::Configure(MosaicNs3Bridge* serverPtr) {
@@ -122,22 +126,6 @@ namespace ns3 {
 
         // [node=2] see no-backhaul-epc-helper:m_mme ... MME network element
         
-        // TODO: this has to come from RTI interaction or configuration file
-        NS_LOG_INFO("Setup eNodeB's...");
-        m_enbNodes.Create (2);
-        m_mobilityHelper.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
-        m_mobilityHelper.Install (m_enbNodes);
-        m_enbDevices = m_lteHelper->InstallEnbDevice (m_enbNodes);
-        NS_LOG_DEBUG("[node=" << m_enbNodes.Get(0)->GetId() << "] dev=" << m_enbDevices.Get(0));
-        NS_LOG_DEBUG("[node=" << m_enbNodes.Get(1)->GetId() << "] dev=" << m_enbDevices.Get(1));
-        m_lteHelper->AddX2Interface (m_enbNodes); // for handover
-
-        // Set position of eNB nr.2
-        Ptr<Node> node = m_enbNodes.Get(1);
-        Ptr<MobilityModel> mobModel = node->GetObject<MobilityModel> ();
-        mobModel->SetPosition(Vector(1000, 1000, 0.0));
-
-
         NS_LOG_INFO("Setup radioNode's...");
         /* 
          * We create all mobileNodes now, because ns3 does not allow to create them after simulation start.
@@ -239,6 +227,13 @@ namespace ns3 {
             cellApp->SetSockets(2);
         }
 
+    }
+
+    void NodeManager::OnStart() {
+        NS_LOG_INFO ("Do the final configuration...");
+
+        m_lteHelper->AddX2Interface (m_enbNodes); // required for handover capabilities
+
         // NS_LOG_INFO("Schedule manual handovers...");
         // m_lteHelper->HandoverRequest (Seconds (3.000), lteDevices.Get (1), m_enbDevices.Get (0), m_enbDevices.Get (1));
     }
@@ -300,6 +295,20 @@ namespace ns3 {
         } 
         uint32_t res = m_nsdrei2mosaic[ns3NodeId];
         return res;
+    }
+
+    void NodeManager::CreateNodeB(Vector position) {
+        Ptr<Node> node = CreateObject<Node>();
+        m_enbNodes.Add (node);
+        m_mobilityHelper.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+        m_mobilityHelper.Install (node);
+        Ptr<NetDevice> device = m_lteHelper->InstallEnbDevice (node).Get(0);
+        m_enbDevices.Add (device);
+        NS_LOG_INFO("[node=" << node->GetId() << "] Create eNodeB: dev=" << device);
+
+        // set position
+        Ptr<MobilityModel> mobModel = node->GetObject<MobilityModel> ();
+        mobModel->SetPosition(position);
     }
 
     void NodeManager::CreateRadioNode(uint32_t mosaicNodeId, Vector position) {
@@ -526,7 +535,7 @@ namespace ns3 {
             NS_LOG_INFO("Attach UE to specific eNB...");
             NS_LOG_INFO("ATTENTION: This requires about 21ms to fully connect");
             // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
-            m_lteHelper->Attach (device, m_enbDevices.Get(0));
+            m_lteHelper->AttachToClosestEnb (device, m_enbDevices);
 
         } else if (m_isWiredNode[nodeId]) {
 

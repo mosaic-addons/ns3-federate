@@ -67,6 +67,7 @@ message AddNode {
     enum NodeType {
         RADIO_NODE = 1; // Vehicle, RSU, TL, CS
         WIRED_NODE = 5; // Server, TMC
+        NODE_B = 10;
         reserved 2, 3, 4, 6;
     }
     required NodeType type = 2;

@@ -95,6 +95,7 @@ namespace ns3 {
 
         ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
         std::atomic_bool m_closeConnection;
+        std::atomic_bool m_didRunOnStart;
         
         Ptr<ExtendedSimulatorImpl> m_sim;
         Ptr<NodeManager> m_nodeManager;
