@@ -26,6 +26,7 @@
 #include "ns3/wifi-net-device.h"
 #include "ns3/lte-ue-net-device.h"
 #include "ns3/lte-ue-rrc.h"
+#include "ns3/csma-net-device.h"
 
 #include "mosaic-ns3-bridge.h" 
 #include "proxy-app.h"
@@ -141,31 +142,11 @@ namespace ns3 {
         NS_LOG_INFO("Install WAVE devices");
         NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_dynamicRadioNodes);
         Ipv4InterfaceContainer wifiIpIfaces = m_wifiAddressHelper.Assign(wifiDevices);
-        for (uint32_t u = 0; u < m_dynamicRadioNodes.GetN (); ++u)
-        {
-            Ptr<Node> node = m_dynamicRadioNodes.Get(u);
-            Ptr<NetDevice> device = wifiDevices.Get(u);
-            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
-            int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
-
-            // logging
-            std::stringstream ss;
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
-                << " dev=" << node->GetDevice(ifIndex) 
-                << " wifiAddr=" << ss.str()
-            );
-        }
 
         NS_LOG_INFO("Install LTE devices");
         NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_dynamicRadioNodes);
         Ipv4InterfaceContainer lteIpIfaces = m_epcHelper->AssignUeIpv4Address (lteDevices);
 
-        // assign IP address to UEs
-        NS_LOG_DEBUG("[LTE GW] addr=" << m_epcHelper->GetUeDefaultGatewayAddress ());
         for (uint32_t u = 0; u < m_dynamicRadioNodes.GetN (); ++u)
         {
             Ptr<Node> node = m_dynamicRadioNodes.Get (u);
@@ -173,45 +154,12 @@ namespace ns3 {
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             uint32_t ifIndex = device->GetIfIndex ();
 
-            // logging
-            std::stringstream ss;
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId() << "]"
-                << " dev=" << device 
-                << " lteAddr=" << ss.str()
-                << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
-                << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
-            );
-
             // set the default gateway for the UE
-            Ptr<Ipv4StaticRouting> ueStaticRouting;
-            ueStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (node->GetObject<Ipv4> ());
-            ueStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
+            Ptr<Ipv4StaticRouting> ueStaticRouting = m_ipv4RoutingHelper.GetStaticRouting (ipv4proto);
+            ueStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), ifIndex); // DefaultGateway is 7.0.0.1
         }
 
-        // logging for radio nodes
-        for (uint32_t u = 0; u < m_dynamicRadioNodes.GetN (); ++u)
-        {
-            Ptr<Node> node = m_dynamicRadioNodes.Get(u);
-            NS_LOG_LOGIC("[node=" << node->GetId () << "]");
-            for (uint32_t i = 0; i < node->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
-            {
-                std::stringstream ss;
-                for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (i); j++ ) {
-                    Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (i, j);
-                    ss << "|" << iaddr.GetLocal ();
-                }
-                NS_LOG_LOGIC("  if_" << i << " dev=" << node->GetDevice(i) << " addr=" << ss.str());
-            }
-        }
-        std::stringstream ss;
-        m_dynamicRadioNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
-        NS_LOG_LOGIC(ss.str());
-
-        NS_LOG_INFO("Install ProxyApp applications...");
+        NS_LOG_INFO("Install ProxyApp applications");
         for (uint32_t i = 0; i < m_dynamicRadioNodes.GetN(); ++i)
         {
             Ptr<Node> node = m_dynamicRadioNodes.Get(i);
@@ -236,32 +184,58 @@ namespace ns3 {
 
         // NS_LOG_INFO("Schedule manual handovers...");
         // m_lteHelper->HandoverRequest (Seconds (3.000), lteDevices.Get (1), m_enbDevices.Get (0), m_enbDevices.Get (1));
+
+        PrintNodeConfigs(m_backboneNodes, 10);
+        PrintNodeConfigs(m_radioNodes, 10);
     }
 
     void NodeManager::OnShutdown() {
         NS_LOG_FUNCTION (this);
 
         NS_LOG_DEBUG("Print IP assignment for all radioNodes");
-        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
+        PrintNodeConfigs(m_radioNodes);
+    }
+
+    void NodeManager::PrintNodeConfigs(NodeContainer nodes, uint32_t maxNum) {
+        for (uint32_t u = 0; u < nodes.GetN () && u < maxNum; ++u)
         {
-            Ptr<Node> node = m_radioNodes.Get(u);
+            Ptr<Node> node = nodes.Get(u);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+
             NS_LOG_DEBUG("[node=" << node->GetId () << "]");
-            for (uint32_t i = 0; i < node->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
+            for (uint32_t i = 0; i < ipv4proto->GetNInterfaces (); i++ )
             {
-                if (i==0) {
-                    // 0: Loopback
-                    continue;
+                Ptr<NetDevice> device = node->GetDevice (i);
+                std::stringstream ipAddressString;
+                for (uint32_t j = 0; j < ipv4proto->GetNAddresses (i); j++ ) {
+                    Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (i, j);
+                    ipAddressString << "|" << iaddr.GetLocal ();
                 }
-                std::stringstream ss;
-                for (uint32_t j = 0; j < node->GetObject<Ipv4> ()->GetNAddresses (i); j++ ) {
-                    Ipv4InterfaceAddress iaddr = node->GetObject<Ipv4> ()->GetAddress (i, j);
-                    ss << "|" << iaddr.GetLocal ();
+
+                if (DynamicCast<CsmaNetDevice>(device)) {
+                    NS_LOG_DEBUG("  if_" << i 
+                        << " dev=" << device 
+                        << " csmaAddr=" << ipAddressString.str()
+                    );
                 }
-                NS_LOG_DEBUG("  if_" << i << " dev=" << node->GetDevice(i) << " addr=" << ss.str());
+                else if (DynamicCast<WifiNetDevice>(device)) {
+                    NS_LOG_DEBUG("  if_" << i 
+                        << " dev=" << device 
+                        << " wifiAddr=" << ipAddressString.str()
+                    );
+                }
+                else if (DynamicCast<LteUeNetDevice>(device)) {
+                    NS_LOG_DEBUG("  if_" << i
+                        << " dev=" << device 
+                        << " cellAddr=" << ipAddressString.str()
+                        << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
+                        << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
+                    );
+                } 
             }
         }
         std::stringstream ss;
-        m_radioNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
+        nodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
         NS_LOG_LOGIC(ss.str());
     }
 
@@ -523,19 +497,6 @@ namespace ns3 {
             Ipv4InterfaceAddress ipv4Addr = Ipv4InterfaceAddress(ip, "255.0.0.0");
             ipv4proto->AddAddress(ifIndex, ipv4Addr);
 
-            /* do logging */
-            std::stringstream ss;
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId() << "]"
-                << " dev=" << device 
-                << " lteAddr=" << ss.str()
-                << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
-                << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
-            );
-
             NS_LOG_INFO("Attach UE to specific eNB...");
             NS_LOG_INFO("ATTENTION: This requires about 21ms to fully connect");
             // this has to be done _after_ IP address assignment, otherwise the route EPC -> UE is broken
@@ -569,23 +530,6 @@ namespace ns3 {
             serverStaticRouting->SetDefaultRoute (Ipv4Address("5.0.0.1"), ifIndex); 
             // We cannot use any IP address of PGW (that worked with point-to-point, but not anymore)
             // We have to use the IP address of PGW that is actually connected to the CSMA, in order for ARP to function properly
-
-            /* do logging */
-            std::stringstream ss;
-            NS_ASSERT_MSG(ifIndex >= 0, "No valid interface index given.");
-            for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ifIndex); j++ ) {
-                Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ifIndex, j);
-                ss << "|" << iaddr.GetLocal ();
-            }
-            NS_LOG_DEBUG("[node=" << node->GetId () << "]" 
-                << " dev=" << node->GetDevice(ifIndex) 
-                << " csmaAddr=" << ss.str()
-            );
-
-            std::stringstream serverRouting;
-            serverRouting << "Server routing:" << std::endl;
-            node->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&serverRouting));
-            NS_LOG_LOGIC(serverRouting.str());
 
         } else {
             NS_LOG_ERROR("Invalid State: Node has to be either radio or wired node.");
