@@ -128,22 +128,22 @@ namespace ns3 {
         
         NS_LOG_INFO("Setup radioNode's...");
         /* 
-         * We create all mobileNodes now, because ns3 does not allow to create them after simulation start.
+         * We create radioNodes now, because ns3 does not allow to create them after simulation start.
          * see "Cannot create UE devices after simulation started" at https://gitlab.com/nsnam/ns-3-dev/-/blob/master/src/lte/model/lte-ue-phy.cc#L144
          */ 
-        m_radioNodes.Create (m_numRadioNodes);
-        m_internetHelper.Install(m_radioNodes);
+        m_dynamicRadioNodes.Create (m_numRadioNodes);
+        m_internetHelper.Install(m_dynamicRadioNodes);
 
         NS_LOG_INFO("Install ConstantVelocityMobilityModel");
         m_mobilityHelper.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
-        m_mobilityHelper.Install (m_radioNodes);
+        m_mobilityHelper.Install (m_dynamicRadioNodes);
 
         NS_LOG_INFO("Install WAVE devices");
-        NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_radioNodes);
+        NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, m_dynamicRadioNodes);
         Ipv4InterfaceContainer wifiIpIfaces = m_wifiAddressHelper.Assign(wifiDevices);
-        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
+        for (uint32_t u = 0; u < m_dynamicRadioNodes.GetN (); ++u)
         {
-            Ptr<Node> node = m_radioNodes.Get(u);
+            Ptr<Node> node = m_dynamicRadioNodes.Get(u);
             Ptr<NetDevice> device = wifiDevices.Get(u);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             int32_t ifIndex = ipv4proto->GetInterfaceForDevice(device);
@@ -161,14 +161,14 @@ namespace ns3 {
         }
 
         NS_LOG_INFO("Install LTE devices");
-        NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_radioNodes);
+        NetDeviceContainer lteDevices = m_lteHelper->InstallUeDevice (m_dynamicRadioNodes);
         Ipv4InterfaceContainer lteIpIfaces = m_epcHelper->AssignUeIpv4Address (lteDevices);
 
         // assign IP address to UEs
         NS_LOG_DEBUG("[LTE GW] addr=" << m_epcHelper->GetUeDefaultGatewayAddress ());
-        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
+        for (uint32_t u = 0; u < m_dynamicRadioNodes.GetN (); ++u)
         {
-            Ptr<Node> node = m_radioNodes.Get (u);
+            Ptr<Node> node = m_dynamicRadioNodes.Get (u);
             Ptr<NetDevice> device = lteDevices.Get (u);
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
             uint32_t ifIndex = device->GetIfIndex ();
@@ -192,10 +192,10 @@ namespace ns3 {
             ueStaticRouting->SetDefaultRoute (m_epcHelper->GetUeDefaultGatewayAddress (), ifIndex);
         }
 
-        // logging for mobile nodes
-        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
+        // logging for radio nodes
+        for (uint32_t u = 0; u < m_dynamicRadioNodes.GetN (); ++u)
         {
-            Ptr<Node> node = m_radioNodes.Get(u);
+            Ptr<Node> node = m_dynamicRadioNodes.Get(u);
             NS_LOG_LOGIC("[node=" << node->GetId () << "]");
             for (uint32_t i = 0; i < node->GetObject<Ipv4> ()->GetNInterfaces (); i++ )
             {
@@ -208,13 +208,13 @@ namespace ns3 {
             }
         }
         std::stringstream ss;
-        m_radioNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
+        m_dynamicRadioNodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
         NS_LOG_LOGIC(ss.str());
 
         NS_LOG_INFO("Install ProxyApp applications...");
-        for (uint32_t i = 0; i < m_radioNodes.GetN(); ++i)
+        for (uint32_t i = 0; i < m_dynamicRadioNodes.GetN(); ++i)
         {
-            Ptr<Node> node = m_radioNodes.Get(i);
+            Ptr<Node> node = m_dynamicRadioNodes.Get(i);
 
             Ptr<ProxyApp> wifiApp = CreateObject<ProxyApp>();
             wifiApp->SetRecvCallback(MakeCallback(&NodeManager::RecvWifiMsg, this));
@@ -241,10 +241,8 @@ namespace ns3 {
     void NodeManager::OnShutdown() {
         NS_LOG_FUNCTION (this);
 
-        uint32_t usedMobileNodes = m_mosaic2nsdrei.size() - (m_backboneNodes.GetN() - 1);
-
-        NS_LOG_DEBUG("Print IP assignment for all used mobileNodes");
-        for (uint32_t u = 0; u < usedMobileNodes; ++u)
+        NS_LOG_DEBUG("Print IP assignment for all radioNodes");
+        for (uint32_t u = 0; u < m_radioNodes.GetN (); ++u)
         {
             Ptr<Node> node = m_radioNodes.Get(u);
             NS_LOG_DEBUG("[node=" << node->GetId () << "]");
@@ -311,33 +309,6 @@ namespace ns3 {
         mobModel->SetPosition(position);
     }
 
-    void NodeManager::CreateRadioNode(uint32_t mosaicNodeId, Vector position) {
-        if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
-            NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
-            exit(1);
-        }
-
-        for (uint32_t i = 0; i < m_radioNodes.GetN(); ++i)
-        {
-            Ptr<Node> node = m_radioNodes.Get(i);
-            if (m_nsdrei2mosaic.find(node->GetId()) == m_nsdrei2mosaic.end()){
-                // the node is not used yet, add it to the lookup tables
-                NS_LOG_INFO("Activate radio node " << mosaicNodeId << "->" << node->GetId());
-                m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
-                m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
-                m_isRadioNode[node->GetId()] = true;
-                break;
-            }
-        }
-        
-        if (m_mosaic2nsdrei.find(mosaicNodeId) == m_mosaic2nsdrei.end()){
-            NS_LOG_ERROR("No available node found. Increase mobile number of nodes!");
-            exit(1);
-        }
-
-        UpdateNodePosition(mosaicNodeId, position);
-    }
-
     void NodeManager::CreateWiredNode(uint32_t mosaicNodeId) {
         if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
             NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
@@ -368,6 +339,39 @@ namespace ns3 {
         app->SetRecvCallback(MakeCallback(&NodeManager::RecvCellMsg, this));
         node->AddApplication(app);
         app->SetSockets(3); // see ProxyApp::TranslateNumberToIndex
+    }
+
+    void NodeManager::CreateRadioNode(uint32_t mosaicNodeId, Vector position) {
+    }
+
+    void NodeManager::ActivateRadioNode(uint32_t mosaicNodeId, Vector position) {
+        if (m_mosaic2nsdrei.find(mosaicNodeId) != m_mosaic2nsdrei.end()){
+            NS_LOG_ERROR("Cannot create node with id=" << mosaicNodeId << " multiple times.");
+            exit(1);
+        }
+
+        Ptr<Node> node;
+        for (uint32_t i = 0; i < m_dynamicRadioNodes.GetN(); ++i)
+        {
+            node = m_dynamicRadioNodes.Get(i);
+            if (m_nsdrei2mosaic.find(node->GetId()) == m_nsdrei2mosaic.end()){
+                // the node is not used yet, add it to the lookup tables
+                NS_LOG_INFO("Activate radio node " << mosaicNodeId << "->" << node->GetId());
+                m_mosaic2nsdrei[mosaicNodeId] = node->GetId();
+                m_nsdrei2mosaic[node->GetId()] = mosaicNodeId;
+                m_isRadioNode[node->GetId()] = true;
+                break;
+            }
+        }
+        
+        if (m_mosaic2nsdrei.find(mosaicNodeId) == m_mosaic2nsdrei.end()){
+            NS_LOG_ERROR("No available node found. Increase number of radio nodes!");
+            exit(1);
+        }
+
+        m_radioNodes.Add (node);
+
+        UpdateNodePosition(mosaicNodeId, position);
     }
 
     void NodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {

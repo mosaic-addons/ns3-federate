@@ -81,7 +81,14 @@ namespace ns3 {
         void CreateNodeB(Vector position);
 
         /**
-         * @brief create a new radio node
+         * @brief create a new wired node
+         *
+         * @param mosaicNodeId id of the node
+         */
+        void CreateWiredNode(uint32_t mosaicNodeId);
+
+        /**
+         * @brief create a new radio node (before simulation started)
          *
          * @param mosaicNodeId id of the node
          * @param position the new node position as a Vector
@@ -89,11 +96,12 @@ namespace ns3 {
         void CreateRadioNode(uint32_t mosaicNodeId, Vector position);
 
         /**
-         * @brief create a new wired node
+         * @brief activate a radio node (after simulation started)
          *
          * @param mosaicNodeId id of the node
+         * @param position the new node position as a Vector
          */
-        void CreateWiredNode(uint32_t mosaicNodeId);
+        void ActivateRadioNode(uint32_t mosaicNodeId, Vector position);
 
         /**
          * @brief update the node position
@@ -197,6 +205,7 @@ namespace ns3 {
         NodeContainer m_enbNodes;
         NetDeviceContainer m_enbDevices;
         NodeContainer m_radioNodes;
+        NodeContainer m_dynamicRadioNodes;
     };
 } // namespace ns3
 #endif /* NODE_MANAGER_H */
