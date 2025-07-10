@@ -62,7 +62,13 @@ namespace ns3 {
         ambassadorFederateChannel.connect();
         if (ambassadorFederateChannel.readCommand() == CommandMessage_CommandType_INIT) {
             InitMessage message = ambassadorFederateChannel.readInitMessage();
-            if (message.start_time() >= 0 && message.end_time() >= 0 && message.end_time() >= message.start_time()) {
+            if (message.protocol_version() != PROTOCOL_VERSION) {
+                NS_LOG_ERROR("Do not have correct protocol version. Have: " << message.protocol_version() << " Require: " << PROTOCOL_VERSION);
+                exit(1);
+            }
+            else if (message.simulation_start_time() >= 0 
+                    && message.simulation_end_time() >= 0 
+                    && message.simulation_end_time() >= message.simulation_start_time()) {
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
             } else {
                 // AbstractNetworkAmbassador.java only checks if (CMD.SUCCESS != ...
