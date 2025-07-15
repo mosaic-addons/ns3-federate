@@ -27,6 +27,7 @@
 NS_LOG_COMPONENT_DEFINE("MosaicNs3Bridge");
 
 namespace ns3 {
+    using namespace ClientServerChannelSpace;
 
     MosaicNs3Bridge::MosaicNs3Bridge(int port, int cmdPort) {
         std::cout << "Starting ns3 federate on port=" << port << " cmdPort=" << cmdPort << std::endl;

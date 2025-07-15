@@ -139,7 +139,7 @@ namespace ns3 {
          * @param msgID the msgID of the message
          * @param payLength the length of the message
          */
-        void SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, RadioChannel channel, uint32_t msgID, uint32_t payLength);
+        void SendWifiMsg(uint32_t mosaicNodeId, Ipv4Address dstAddr, ClientServerChannelSpace::RadioChannel channel, uint32_t msgID, uint32_t payLength);
 
         /**
          * @brief start the sending of a cell message on a node

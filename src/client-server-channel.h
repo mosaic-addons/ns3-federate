@@ -36,7 +36,7 @@ constexpr const int PROTOCOL_VERSION = 2;
 /**
  * Abstraction of socket communication between Ambassador and Federate (e.g. ns-3 or OMNeT++).
  */
-namespace ns3 {
+namespace ClientServerChannelSpace {
 
 class ClientServerChannel {
 
@@ -206,5 +206,5 @@ class ClientServerChannel {
 		std::shared_ptr < uint32_t > readVarintPrefix(SOCKET sock);
 };
 
-} // namespace ns3
+} // namespace ClientServerChannelSpace
 #endif /* CLIENT_SERVER_CHANNEL_H */

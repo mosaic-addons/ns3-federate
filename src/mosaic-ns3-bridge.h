@@ -93,7 +93,7 @@ namespace ns3 {
          */
         void dispatchCommand();
 
-        ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
+        ClientServerChannelSpace::ClientServerChannel ambassadorFederateChannel, federateAmbassadorChannel;        
         std::atomic_bool m_closeConnection;
         std::atomic_bool m_didRunOnStart;
         
