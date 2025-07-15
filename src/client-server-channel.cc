@@ -268,6 +268,10 @@ InitMessage ClientServerChannel::readInitMessage() {
 
     InitMessage msg;
     msg.ParseFromCodedStream ( &codedIn );
+    if (msg.protocol_version() != PROTOCOL_VERSION) {
+        NS_LOG_ERROR("Do not have correct protocol version. Have: " << msg.protocol_version() << " Require: " << PROTOCOL_VERSION);
+        exit(1);
+    }
     return msg;
 }
 
