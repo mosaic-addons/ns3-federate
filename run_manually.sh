@@ -15,7 +15,7 @@ ns3Version="3.36.1"
 
 make -j1 || exit 1
 
-LD_LIBRARY_PATH=/home/$USER/ns-allinone-$ns3Version/ns-$ns3Version/build/lib\
+LD_LIBRARY_PATH=/mnt/c/Users/geo27059/Documents/Code/ns-$ns3Version/build/lib\
     ./bin/Debug/ns3-federate\
     --port=$port --cmdPort=$cmdport --configFile=ns3_federate_config.xml
     
