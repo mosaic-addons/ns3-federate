@@ -74,6 +74,13 @@ namespace ns3 {
         void OnShutdown(void);
 
         /**
+         * @brief this function will change the eNB settings such, that no UE can request a connection.
+         * This is especially required, so that only eNB changes initiated by the handover algorithm remain.
+         * ATTENTION: You cannot insert more nodes into the network after this change, the initial connection will fail.
+         */
+        void RejectAnyUeConnectionRequest(void);
+
+        /**
          * @brief create a new eNodeB
          *
          * @param position the new node position as a Vector

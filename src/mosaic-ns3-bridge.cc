@@ -42,6 +42,7 @@ namespace ns3 {
 
         m_nodeManager = CreateObject<NodeManager>();
         m_nodeManager->Configure(this);
+        // m_sim->Schedule(Seconds(10), MakeEvent(&NodeManager::RejectAnyUeConnectionRequest, m_nodeManager));
         
         m_closeConnection = false;
         m_didRunOnStart = false;

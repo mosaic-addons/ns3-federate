@@ -26,6 +26,8 @@
 #include "ns3/wifi-net-device.h"
 #include "ns3/lte-ue-net-device.h"
 #include "ns3/lte-ue-rrc.h"
+#include "ns3/lte-enb-net-device.h"
+#include "ns3/lte-enb-rrc.h"
 #include "ns3/csma-net-device.h"
 
 #include "mosaic-ns3-bridge.h" 
@@ -200,6 +202,19 @@ namespace ns3 {
             std::stringstream ss;
             nodes.Get (0)->GetObject<Ipv4> ()->GetRoutingProtocol ()->PrintRoutingTable (new OutputStreamWrapper(&ss));
             NS_LOG_LOGIC(ss.str());
+        }
+    }
+
+    void NodeManager::RejectAnyUeConnectionRequest() {
+        NS_LOG_FUNCTION (this);
+        NS_LOG_WARN("-------------------- change eNB settings now");
+        NS_LOG_WARN("-------------------- only accept handover algorithm triggers");
+        NS_LOG_WARN("-------------------- UEs cannot recover, if connection got lost once");
+        Config::SetDefault("ns3::LteEnbRrc::AdmitRrcConnectionRequest", BooleanValue(false));
+        for (uint32_t i = 0; i < m_enbDevices.GetN (); i++ ){
+            Ptr<LteEnbNetDevice> device = m_enbDevices.Get (i)->GetObject<LteEnbNetDevice> ();
+            Ptr<LteEnbRrc> rrc = device->GetRrc ();
+            rrc->m_admitRrcConnectionRequest = false; // changes in ns3 required: make variable public
         }
     }
 
