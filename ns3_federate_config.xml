@@ -53,6 +53,8 @@
 
     <default name="ns3::LteEnbRrc::AdmitHandoverRequest" value="true"/>
     <default name="ns3::LteEnbRrc::AdmitRrcConnectionRequest" value="true"/>
+    <default name="ns3::LteUeRrc::N310" value="20"/>
+    <default name="ns3::LteUeRrc::T310" value="+2000.0ms"/>
 
     <!-- NS3 model settings -->
     <default name="ns3::RandomPropagationDelayModel::Variable" value="ns3::UniformRandomVariable"/>
