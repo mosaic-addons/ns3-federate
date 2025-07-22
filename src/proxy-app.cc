@@ -126,6 +126,11 @@ namespace ns3 {
         int result = m_socket->SendTo(packet, 0, ipSA);
         if (result == -1) {
             NS_LOG_ERROR("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Sending packet failed!");
+            if (m_socket->GetErrno () == Socket::SocketErrno::ERROR_MSGSIZE) {
+                NS_LOG_ERROR("Can only use up to MAX_IPV4_UDP_DATAGRAM_SIZE = 65507 Bytes per packet");
+            } else {
+                NS_LOG_ERROR("Errno:" << m_socket->GetErrno ());
+            }
             exit(1);
         }
     }
