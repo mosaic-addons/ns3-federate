@@ -62,6 +62,9 @@
     <default name="ns3::LteUeRrc::T310" value="+2000.0ms"/>
 
     <default name="ns3::LteRlcUm::MaxTxBufferSize" value="100000"/>
+    <!-- increase from 5MHz to 20MHz -->
+    <!-- <default name="ns3::LteEnbNetDevice::UlBandwidth" value="100"/> -->
+    <!-- <default name="ns3::LteEnbNetDevice::DlBandwidth" value="100"/> -->
 
     <!-- Network settings -->
     <default name="ns3::ArpCache::PendingQueueSize" value="100"/>
