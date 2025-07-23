@@ -572,7 +572,7 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength);
+        NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength);
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<ProxyApp> app = DynamicCast<ProxyApp> (node->GetApplication(0));
@@ -589,7 +589,7 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_INFO("[node=" << nodeId << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength);
+        NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength);
 
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<ProxyApp> app = DynamicCast<ProxyApp> (node->GetApplication(1));

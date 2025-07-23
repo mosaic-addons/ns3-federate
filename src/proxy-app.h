@@ -67,6 +67,7 @@ namespace ns3 {
         uint64_t m_recvCount = 0;
 
         bool m_active = false;
+        bool m_trace = false;
 
         Callback<void, unsigned long long, uint32_t, int> m_recvCallback;
     };

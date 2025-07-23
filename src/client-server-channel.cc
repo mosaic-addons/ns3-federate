@@ -240,7 +240,7 @@ CommandMessage_CommandType ClientServerChannel::readCommand() {
         commandMessage.ParseFromCodedStream(&codedIn);  //parse message
         //pick the needed data from the protobuf message class and return it
         const CommandMessage_CommandType cmd = commandMessage.command_type();
-        NS_LOG_INFO("read command: " << cmd);
+        NS_LOG_LOGIC("read command: " << cmd);
         return cmd;
     }
     return CommandMessage_CommandType_UNDEF;

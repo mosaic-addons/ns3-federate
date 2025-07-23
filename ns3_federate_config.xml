@@ -8,12 +8,12 @@
 
         <component name="*" value="error|prefix_level|prefix_time|prefix_func"/>
 
-        <component name="MainClass"             value="error|warn|debug|info"/>
-        <component name="ExtendedSimulatorImpl" value="error|warn|debug|info"/>
-        <component name="MosaicNs3Bridge"       value="error|warn|debug|info"/>
-        <component name="NodeManager"           value="error|warn|debug|info"/>
-        <component name="ProxyApp"              value="error|warn|debug|info|prefix_node"/>
-        <component name="ClientServerChannel"   value="error|warn"/>
+        <component name="MainClass"             value="error|warn|info|debug"/>
+        <component name="ExtendedSimulatorImpl" value="error|warn|info|debug"/>
+        <component name="MosaicNs3Bridge"       value="error|warn|info"/>
+        <component name="NodeManager"           value="error|warn|info"/>
+        <component name="ProxyApp"              value="error|warn|info|prefix_node"/>
+        <component name="ClientServerChannel"   value="error|warn|info"/>
 
         <component name="UdpSocketImpl"        value="error|warn|prefix_node"/>
         <component name="UdpL4Protocol"        value="error|warn|prefix_node"/>

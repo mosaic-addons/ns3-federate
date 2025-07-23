@@ -61,6 +61,7 @@ namespace ns3 {
 
     void ProxyApp::Enable(void) {
         m_active = true;
+        m_trace = GetLogComponent("ProxyApp").IsEnabled(LOG_DEBUG);
     }
 
     void ProxyApp::Disable(void) {
@@ -117,9 +118,12 @@ namespace ns3 {
         packet->AddByteTag(msgIDTag);
 
         m_sendCount++;
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength << " PacketID=" << packet->GetUid() << " PacketCount=" << m_sendCount);
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid());
-        LogComponentEnable ("TrafficControlLayer", (LogLevel)(LOG_DEBUG | LOG_PREFIX_NODE));
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength << " PacketID=" << packet->GetUid() << " PacketCount=" << m_sendCount);
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid());
+        if (m_trace) {
+            LogComponentEnable ("TrafficControlLayer", (LogLevel)(LOG_DEBUG | LOG_PREFIX_NODE));
+        }
+
 
         //call the socket of this node to send the packet
         InetSocketAddress ipSA = InetSocketAddress(dstAddr, m_port);
@@ -148,7 +152,7 @@ namespace ns3 {
         }
 
         Ptr<Packet> packet;
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Start receiving...");
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Start receiving...");
         packet = socket->Recv();
 
         m_recvCount++;
@@ -164,8 +168,10 @@ namespace ns3 {
             msgID = -1;
         }
 
-        NS_LOG_INFO("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
-        LogComponentDisable ("TrafficControlLayer", LOG_DEBUG);
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
+        if (m_trace) {
+            LogComponentDisable ("TrafficControlLayer", LOG_DEBUG);
+        }
 
         if (!m_recvCallback.IsNull()) {
             m_recvCallback(Simulator::Now().GetNanoSeconds(), GetNode()->GetId(), msgID);
