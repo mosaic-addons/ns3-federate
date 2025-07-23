@@ -43,6 +43,9 @@
         <component name="InterferenceHelper"   value="error|warn"/>
     </LogLevel>
 
+    <!-- Global settings -->
+    <global name="RngSeed" value="1"/>
+
     <!-- Federate settings -->
     <default name="ns3::ProxyApp::Port" value="8010"/>
     <default name="ns3::NodeManager::numExtraRadioNodes" value="5"/>
@@ -56,7 +59,10 @@
     <default name="ns3::LteUeRrc::N310" value="20"/>
     <default name="ns3::LteUeRrc::T310" value="+2000.0ms"/>
 
-    <!-- NS3 model settings -->
+    <!-- Network settings -->
+    <default name="ns3::ArpCache::PendingQueueSize" value="100"/>
+
+    <!-- Wifi settings -->
     <default name="ns3::RandomPropagationDelayModel::Variable" value="ns3::UniformRandomVariable"/>
     <default name="ns3::ConstantSpeedPropagationDelayModel::Speed" value="2.99792e+08"/>
 
@@ -99,5 +105,4 @@
     <default name="ns3::WifiMacQueue::MaxDelay" value="+500000000.0ns"/>
     <default name="ns3::WifiNetDevice::Mtu" value="2296"/>
     <default name="ns3::WifiMac::Ssid" value="default"/>
-    <global name="RngSeed" value="1"/>
 </ns3>
