@@ -187,6 +187,11 @@ namespace ns3 {
          */
         void PrintNodeConfigs(NodeContainer nodes, uint32_t maxNum = 100);
 
+        /**
+         * @brief Print important information about device/interface configuration
+         */
+        void PrintNodeConfigsDeviceAgnostic(NodeContainer nodes, uint32_t maxNum = 100);
+
         MosaicNs3Bridge *m_serverPtr;
         std::map<uint32_t, uint32_t> m_mosaic2nsdrei;
         std::map<uint32_t, uint32_t> m_nsdrei2mosaic;

@@ -28,7 +28,9 @@
 #include "ns3/lte-ue-rrc.h"
 #include "ns3/lte-enb-net-device.h"
 #include "ns3/lte-enb-rrc.h"
+#include "ns3/loopback-net-device.h"
 #include "ns3/csma-net-device.h"
+#include "ns3/point-to-point-net-device.h"
 
 #include "mosaic-ns3-bridge.h" 
 #include "proxy-app.h"
@@ -148,6 +150,7 @@ namespace ns3 {
             m_extraRadioNodes.Add (node);
         }
 
+        PrintNodeConfigs(m_enbNodes, 10);
         PrintNodeConfigs(m_backboneNodes, 10);
         PrintNodeConfigs(m_radioNodes, 10);
         PrintNodeConfigs(m_extraRadioNodes, 10);
@@ -160,6 +163,30 @@ namespace ns3 {
         PrintNodeConfigs(m_radioNodes);
     }
 
+    void NodeManager::PrintNodeConfigsDeviceAgnostic(NodeContainer nodes, uint32_t maxNum) {
+        for (uint32_t u = 0; u < nodes.GetN () && u < maxNum; ++u)
+        {
+            Ptr<Node> node = nodes.Get(u);
+            Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
+            // NS_ASSERT(node->GetObject<Ipv4> ()->GetNInterfaces () == node->GetNDevices ()); // fails. Ipv4Interfaces require IP address
+            // device->GetIfIndex () and node->GetDevice(i) are unrelated to indexing in ipv4proto! e.g. ipv4proto->GetAddress (i, 0) is not the same 'i'
+
+            NS_LOG_DEBUG("[node=" << node->GetId () << "]");
+            for (uint32_t i = 0; i < node->GetNDevices (); i++ )
+            {
+                Ipv4InterfaceAddress iaddr;
+                Ptr<NetDevice> device = node->GetDevice(i);
+                int32_t ipif = DynamicCast<Ipv4L3Protocol>(ipv4proto)->GetInterfaceForDevice(device);
+                if (ipif != -1) {
+                    iaddr = ipv4proto->GetAddress (ipif, 0);
+                    NS_LOG_DEBUG("  if_" << i << " dev=" << device << " type=" << device->GetInstanceTypeId ().GetName () << " iaddr=" << iaddr);
+                } else {
+                    NS_LOG_DEBUG("  if_" << i << " dev=" << device << " type=" << device->GetInstanceTypeId ().GetName ());
+                }
+            }
+        }
+    }
+
     void NodeManager::PrintNodeConfigs(NodeContainer nodes, uint32_t maxNum) {
         for (uint32_t u = 0; u < nodes.GetN () && u < maxNum; ++u)
         {
@@ -167,35 +194,67 @@ namespace ns3 {
             Ptr<Ipv4> ipv4proto = node->GetObject<Ipv4>();
 
             NS_LOG_DEBUG("[node=" << node->GetId () << "]");
-            for (uint32_t i = 0; i < ipv4proto->GetNInterfaces (); i++ )
+            for (uint32_t i = 0; i < node->GetNDevices (); i++ )
             {
                 Ptr<NetDevice> device = node->GetDevice (i);
+
+                int32_t ipif = DynamicCast<Ipv4L3Protocol>(ipv4proto)->GetInterfaceForDevice(device);
                 std::stringstream ipAddressString;
-                for (uint32_t j = 0; j < ipv4proto->GetNAddresses (i); j++ ) {
-                    Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (i, j);
-                    ipAddressString << "|" << iaddr.GetLocal ();
+                if (ipif != -1) {
+                    for (uint32_t j = 0; j < ipv4proto->GetNAddresses (ipif); j++ ) {
+                        Ipv4InterfaceAddress iaddr = ipv4proto->GetAddress (ipif, j);
+                        ipAddressString << "|" << iaddr.GetLocal ();
+                    }
                 }
 
-                if (DynamicCast<CsmaNetDevice>(device)) {
+
+                if (DynamicCast<LoopbackNetDevice>(device)) {
+                    // nop
+                }
+                else if (DynamicCast<CsmaNetDevice>(device)) {
                     NS_LOG_DEBUG("  if_" << i 
                         << " dev=" << device 
-                        << " csmaAddr=" << ipAddressString.str()
+                        << " ETH"
+                        << " \taddr=" << ipAddressString.str()
+                    );
+                }
+                else if (DynamicCast<PointToPointNetDevice>(device)) {
+                    NS_LOG_DEBUG("  if_" << i 
+                        << " dev=" << device 
+                        << " P2P"
+                        << " \taddr=" << ipAddressString.str()
                     );
                 }
                 else if (DynamicCast<WifiNetDevice>(device)) {
                     NS_LOG_DEBUG("  if_" << i 
                         << " dev=" << device 
-                        << " wifiAddr=" << ipAddressString.str()
+                        << " WIFI"
+                        << " \taddr=" << ipAddressString.str()
                     );
                 }
                 else if (DynamicCast<LteUeNetDevice>(device)) {
                     NS_LOG_DEBUG("  if_" << i
                         << " dev=" << device 
-                        << " cellAddr=" << ipAddressString.str()
+                        << " UE"
+                        << " \taddr=" << ipAddressString.str()
                         << " rrc=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()
                         << " imsi=" << device->GetObject<LteUeNetDevice> ()->GetRrc ()->GetImsi ()
                     );
                 } 
+                else if (DynamicCast<LteEnbNetDevice>(device)) {
+                    NS_LOG_DEBUG("  if_" << i
+                        << " dev=" << device 
+                        << " ENB"
+                        << " \taddr=" << ipAddressString.str()
+                    );
+                }
+                else {
+                    NS_LOG_DEBUG("  if_" << i
+                        << " dev=" << device
+                        << " type=" << device->GetInstanceTypeId ().GetName ()
+                        << " \taddr=" << ipAddressString.str()
+                    );
+                }
             }
         }
         if (nodes.GetN() > 0) {
