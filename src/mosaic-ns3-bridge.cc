@@ -171,6 +171,15 @@ namespace ns3 {
                 uint64_t advancedTime;
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
 
+                if (advancedTime == 0) {
+                    // We need that TrafficControlLayer::DoInitialize() (triggered by Node::Initialize()) 
+                    // is called _after_ LteHelper::AddX2Interface()
+                    NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << advancedTime);
+                    federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
+                    federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
+                    break;
+                }
+
                 if (advancedTime > 0 && !m_didRunOnStart) {
                     m_nodeManager->OnStart();
                     m_didRunOnStart = true;
