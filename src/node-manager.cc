@@ -633,6 +633,7 @@ namespace ns3 {
         }
         NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength);
 
+        NS_ASSERT_MSG(m_isRadioNode[nodeId], "Cannot use Wifi communication on wired nodes.");
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<ProxyApp> app = DynamicCast<ProxyApp> (node->GetApplication(0));
         if (app == nullptr) {
@@ -650,8 +651,14 @@ namespace ns3 {
         }
         NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength);
 
+
         Ptr<Node> node = NodeList::GetNode(nodeId);
-        Ptr<ProxyApp> app = DynamicCast<ProxyApp> (node->GetApplication(1));
+        Ptr<ProxyApp> app;
+        if (m_isRadioNode[nodeId]) {
+            app = DynamicCast<ProxyApp> (node->GetApplication(1));
+        } else if (m_isWiredNode[nodeId]) {
+            app = DynamicCast<ProxyApp> (node->GetApplication(0));
+        }
         if (app == nullptr) {
             NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, ProxyApp is missing");
             return;
