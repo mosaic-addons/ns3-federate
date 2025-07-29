@@ -22,7 +22,7 @@
         <component name="Ipv4Interface"        value="error|warn|prefix_node"/>
         <component name="Ipv4GlobalRouting"    value="error|warn|prefix_node"/>
         <component name="Ipv4StaticRouting"    value="error|warn|prefix_node"/>
-        <!-- <component name="ArpL3Protocol"        value="error|warn|prefix_node|logic"/> -->
+        <component name="ArpL3Protocol"        value="error|warn|prefix_node"/>
 
         <component name="LteNetDevice"         value="error|warn"/>
         <component name="LteHelper"            value="error|warn"/>
@@ -69,7 +69,7 @@
     <!-- Network settings -->
     <default name="ns3::ArpCache::PendingQueueSize" value="100"/>
 
-    <!-- Wifi settings -->
+    <!-- Propagation settings -->
     <default name="ns3::RandomPropagationDelayModel::Variable" value="ns3::UniformRandomVariable"/>
     <default name="ns3::ConstantSpeedPropagationDelayModel::Speed" value="2.99792e+08"/>
 
@@ -88,6 +88,7 @@
     <default name="ns3::LogDistancePropagationLossModel::ReferenceDistance" value="1"/>
     <default name="ns3::LogDistancePropagationLossModel::ReferenceLoss" value="47.85704"/>
 
+    <!-- Wifi settings -->
     <default name="ns3::WifiPhy::RxSensitivity" value="-81.02"/>
     <default name="ns3::WifiPhy::CcaEdThreshold" value="-99.0"/>
     <default name="ns3::WifiPhy::TxGain" value="0.0"/>
