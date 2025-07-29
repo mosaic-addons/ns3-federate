@@ -119,18 +119,27 @@ namespace ns3 {
                 Time tDelay = tNext - m_sim->Now();
 
                 if (message.type() == AddNode_NodeType_RADIO_NODE) {
+                    NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
                     if (!m_didRunOnStart) {
-                        m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
+                        m_nodeManager->CreateRadioNode(message.node_id(), Vector(message.x(), message.y(), message.z()));
                     } else {
                         m_sim->Schedule(tDelay, MakeEvent(&NodeManager::ActivateRadioNode, m_nodeManager, message.node_id(), Vector(message.x(), message.y(), message.z())));
                     }
-                    NS_LOG_DEBUG("Received ADD_RADIO_NODE: mosNID=" << message.node_id() << " pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
                 } else if (message.type() == AddNode_NodeType_WIRED_NODE) {
-                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateWiredNode, m_nodeManager, message.node_id()));
                     NS_LOG_DEBUG("Received ADD_WIRED_NODE: mosNID=" << message.node_id() << " tNext=" << tNext);
+                    if (!m_didRunOnStart) {
+                        m_nodeManager->CreateWiredNode(message.node_id());
+                    } else {
+                        m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateWiredNode, m_nodeManager, message.node_id()));
+                    }
                 } else if (message.type() == AddNode_NodeType_NODE_B) {
-                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::CreateNodeB, m_nodeManager, Vector(message.x(), message.y(), message.z())));
                     NS_LOG_DEBUG("Received ADD_NODE_B: pos(x=" << message.x() << " y=" << message.y() << " z=" << message.z() << ") tNext=" << tNext);
+                    if (!m_didRunOnStart) {
+                        m_nodeManager->CreateNodeB(Vector(message.x(), message.y(), message.z()));
+                    } else {
+                        NS_LOG_ERROR("Can only add eNBs before simulation start");
+                        exit(1);
+                    }
                 } else {
                     NS_LOG_ERROR("Received unhandeled ADD_..._NODE message");
                     m_closeConnection = true;
@@ -255,8 +264,12 @@ namespace ns3 {
                     Ipv4Address ip;
                     ip.Set(message.ip_address());
 
-                    m_sim->Schedule(tDelay, MakeEvent(&NodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), ip));
                     NS_LOG_DEBUG("Received CONF_CELL_RADIO: mosNID=" << message.node_id() << " tNext=" << tNext);
+                    if (!m_didRunOnStart) {
+                        m_nodeManager->ConfigureCellRadio(message.node_id(), ip);
+                    } else {
+                        m_sim->Schedule(tDelay, MakeEvent(&NodeManager::ConfigureCellRadio, m_nodeManager, message.node_id(), ip));
+                    }
 
                 } catch (int e) {
                     NS_LOG_ERROR("Error while reading configuration message");
