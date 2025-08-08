@@ -99,6 +99,9 @@ namespace ns3 {
         
         Ptr<MosaicSimulatorImpl> m_sim;
         Ptr<MosaicNodeManager> m_nodeManager;
+
+        uint64_t m_countAdvanceTime = 0;
+        uint64_t m_counterSignalNextEvent = 0;
     };
 } // namespace ns3
 #endif /* MOSAIC_NS3_BRIDGE_H */
