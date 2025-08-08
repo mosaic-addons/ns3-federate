@@ -173,6 +173,8 @@ int main(int argc, char *argv[]) {
     xmlConfig.ConfigureAttributes();
     SetLogLevels(configFile);
 
+    Time::SetResolution (Time::NS);
+
     try {
         MosaicNs3Bridge instance(port, cmdPort);
         instance.run();
