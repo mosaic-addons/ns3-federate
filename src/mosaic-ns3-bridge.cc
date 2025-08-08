@@ -46,6 +46,20 @@ namespace ns3 {
         
         m_closeConnection = false;
         m_didRunOnStart = false;
+        
+        if (Time::GetResolution () == Time::NS) {
+            NS_LOG_INFO("Have time scale NS - use factor 1.");
+            m_timeFactor = 1;
+        } else if (Time::GetResolution () == Time::US) {
+            NS_LOG_INFO("Have time scale US - use factor 1000.");
+            m_timeFactor = 1000;
+        } else if (Time::GetResolution () == Time::MS) {
+            NS_LOG_INFO("Have time scale MS - use factor 1000000.");
+            m_timeFactor = 1000000;
+        } else {
+            NS_LOG_ERROR("Unknown time scale. " << Time::GetResolution());
+            exit(1);
+        }
 
         /* Initialize federateAmbassadorChannel (mostly for SENDING) */
         NS_LOG_INFO("Initialize federateAmbassadorChannel");
@@ -176,11 +190,12 @@ namespace ns3 {
             }
             // advance the next time step and run the simulation read the next time step
             case CommandMessage_CommandType_ADVANCE_TIME:
-
+            {
                 uint64_t advancedTime;
                 advancedTime = ambassadorFederateChannel.readTimeMessage();
+                Time tNext = NanoSeconds(advancedTime);
 
-                if (advancedTime == 0) {
+                if (tNext == NanoSeconds(0)) {
                     // We need that TrafficControlLayer::DoInitialize() (triggered by Node::Initialize()) 
                     // is called _after_ LteHelper::AddX2Interface()
                     NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << advancedTime);
@@ -189,7 +204,7 @@ namespace ns3 {
                     break;
                 }
 
-                if (advancedTime > 0 && !m_didRunOnStart) {
+                if (tNext > NanoSeconds(0) && !m_didRunOnStart) {
                     m_nodeManager->OnStart();
                     m_didRunOnStart = true;
                 }
@@ -207,7 +222,7 @@ namespace ns3 {
                 federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                 federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                 break;
-
+            }
             case CommandMessage_CommandType_CONF_WIFI_RADIO:
             {
                 try {
@@ -321,6 +336,7 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
+        nextTime *= m_timeFactor; // convert to nanoseconds
         m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
