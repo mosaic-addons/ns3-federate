@@ -30,7 +30,7 @@ namespace ns3 {
     using namespace ClientServerChannelSpace;
 
     MosaicNs3Bridge::MosaicNs3Bridge(int port, int cmdPort) {
-        std::cout << "Starting ns3 federate on port=" << port << " cmdPort=" << cmdPort << std::endl;
+        std::cout << "Starting ns3 federate on OutPort=" << port << " CmdPort=" << cmdPort << std::endl;
 
         m_sim = DynamicCast<ExtendedSimulatorImpl> (Simulator::GetImplementation());
         if (nullptr == m_sim) {
