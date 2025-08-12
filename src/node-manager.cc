@@ -494,7 +494,7 @@ namespace ns3 {
         }
         m_isWifiRadioConfigured[nodeId] = true;
 
-        NS_ASSERT_MSG(!m_isRadioNode[nodeId], "Cannot have a wifi interface on a wired node.");
+        NS_ASSERT_MSG(m_isRadioNode[nodeId], "Cannot have a wifi interface on a wired node.");
 
         NS_LOG_INFO("[node=" << nodeId << "] txPow=" << transmitPower << " ip=" << ip);
         
