@@ -24,14 +24,14 @@
 #define MOSAIC_NS3_BRIDGE_H
 
 #include "client-server-channel.h"
-#include "node-manager.h"
+#include "mosaic-node-manager.h"
 
 #include <atomic>
 
 namespace ns3 {
 
     // Forward declaration to prevent circular dependency
-    class ExtendedSimulatorImpl;
+    class MosaicSimulatorImpl;
 
     /**
      * @brief The central class of the MOSAIC-NS3 coupling
@@ -97,8 +97,8 @@ namespace ns3 {
         std::atomic_bool m_closeConnection;
         std::atomic_bool m_didRunOnStart;
         
-        Ptr<ExtendedSimulatorImpl> m_sim;
-        Ptr<NodeManager> m_nodeManager;
+        Ptr<MosaicSimulatorImpl> m_sim;
+        Ptr<MosaicNodeManager> m_nodeManager;
     };
 } // namespace ns3
 #endif /* MOSAIC_NS3_BRIDGE_H */

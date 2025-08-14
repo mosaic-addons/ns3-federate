@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef EXTENDED_SIMULATOR_IMPL_H
-#define EXTENDED_SIMULATOR_IMPL_H
+#ifndef MOSAIC_SIMULATOR_IMPL_H
+#define MOSAIC_SIMULATOR_IMPL_H
 
 #include <list>
 
@@ -35,7 +35,7 @@
 namespace ns3 {
 
     /**
-     * @class ExtendedSimulatorImpl
+     * @class MosaicSimulatorImpl
      * @brief the MOSAIC simulator implementation extends the NS3 standard simulator 
      * implementation with the methods AttachNS3Server and RunOneEvent.
      * Unfortunately, the default simulator, provided by ns-3 does not allow to use the
@@ -44,11 +44,11 @@ namespace ns3 {
      * processOneEvent() either, so in the MOSAIC server, we need to obtain a direct pointer
      * to this instance and call it directly.
      */
-    class ExtendedSimulatorImpl : public SimulatorImpl {
+    class MosaicSimulatorImpl : public SimulatorImpl {
     public:
 
-        ExtendedSimulatorImpl();
-        ~ExtendedSimulatorImpl() = default;
+        MosaicSimulatorImpl();
+        ~MosaicSimulatorImpl() = default;
 
         static TypeId GetTypeId(void);
 
@@ -104,4 +104,4 @@ namespace ns3 {
 
     };
 } // namespace ns3
-#endif /* EXTENDED_SIMULATOR_IMPL_H */
+#endif /* MOSAIC_SIMULATOR_IMPL_H */

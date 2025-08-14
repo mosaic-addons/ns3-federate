@@ -20,7 +20,7 @@
  *
  */
 
-#include "extended-simulator-impl.h"
+#include "mosaic-simulator-impl.h"
 
 #include <math.h>
 
@@ -31,18 +31,18 @@
 #include "ns3/assert.h"
 #include "ns3/log.h"
 
-NS_LOG_COMPONENT_DEFINE("ExtendedSimulatorImpl");
+NS_LOG_COMPONENT_DEFINE("MosaicSimulatorImpl");
 
 namespace ns3 {
 
-    NS_OBJECT_ENSURE_REGISTERED(ExtendedSimulatorImpl);
+    NS_OBJECT_ENSURE_REGISTERED(MosaicSimulatorImpl);
 
-    TypeId ExtendedSimulatorImpl::GetTypeId(void) {
-        static TypeId tid = TypeId("ns3::ExtendedSimulatorImpl").SetParent<SimulatorImpl> ().AddConstructor<ExtendedSimulatorImpl> ();
+    TypeId MosaicSimulatorImpl::GetTypeId(void) {
+        static TypeId tid = TypeId("ns3::MosaicSimulatorImpl").SetParent<SimulatorImpl> ().AddConstructor<MosaicSimulatorImpl> ();
         return tid;
     }
 
-    ExtendedSimulatorImpl::ExtendedSimulatorImpl() {
+    MosaicSimulatorImpl::MosaicSimulatorImpl() {
         m_stop = false;
         // uids are allocated from 4.
         // uid 0 is "invalid" events
@@ -57,7 +57,7 @@ namespace ns3 {
         m_eventCount = 0;
     }
 
-    void ExtendedSimulatorImpl::DoDispose(void) {
+    void MosaicSimulatorImpl::DoDispose(void) {
         while (!m_events->IsEmpty()) {
             Scheduler::Event next = m_events->RemoveNext();
             next.impl->Unref();
@@ -66,7 +66,7 @@ namespace ns3 {
         SimulatorImpl::DoDispose();
     }
 
-    void ExtendedSimulatorImpl::Destroy() {
+    void MosaicSimulatorImpl::Destroy() {
         while (!m_destroyEvents.empty()) {
             Ptr<EventImpl> ev = m_destroyEvents.front().PeekEventImpl();
             m_destroyEvents.pop_front();
@@ -77,7 +77,7 @@ namespace ns3 {
         }
     }
 
-    void ExtendedSimulatorImpl::SetScheduler(ObjectFactory schedulerFactory) {
+    void MosaicSimulatorImpl::SetScheduler(ObjectFactory schedulerFactory) {
         Ptr<Scheduler> scheduler = schedulerFactory.Create<Scheduler> ();
 
         if (m_events != 0) {
@@ -91,11 +91,11 @@ namespace ns3 {
 
     // System ID for non-distributed simulation is always zero
 
-    uint32_t ExtendedSimulatorImpl::GetSystemId(void) const {
+    uint32_t MosaicSimulatorImpl::GetSystemId(void) const {
         return 0;
     }
 
-    void ExtendedSimulatorImpl::ProcessOneEvent(void) {
+    void MosaicSimulatorImpl::ProcessOneEvent(void) {
         Scheduler::Event next = m_events->RemoveNext();
         NS_ASSERT(next.key.m_ts >= m_currentTs);
         m_unscheduledEvents--;
@@ -109,21 +109,21 @@ namespace ns3 {
         next.impl->Unref();
     }
 
-    bool ExtendedSimulatorImpl::IsFinished(void) const {
+    bool MosaicSimulatorImpl::IsFinished(void) const {
         return m_events->IsEmpty() || m_stop;
     }
 
-    uint64_t ExtendedSimulatorImpl::NextTs(void) const {
+    uint64_t MosaicSimulatorImpl::NextTs(void) const {
         NS_ASSERT(!m_events->IsEmpty());
         Scheduler::Event ev = m_events->PeekNext();
         return ev.key.m_ts;
     }
 
-    Time ExtendedSimulatorImpl::Next(void) const {
+    Time MosaicSimulatorImpl::Next(void) const {
         return TimeStep(NextTs());
     }
 
-    void ExtendedSimulatorImpl::Run(void) {
+    void MosaicSimulatorImpl::Run(void) {
         m_stop = false;
         while (!m_events->IsEmpty() && !m_stop) {
             ProcessOneEvent();
@@ -134,23 +134,23 @@ namespace ns3 {
         NS_ASSERT(!m_events->IsEmpty() || m_unscheduledEvents == 0);
     }
 
-    void ExtendedSimulatorImpl::RunOneEvent(void) {
+    void MosaicSimulatorImpl::RunOneEvent(void) {
         ProcessOneEvent();
     }
 
-    uint64_t ExtendedSimulatorImpl::GetEventCount(void) const {
+    uint64_t MosaicSimulatorImpl::GetEventCount(void) const {
         return m_eventCount;
     }
 
-    void ExtendedSimulatorImpl::Stop(void) {
+    void MosaicSimulatorImpl::Stop(void) {
         m_stop = true;
     }
 
-    void ExtendedSimulatorImpl::Stop(Time const &time) {
+    void MosaicSimulatorImpl::Stop(Time const &time) {
         Simulator::Schedule(time, &Simulator::Stop);
     }
 
-    EventId ExtendedSimulatorImpl::Schedule(Time const &time, EventImpl *event) {
+    EventId MosaicSimulatorImpl::Schedule(Time const &time, EventImpl *event) {
 
         Time tAbsolute = time + TimeStep(m_currentTs);
 
@@ -169,7 +169,7 @@ namespace ns3 {
         return EventId(event, ev.key.m_ts, ev.key.m_context, ev.key.m_uid);
     }
 
-    void ExtendedSimulatorImpl::ScheduleWithContext(uint32_t context, Time const &time, EventImpl *event) {
+    void MosaicSimulatorImpl::ScheduleWithContext(uint32_t context, Time const &time, EventImpl *event) {
         NS_LOG_FUNCTION(this << context << time.GetTimeStep() << m_currentTs << event);
 
         Scheduler::Event ev;
@@ -183,7 +183,7 @@ namespace ns3 {
         m_mosaicNs3Bridge->writeNextTime(ev.key.m_ts);
     }
 
-    EventId ExtendedSimulatorImpl::ScheduleNow(EventImpl *event) {
+    EventId MosaicSimulatorImpl::ScheduleNow(EventImpl *event) {
 
         Scheduler::Event ev;
         ev.impl = event;
@@ -197,7 +197,7 @@ namespace ns3 {
         return EventId(event, ev.key.m_ts, ev.key.m_context, ev.key.m_uid);
     }
 
-    EventId ExtendedSimulatorImpl::ScheduleDestroy(EventImpl *event) {
+    EventId MosaicSimulatorImpl::ScheduleDestroy(EventImpl *event) {
 
         EventId id(Ptr<EventImpl> (event, false), m_currentTs, 0xffffffff, 2);
         m_destroyEvents.push_back(id);
@@ -206,17 +206,17 @@ namespace ns3 {
         return id;
     }
 
-    Time ExtendedSimulatorImpl::Now(void) const {
+    Time MosaicSimulatorImpl::Now(void) const {
 
         return TimeStep(m_currentTs);
     }
 
-    void ExtendedSimulatorImpl::SetCurrentTs(Time time) {
+    void MosaicSimulatorImpl::SetCurrentTs(Time time) {
 
         m_currentTs = time.GetNanoSeconds();
     }
 
-    Time ExtendedSimulatorImpl::GetDelayLeft(const EventId &id) const {
+    Time MosaicSimulatorImpl::GetDelayLeft(const EventId &id) const {
 
         if (IsExpired(id)) {
             return TimeStep(0);
@@ -225,7 +225,7 @@ namespace ns3 {
         }
     }
 
-    void ExtendedSimulatorImpl::Remove(const EventId &id) {
+    void MosaicSimulatorImpl::Remove(const EventId &id) {
 
         if (id.GetUid() == 2) {
             // destroy events.
@@ -253,13 +253,13 @@ namespace ns3 {
         m_unscheduledEvents--;
     }
 
-    void ExtendedSimulatorImpl::Cancel(const EventId &id) {
+    void MosaicSimulatorImpl::Cancel(const EventId &id) {
         if (!IsExpired(id)) {
             id.PeekEventImpl()->Cancel();
         }
     }
 
-    bool ExtendedSimulatorImpl::IsExpired(const EventId &ev) const {
+    bool MosaicSimulatorImpl::IsExpired(const EventId &ev) const {
         if (ev.GetUid() == 2) {
             if (ev.PeekEventImpl() == 0 ||
                     ev.PeekEventImpl()->IsCancelled()) {
@@ -284,15 +284,15 @@ namespace ns3 {
         }
     }
 
-    Time ExtendedSimulatorImpl::GetMaximumSimulationTime(void) const {
+    Time MosaicSimulatorImpl::GetMaximumSimulationTime(void) const {
         return TimeStep(0x7fffffffffffffffLL);
     }
 
-    uint32_t ExtendedSimulatorImpl::GetContext(void) const {
+    uint32_t MosaicSimulatorImpl::GetContext(void) const {
         return m_currentContext;
     }
 
-    void ExtendedSimulatorImpl::AttachBridge(MosaicNs3Bridge* instance) {
+    void MosaicSimulatorImpl::AttachBridge(MosaicNs3Bridge* instance) {
         m_mosaicNs3Bridge = instance;
     }
 

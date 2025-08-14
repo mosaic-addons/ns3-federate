@@ -9,10 +9,10 @@
         <component name="*" value="error|prefix_level|prefix_time|prefix_func"/>
 
         <component name="MainClass"             value="error|warn|info|debug"/>
-        <component name="ExtendedSimulatorImpl" value="error|warn|info|debug"/>
+        <component name="MosaicSimulatorImpl"   value="error|warn|info|debug"/>
         <component name="MosaicNs3Bridge"       value="error|warn|info"/>
-        <component name="NodeManager"           value="error|warn|info"/>
-        <component name="ProxyApp"              value="error|warn|info|prefix_node"/>
+        <component name="MosaicNodeManager"     value="error|warn|info"/>
+        <component name="MosaicProxyApp"        value="error|warn|info|prefix_node"/>
         <component name="ClientServerChannel"   value="error|warn|info"/>
 
         <component name="UdpSocketImpl"        value="error|warn|prefix_node"/>
@@ -51,8 +51,8 @@
     <global name="RngSeed" value="1"/>
 
     <!-- Federate settings -->
-    <default name="ns3::ProxyApp::Port" value="8010"/>
-    <default name="ns3::NodeManager::numExtraRadioNodes" value="5"/>
+    <default name="ns3::MosaicProxyApp::Port" value="8010"/>
+    <default name="ns3::MosaicNodeManager::numExtraRadioNodes" value="5"/>
 
     <!-- LTE settings -->
     <default name="ns3::LteHelper::HandoverAlgorithm" value="ns3::NoOpHandoverAlgorithm"/>
