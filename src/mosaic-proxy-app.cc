@@ -68,22 +68,24 @@ namespace ns3 {
         m_active = false;
     }
 
-    int MosaicProxyApp::TranslateNumberToIndex(int outDevice) {
+    int MosaicProxyApp::InterfaceToInterfaceIndex(interface_e outDevice) {
         // Expected Input is 1:Wifi 2:LTE 3:Csma
         // Radio Devices are 0:Loopback 1:Wifi 2:LTE
         // Wired Devices are 0:Loopback 1:Csma
         switch (outDevice){
-            case 1: 
+            case WIFI: 
                 return 1;
-            case 2: 
+            case CELL: 
                 return 2;
-            case 3: 
+            case ETH: 
                 return 1;
-            default: return -1;
+            default: 
+                NS_LOG_ERROR("Unexpected value for interface_e");
+                exit(1);
         }
     }
 
-    void MosaicProxyApp::SetSockets(int outDevice) {
+    void MosaicProxyApp::SetSockets(interface_e outDevice) {
         NS_LOG_FUNCTION(GetNode()->GetId());
 
         if (m_socket) {
@@ -95,7 +97,7 @@ namespace ns3 {
         InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
         m_socket->Bind(local);
         if(outDevice > 0) {
-            int outDeviceIndex = TranslateNumberToIndex(outDevice);
+            int outDeviceIndex = InterfaceToInterfaceIndex(outDevice);
             m_socket->BindToNetDevice (GetNode()->GetDevice(outDeviceIndex));
         }
         m_socket->SetAllowBroadcast(true);

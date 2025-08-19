@@ -30,6 +30,12 @@
 
 namespace ns3 {
 
+    enum interface_e {
+        WIFI = 1,
+        CELL = 2,
+        ETH  = 3
+    };
+
     class MosaicProxyApp : public Application {
     public:
 
@@ -41,7 +47,7 @@ namespace ns3 {
 
         void SetRecvCallback(Callback<void, unsigned long long, uint32_t, int> cb);
 
-        void SetSockets(int outDevice);
+        void SetSockets(interface_e outDevice);
         
         void TransmitPacket(Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength);
         
@@ -56,7 +62,7 @@ namespace ns3 {
 
     private:
 
-        int TranslateNumberToIndex(int outDevice);
+        int InterfaceToInterfaceIndex(interface_e outDevice);
 
         void Receive(Ptr<Socket> socket);
 

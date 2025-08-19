@@ -350,7 +350,7 @@ namespace ns3 {
         Ptr<MosaicProxyApp> app = CreateObject<MosaicProxyApp>();
         app->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvCellMsg, this));
         node->AddApplication(app);
-        app->SetSockets(3); // see MosaicProxyApp::TranslateNumberToIndex
+        app->SetSockets(interface_e::ETH);
     }
 
     Ptr<Node> MosaicNodeManager::CreateRadioNodeHelper(void) {
@@ -381,12 +381,12 @@ namespace ns3 {
         Ptr<MosaicProxyApp> wifiApp = CreateObject<MosaicProxyApp>();
         wifiApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvWifiMsg, this));
         node->AddApplication(wifiApp);
-        wifiApp->SetSockets(1);
+        wifiApp->SetSockets(interface_e::WIFI);
 
         Ptr<MosaicProxyApp> cellApp = CreateObject<MosaicProxyApp>();
         cellApp->SetRecvCallback(MakeCallback(&MosaicNodeManager::RecvCellMsg, this));
         node->AddApplication(cellApp);
-        cellApp->SetSockets(2);
+        cellApp->SetSockets(interface_e::CELL);
 
         return node;
     }
