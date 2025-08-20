@@ -23,19 +23,19 @@
 #include <exception>
 #include <string>
 #include <unistd.h>
-
-#include "ns3/log.h"
-#include "ns3/core-module.h"
-#include "mosaic-ns3-server.h"
-#include "ns3/config-store.h"
-
 #include <algorithm>
 #include <libxml2/libxml/xpath.h>
 #include <libxml2/libxml/tree.h>
 
+#include "ns3/log.h"
+#include "ns3/core-module.h"
+#include "ns3/config-store.h"
+
+#include "mosaic-ns3-bridge.h"
+
 using namespace ns3;
 
-NS_LOG_COMPONENT_DEFINE("MosaicStarter");
+NS_LOG_COMPONENT_DEFINE("MainClass");
 
 static LogLevel ParseLogLevel(const std::string & levelString) {
     //Taken from ns-3 environment parsing of log level
@@ -139,56 +139,46 @@ void SetLogLevels(const std::string & configFile) {
     xmlXPathFreeObject(result);
 }
 
-void redirectClogToCout() {
-    // std::clog should print to standard output (std::cout)
-    // change stream buffer of std::clog
-    auto destination = std::cout.rdbuf();
-    std::clog.rdbuf(destination);
-}
-
 int main(int argc, char *argv[]) {
     using namespace std;
 
     // ns3 logs to std::clog, redirect to std::cout
-    redirectClogToCout();
+    auto destination = std::cout.rdbuf();
+    std::clog.rdbuf(destination);
 
     //default values
     int port = 0;
     int cmdPort = 0;
     std::string configFile = "ns3_federate_config.xml";
 
-    GlobalValue::Bind("SchedulerType", StringValue("ns3::ListScheduler"));
-    GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
-
     MosaicNodeManager::GetTypeId();
-    CommandLine cmd;
-    cmd.Usage("Mosaic ns-3 federate.\n\tcmdPort - command port");
+    CommandLine cmd("ns3-federate");
+    cmd.Usage("Mosaic ns-3 federate.");
     cmd.AddValue("cmdPort", "the command port", cmdPort);
     cmd.AddValue("port", "the port", port);
-    cmd.AddValue("configFile", "the configuration file to evaluate", configFile);
+    cmd.AddValue("configFile", "the configuration file", configFile);
     cmd.Parse(argc, argv);
 
+    GlobalValue::Bind("SchedulerType", StringValue("ns3::ListScheduler"));
+    GlobalValue::Bind("SimulatorImplementationType", StringValue("ns3::MosaicSimulatorImpl"));
     if (access(configFile.c_str(), F_OK) == -1) {
-        cerr << "Could not open configuration file \"" << configFile << "\"" << endl;
-        return -1;
+        std::cerr << "Could not open configuration file \"" << configFile << "\"" << std::endl;
+        return 1;
     }
-
     Config::SetDefault("ns3::ConfigStore::Filename", StringValue(configFile.c_str()));
     Config::SetDefault("ns3::ConfigStore::FileFormat", StringValue("Xml"));
     Config::SetDefault("ns3::ConfigStore::Mode", StringValue("Load"));
     ConfigStore xmlConfig;
-
     xmlConfig.ConfigureDefaults();
     xmlConfig.ConfigureAttributes();
-
     SetLogLevels(configFile);
 
     try {
-        MosaicNs3Server server(port, cmdPort);
-        server.processCommandsUntilSimStep();
+        MosaicNs3Bridge instance(port, cmdPort);
+        instance.run();
     } catch (int e) {
         NS_LOG_ERROR("Caught exception [" << e << "]. Exiting ns-3 federate ");
-        return -1;
+        return 1;
     }
 
     Simulator::Destroy();

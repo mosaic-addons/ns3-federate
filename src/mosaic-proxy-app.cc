@@ -47,45 +47,69 @@ namespace ns3 {
         return tid;
     }
 
-    void MosaicProxyApp::SetNodeManager(MosaicNodeManager* nodeManager) {
-        m_nodeManager = nodeManager;
+    void MosaicProxyApp::SetRecvCallback(Callback<void, unsigned long long, uint32_t, int> cb) {
+        NS_LOG_FUNCTION (this << &cb);
+        m_recvCallback = cb;
     }
 
     void MosaicProxyApp::DoDispose(void) {
         NS_LOG_FUNCTION_NOARGS();
         m_socket = 0;
+        m_recvCallback = MakeNullCallback<void, unsigned long long, uint32_t, int> ();
         Application::DoDispose();
     }
 
     void MosaicProxyApp::Enable(void) {
         m_active = true;
+        m_trace = GetLogComponent("MosaicProxyApp").IsEnabled(LOG_DEBUG);
     }
 
     void MosaicProxyApp::Disable(void) {
         m_active = false;
     }
 
-    void MosaicProxyApp::SetSockets(void) {
-        NS_LOG_INFO("set sockets on node " << GetNode()->GetId());
-
-        if (!m_socket) {
-
-            m_socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
-            InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
-            m_socket->Bind(local);
-            m_socket->SetAllowBroadcast(true);
-
-            m_socket->SetRecvCallback(MakeCallback(&MosaicProxyApp::Receive, this));
-        } else {
-            NS_FATAL_ERROR("creation attempt of a socket for MosaicProxyApp that has already a socket active");
-            return;
+    int MosaicProxyApp::InterfaceToInterfaceIndex(interface_e outDevice) {
+        // Expected Input is 1:Wifi 2:LTE 3:Csma
+        // Radio Devices are 0:Loopback 1:Wifi 2:LTE
+        // Wired Devices are 0:Loopback 1:Csma
+        switch (outDevice){
+            case WIFI: 
+                return 1;
+            case CELL: 
+                return 2;
+            case ETH: 
+                return 1;
+            default: 
+                NS_LOG_ERROR("Unexpected value for interface_e");
+                exit(1);
         }
     }
 
-    void MosaicProxyApp::TransmitPacket(uint32_t protocolID, uint32_t msgID, uint32_t payLength, Ipv4Address address) {
-        NS_LOG_FUNCTION(protocolID << msgID << payLength << address);
+    void MosaicProxyApp::SetSockets(interface_e outDevice) {
+        NS_LOG_FUNCTION(GetNode()->GetId());
+
+        if (m_socket) {
+            NS_FATAL_ERROR("Ignore creation attempt of a socket for MosaicProxyApp that has already a socket active. ");
+            return;
+        }
+
+        m_socket = Socket::CreateSocket(GetNode(), UdpSocketFactory::GetTypeId());
+        InetSocketAddress local = InetSocketAddress(Ipv4Address::GetAny(), m_port);
+        m_socket->Bind(local);
+        if(outDevice > 0) {
+            int outDeviceIndex = InterfaceToInterfaceIndex(outDevice);
+            m_socket->BindToNetDevice (GetNode()->GetDevice(outDeviceIndex));
+        }
+        m_socket->SetAllowBroadcast(true);
+        m_socket->SetRecvCallback(MakeCallback(&MosaicProxyApp::Receive, this));
+        m_outDevice = outDevice;
+    }
+
+    void MosaicProxyApp::TransmitPacket(Ipv4Address dstAddr, uint32_t msgID, uint32_t payLength) {
+        NS_LOG_FUNCTION(GetNode()->GetId() << dstAddr << msgID << payLength);
 
         if (!m_active) {
+            NS_LOG_WARN("[node=" << GetNode()->GetId() << "." << m_outDevice << "] This app is disabled but should transmit a packet. Ignore.");
             return;
         }
 
@@ -96,11 +120,25 @@ namespace ns3 {
         packet->AddByteTag(msgIDTag);
 
         m_sendCount++;
-        NS_LOG_INFO("Node " << GetNode()->GetId() << " SENDING packet no. " << m_sendCount << " PacketID= " << packet->GetUid() << " at " << Simulator::Now().GetNanoSeconds() << " seconds | packet size = " << packet->GetSize());
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength << " PacketID=" << packet->GetUid() << " PacketCount=" << m_sendCount);
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Sending packet no. " << m_sendCount << " msgID=" << msgID << " PacketID=" << packet->GetUid());
+        if (m_trace) {
+            LogComponentEnable ("TrafficControlLayer", (LogLevel)(LOG_DEBUG | LOG_PREFIX_NODE));
+        }
+
 
         //call the socket of this node to send the packet
-        InetSocketAddress ipSA = InetSocketAddress(address, m_port);
-        m_socket->SendTo(packet, 0, ipSA);
+        InetSocketAddress ipSA = InetSocketAddress(dstAddr, m_port);
+        int result = m_socket->SendTo(packet, 0, ipSA);
+        if (result == -1) {
+            NS_LOG_ERROR("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Sending packet failed!");
+            if (m_socket->GetErrno () == Socket::SocketErrno::ERROR_MSGSIZE) {
+                NS_LOG_ERROR("Can only use up to MAX_IPV4_UDP_DATAGRAM_SIZE = 65507 Bytes per packet");
+            } else {
+                NS_LOG_ERROR("Errno:" << m_socket->GetErrno ());
+            }
+            exit(1);
+        }
     }
 
     /*
@@ -108,13 +146,15 @@ namespace ns3 {
      * This method is called by the callback which is defined in the method MosaicProxyApp::SetSockets
      */
     void MosaicProxyApp::Receive(Ptr<Socket> socket) {
-        NS_LOG_FUNCTION_NOARGS();
+        NS_LOG_FUNCTION(GetNode()->GetId());
         if (!m_active) {
+            // This happens e.g. for wifi broadcasts on un-initialized ns3 nodes (aka unused by mosaic)
+            // NS_LOG_WARN("[node=" << GetNode()->GetId() << "." << m_outDevice << "] This app is disabled but it received a packet. Ignore.");
             return;
         }
 
         Ptr<Packet> packet;
-        NS_LOG_INFO("Start Receiving - Call Socket -> Recv()");
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Start receiving...");
         packet = socket->Recv();
 
         m_recvCount++;
@@ -125,15 +165,28 @@ namespace ns3 {
         if (packet->FindFirstMatchingByteTag(Tag)) {
             //send the MsgID
             msgID = Tag.GetFlowId();
-            //find the message and send it back
         } else {
             NS_LOG_ERROR("Error, message has no msgIdTag");
             msgID = -1;
         }
 
-        //report the received messages to the MosaicNs3Server instance
-        m_nodeManager->AddRecvPacket(Simulator::Now().GetNanoSeconds(), packet, GetNode()->GetId(), msgID);
-        NS_LOG_INFO("Receiving message no. " << m_recvCount << " PacketID= " << packet->GetUid() << " at " << Simulator::Now().GetNanoSeconds() << " seconds | message size  = " << packet->GetSize() << " Bytes");
-        NS_LOG_INFO("Reception on node " << GetNode()->GetId());
+        NS_LOG_DEBUG("[node=" << GetNode()->GetId() << "." << m_outDevice << "] Received message no. " << m_recvCount << " msgID=" << msgID << " PacketID=" << packet->GetUid() << " now=" << Simulator::Now().GetNanoSeconds() << "ns len=" << packet->GetSize());
+        if (m_trace) {
+            LogComponentDisable ("TrafficControlLayer", LOG_DEBUG);
+        }
+
+        if (!m_recvCallback.IsNull()) {
+            m_recvCallback(Simulator::Now().GetNanoSeconds(), GetNode()->GetId(), msgID);
+        } else {
+            NS_LOG_ERROR("Received a packet but have no possibility to forward up. Ignore.");
+        }
+
+        /* Add one slash, to enable this development test 
+        if (m_outDevice == 3 && msgID == 1) {
+            // ping pong a packet back to fixed IP
+            Ipv4Address dst("10.3.0.20");
+            TransmitPacket(dst, msgID, 1234);
+        }
+        //*/
     }
 } // namespace ns3

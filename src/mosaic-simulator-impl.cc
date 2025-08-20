@@ -21,14 +21,15 @@
  */
 
 #include "mosaic-simulator-impl.h"
+
+#include <math.h>
+
 #include "ns3/simulator.h"
 #include "ns3/event-impl.h"
 #include "ns3/ptr.h"
 #include "ns3/pointer.h"
 #include "ns3/assert.h"
 #include "ns3/log.h"
-
-#include <math.h>
 
 NS_LOG_COMPONENT_DEFINE("MosaicSimulatorImpl");
 
@@ -163,7 +164,7 @@ namespace ns3 {
         m_uid++;
         m_unscheduledEvents++;
         m_events->Insert(ev);
-        m_server->writeNextTime(ev.key.m_ts);
+        m_mosaicNs3Bridge->writeNextTime(ev.key.m_ts);
 
         return EventId(event, ev.key.m_ts, ev.key.m_context, ev.key.m_uid);
     }
@@ -179,7 +180,7 @@ namespace ns3 {
         m_uid++;
         m_unscheduledEvents++;
         m_events->Insert(ev);
-        m_server->writeNextTime(ev.key.m_ts);
+        m_mosaicNs3Bridge->writeNextTime(ev.key.m_ts);
     }
 
     EventId MosaicSimulatorImpl::ScheduleNow(EventImpl *event) {
@@ -291,8 +292,8 @@ namespace ns3 {
         return m_currentContext;
     }
 
-    void MosaicSimulatorImpl::AttachNS3Server(MosaicNs3Server* server) {
-        m_server = server;
+    void MosaicSimulatorImpl::AttachBridge(MosaicNs3Bridge* instance) {
+        m_mosaicNs3Bridge = instance;
     }
 
 } // namespace ns3
