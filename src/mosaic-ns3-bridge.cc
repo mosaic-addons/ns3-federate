@@ -337,6 +337,14 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
+        if (m_reportedTimes.find (nextTime) != m_reportedTimes.end()) {
+            return;
+        }
+        m_reportedTimes.insert(nextTime);
+        while (m_reportedTimes.size() > 1000) {
+            m_reportedTimes.erase(m_reportedTimes.begin());
+        }
+
         nextTime *= m_timeFactor; // convert to nanoseconds
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
