@@ -191,14 +191,13 @@ namespace ns3 {
             // advance the next time step and run the simulation read the next time step
             case CommandMessage_CommandType_ADVANCE_TIME:
             {
-                uint64_t advancedTime;
-                advancedTime = ambassadorFederateChannel.readTimeMessage();
-                Time tNext = NanoSeconds(advancedTime);
+                m_currentAdvanceTime = ambassadorFederateChannel.readTimeMessage();
+                Time tNext = NanoSeconds(m_currentAdvanceTime);
 
                 if (tNext == NanoSeconds(0)) {
                     // We need that TrafficControlLayer::DoInitialize() (triggered by Node::Initialize()) 
                     // is called _after_ LteHelper::AddX2Interface()
-                    NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << advancedTime);
+                    NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << m_currentAdvanceTime);
                     federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                     federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                     break;
@@ -211,9 +210,9 @@ namespace ns3 {
 
                 m_countTimeAdvanceGrant++;
 
-                // NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime); // LTE schedules events every 1ms
+                // NS_LOG_DEBUG("Received ADVANCE_TIME " << m_currentAdvanceTime); // LTE schedules events every 1ms
                 //run the simulation while the time of the next event is smaller than the next time step
-                while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= m_sim->Next()) {
+                while (!Simulator::IsFinished() && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next()) {
                     m_sim->RunOneEvent();
                 }
 
@@ -336,6 +335,11 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
+        nextTime *= m_timeFactor; // convert to nanoseconds
+
+        if (nextTime <= m_currentAdvanceTime) {
+            return;
+        }
         if (m_reportedTimes.find (nextTime) != m_reportedTimes.end()) {
             return;
         }
@@ -344,7 +348,6 @@ namespace ns3 {
             m_reportedTimes.erase(m_reportedTimes.begin());
         }
 
-        nextTime *= m_timeFactor; // convert to nanoseconds
         m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
