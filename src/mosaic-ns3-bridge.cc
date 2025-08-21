@@ -197,7 +197,8 @@ namespace ns3 {
                 if (tNext == NanoSeconds(0)) {
                     // We need that TrafficControlLayer::DoInitialize() (triggered by Node::Initialize()) 
                     // is called _after_ LteHelper::AddX2Interface()
-                    NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << m_currentAdvanceTime);
+                    // NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << m_currentAdvanceTime);
+                    this->writeNextTime(1); // compensate for the skipped time zero
                     federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                     federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                     break;
