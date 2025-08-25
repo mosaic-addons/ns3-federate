@@ -344,6 +344,7 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
+        return; // DISABLE THIS FUNCTION COMPLETELY
         nextTime *= m_timeFactor; // convert to nanoseconds
 
         if (m_reportedTimes.find (nextTime) != m_reportedTimes.end()) {
