@@ -355,15 +355,21 @@ namespace ns3 {
         }
 
         if (nextTime < m_currentAdvanceTime) {
+            NS_LOG_DEBUG("nextEvent " << nextTime << " [smaller than grant]");
             m_didRequestEventInThePast = true;
         } 
+        else {
+            NS_LOG_DEBUG("nextEvent " << nextTime);
+        }
         m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
     }
 
     void MosaicNs3Bridge::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        NS_LOG_DEBUG("Received a message! " << recvTime << ":" << m_currentAdvanceTime );
         if (recvTime <= m_currentAdvanceTime) {
+            NS_LOG_DEBUG("Received a message [smaller than grant]");
             m_didRequestEventInThePast = true;
         } 
         m_countNextEventRequest++;
@@ -373,7 +379,9 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        NS_LOG_DEBUG("Received a message! " << recvTime << ":" << m_currentAdvanceTime );
         if (recvTime <= m_currentAdvanceTime) {
+            NS_LOG_DEBUG("Received a message [smaller than grant]");
             m_didRequestEventInThePast = true;
         } 
         m_countNextEventRequest++;
