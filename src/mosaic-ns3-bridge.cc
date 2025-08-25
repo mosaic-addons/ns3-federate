@@ -214,14 +214,22 @@ namespace ns3 {
 
                 // NS_LOG_DEBUG("Received ADVANCE_TIME " << m_currentAdvanceTime); // LTE schedules events every 1ms
                 //run the simulation while the time of the next event is smaller than the next time step
-                while (!Simulator::IsFinished() && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next()) {
+                m_didRequestEventInThePast = false;
+                while (!Simulator::IsFinished() 
+                    && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next() 
+                    && !m_didRequestEventInThePast) 
+                {
                     m_sim->RunOneEvent();
                 }
 
                 // write the confirmation at the end of the sequence
                 // this acknowledgement is exceptionally on the other channel (federate->ambassador)
                 federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
-                federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
+                if (m_didRequestEventInThePast) {
+                    federateAmbassadorChannel.writeTimeMessage(0); // signal preemption
+                } else {
+                    federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
+                }
                 break;
             }
             case CommandMessage_CommandType_CONF_WIFI_RADIO:
@@ -339,9 +347,6 @@ namespace ns3 {
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
         nextTime *= m_timeFactor; // convert to nanoseconds
 
-        if (nextTime <= m_currentAdvanceTime) {
-            return;
-        }
         if (m_reportedTimes.find (nextTime) != m_reportedTimes.end()) {
             return;
         }
@@ -353,9 +358,16 @@ namespace ns3 {
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
         m_counterSignalNextEvent++;
+        if (nextTime < m_currentAdvanceTime) {
+            m_didRequestEventInThePast = true;
+        } 
     }
 
     void MosaicNs3Bridge::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        if (recvTime <= m_currentAdvanceTime) {
+            m_didRequestEventInThePast = true;
+        } 
+        m_counterSignalNextEvent++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
         federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, RadioChannel::PROTO_CCH, 0);
         // FIXME: Channel is hardcoded
@@ -363,6 +375,10 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        if (recvTime <= m_currentAdvanceTime) {
+            m_didRequestEventInThePast = true;
+        } 
+        m_counterSignalNextEvent++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_CELL_MSG);
         federateAmbassadorChannel.writeReceiveCellMessage(recvTime, nodeID, msgID);
     }
