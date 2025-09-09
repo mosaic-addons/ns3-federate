@@ -18,6 +18,8 @@ In the case that you are an advanced users who wants to alter the source code of
   - For ADVANCE_TIME, the bridge runs ns-3 events up to the granted time
   - When ns-3 receives packets, the bridge reports them back to MOSAIC.
 
+![Architecture](/docs/Ns3Federate.drawio.png)
+
 ### Key components
 
 | Component/File                  | Responsibility                                                                                                   | Key interactions                                                                                                   |
