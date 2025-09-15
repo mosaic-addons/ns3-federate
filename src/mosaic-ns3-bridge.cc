@@ -194,6 +194,8 @@ namespace ns3 {
                     m_didRunOnStart = true;
                 }
 
+                m_countTimeAdvanceGrant++;
+
                 // NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime); // LTE schedules events every 1ms
                 //run the simulation while the time of the next event is smaller than the next time step
                 while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= m_sim->Next()) {
@@ -303,6 +305,8 @@ namespace ns3 {
             case CommandMessage_CommandType_SHUT_DOWN:
                 NS_LOG_INFO("Received CMD_SHUT_DOWN");
                 m_nodeManager->OnShutdown();
+                NS_LOG_INFO("m_countTimeAdvanceGrant=" << m_countTimeAdvanceGrant);
+                NS_LOG_INFO("m_countNextEventRequest=" << m_countNextEventRequest);
                 NS_LOG_INFO("Disable log...");
                 LogComponentDisableAll(LOG_LEVEL_ALL);
                 m_closeConnection = true;
@@ -317,17 +321,20 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
+        m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
     }
 
     void MosaicNs3Bridge::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
         federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, RadioChannel::PROTO_CCH, 0);
         // FIXME: RSSI is hardcoded
     }
 
     void MosaicNs3Bridge::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_CELL_MSG);
         federateAmbassadorChannel.writeReceiveCellMessage(recvTime, nodeID, msgID);
     }
