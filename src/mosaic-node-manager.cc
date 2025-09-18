@@ -637,7 +637,11 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength);
+        if (channel != ClientServerChannelSpace::RadioChannel::PROTO_CCH) {
+            NS_LOG_ERROR("Ns3 only supports one pre-configured wifi channel. Expect value CCH.");
+            exit(1);
+        }
+        NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength);
 
         NS_ASSERT_MSG(m_isRadioNode[nodeId], "Cannot use Wifi communication on wired nodes.");
         Ptr<Node> node = NodeList::GetNode(nodeId);
@@ -646,7 +650,6 @@ namespace ns3 {
             NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, MosaicProxyApp is missing");
             return;
         }
-        // TODO: use channel 
         app->TransmitPacket(dstAddr, msgID, payLength);
     }
 
