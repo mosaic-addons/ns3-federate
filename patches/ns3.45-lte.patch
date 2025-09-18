@@ -1,0 +1,53 @@
+diff --git a/src/lte/helper/no-backhaul-epc-helper.cc b/src/lte/helper/no-backhaul-epc-helper.cc
+index 514cea5af..55e31702a 100644
+--- a/src/lte/helper/no-backhaul-epc-helper.cc
++++ b/src/lte/helper/no-backhaul-epc-helper.cc
+@@ -472,6 +472,19 @@ NoBackhaulEpcHelper::ActivateEpsBearer(Ptr<NetDevice> ueDevice,
+             NS_LOG_LOGIC(" UE IPv4 address: " << ueAddr);
+             m_pgwApp->SetUeAddress(imsi, ueAddr);
+         }
++      else if (interface >= 0 && ueIpv4->GetNAddresses (interface) == 2)
++        {
++          Ipv4Address ueAddr = ueIpv4->GetAddress (interface, 1).GetLocal ();
++          NS_LOG_LOGIC (" UE IPv4 address: " << ueAddr);
++          m_pgwApp->SetUeAddress (imsi, ueAddr);
++        }
++      else 
++        {
++          NS_LOG_ERROR("  The manual adaptation in no-backhaul-epc-helper.cc does not cover this case. Shut down.");
++          NS_LOG_ERROR("  if=" << interface);
++          NS_LOG_ERROR("  GetNAddresses=" << ueIpv4->GetNAddresses (interface));
++          exit(1);
++        }
+     }
+     if (ueIpv6)
+     {
+diff --git a/src/lte/model/lte-enb-rrc.h b/src/lte/model/lte-enb-rrc.h
+index 0bf2d8124..aac3bcbd5 100644
+--- a/src/lte/model/lte-enb-rrc.h
++++ b/src/lte/model/lte-enb-rrc.h
+@@ -1465,6 +1465,12 @@ class LteEnbRrc : public Object
+      * simulation.
+      */
+     void SetCsgId(uint32_t csgId, bool csgIndication);
++    
++    /**
++     * The `AdmitRrcConnectionRequest` attribute. Whether to admit a connection
++     * request from a UE.
++     */
++    bool m_admitRrcConnectionRequest;
+ 
+   private:
+     /**
+@@ -1647,11 +1653,6 @@ class LteEnbRrc : public Object
+      * request from another eNB.
+      */
+     bool m_admitHandoverRequest;
+-    /**
+-     * The `AdmitRrcConnectionRequest` attribute. Whether to admit a connection
+-     * request from a UE.
+-     */
+-    bool m_admitRrcConnectionRequest;
+     /**
+      * The `RsrpFilterCoefficient` attribute. Determines the strength of
+      * smoothing effect induced by layer 3 filtering of RSRP in all attached UE.
