@@ -370,7 +370,7 @@ namespace ns3 {
         m_mobilityHelper.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
         m_mobilityHelper.Install (node);
 
-        /* Install WAVE devices */
+        /* Install WIFI devices */
         NetDeviceContainer wifiDevices = m_wifiHelper.Install(m_wifiPhyHelper, m_wifiMacHelper, node);
         Ipv4InterfaceContainer wifiIpIfaces = m_wifiAddressHelper.Assign(wifiDevices);
 
@@ -517,12 +517,12 @@ namespace ns3 {
                 NS_LOG_ERROR("Inconsistency: no matching NetDevice found on node while configuring");
                 return;
             }                        
-            Ptr<YansWifiPhy> wavePhy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
-            NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << wavePhy);
-            if (wavePhy != 0) {
+            Ptr<YansWifiPhy> phy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
+            NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << phy);
+            if (phy != 0) {
                 double txDBm = 10 * log10(transmitPower);
-                wavePhy->SetTxPowerStart(txDBm);
-                wavePhy->SetTxPowerEnd(txDBm);
+                phy->SetTxPowerStart(txDBm);
+                phy->SetTxPowerEnd(txDBm);
             }
         }
 
