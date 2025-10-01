@@ -31,6 +31,7 @@
 #include "ns3/loopback-net-device.h"
 #include "ns3/csma-net-device.h"
 #include "ns3/point-to-point-net-device.h"
+#include "ns3/node-string-list-attribute.h"
 
 #include "mosaic-ns3-bridge.h" 
 #include "mosaic-proxy-app.h"
@@ -454,6 +455,12 @@ namespace ns3 {
         Ptr<Node> node = NodeList::GetNode(nodeId);
         Ptr<MobilityModel> mobModel = node->GetObject<MobilityModel> ();
         mobModel->SetPosition(position);
+
+        ClearNodeStrings(node);
+        AddNodeString(node, "position received");
+        AddNodeString(node, "X: " + std::to_string(position.x));
+        AddNodeString(node, "Y: " + std::to_string(position.y));
+
     }
 
     void MosaicNodeManager::RemoveNode(uint32_t mosaicNodeId) {
