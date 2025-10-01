@@ -173,7 +173,12 @@ namespace ns3 {
 
                 for ( size_t i = 0; i < message.properties_size(); i++ ) { //fill the update messages into our struct
                     UpdateNode_NodeData node_data = message.properties(i);
-                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, node_data.id(), Vector(node_data.x(), node_data.y(), node_data.z())));
+                    std::vector<std::string> roads;
+                    roads.reserve(node_data.roads_size()); // Pre-allocate for efficiency
+                    for (const auto& road : node_data.roads()) {
+                        roads.push_back(road);
+                    }
+                    m_sim->Schedule(tDelay, MakeEvent(&MosaicNodeManager::UpdateNodePosition, m_nodeManager, node_data.id(), Vector(node_data.x(), node_data.y(), node_data.z()), roads));
                     NS_LOG_DEBUG("Received UPDATE_NODE(S): mosNID=" << node_data.id() << " pos(x=" << node_data.x() << " y=" << node_data.y() << " z=" << node_data.z() << ") tNext=" << tNext);
                 }
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);

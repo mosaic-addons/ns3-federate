@@ -412,7 +412,7 @@ namespace ns3 {
         m_isRadioNode[node->GetId()] = true;
         m_radioNodes.Add (node);
         
-        UpdateNodePosition(mosaicNodeId, position);
+        UpdateNodePosition(mosaicNodeId, position, std::vector<std::string>());
     }
 
     void MosaicNodeManager::ActivateRadioNode(uint32_t mosaicNodeId, Vector position) {
@@ -441,10 +441,10 @@ namespace ns3 {
             exit(1);
         }
 
-        UpdateNodePosition(mosaicNodeId, position);
+        UpdateNodePosition(mosaicNodeId, position, std::vector<std::string>());
     }
 
-    void MosaicNodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position) {
+    void MosaicNodeManager::UpdateNodePosition(uint32_t mosaicNodeId, Vector position, const std::vector<std::string>& roads) {
         uint32_t nodeId = GetNs3NodeId(mosaicNodeId);
         if (m_isDeactivated[nodeId]) {
             return;
@@ -456,11 +456,10 @@ namespace ns3 {
         Ptr<MobilityModel> mobModel = node->GetObject<MobilityModel> ();
         mobModel->SetPosition(position);
 
-        ClearNodeStrings(node);
-        AddNodeString(node, "position received");
-        AddNodeString(node, "X: " + std::to_string(position.x));
-        AddNodeString(node, "Y: " + std::to_string(position.y));
-
+        ClearNodeStrings(node);        
+        for (size_t i = 0; i < roads.size(); ++i) {
+            AddNodeString(node, roads[i]);
+        }
     }
 
     void MosaicNodeManager::RemoveNode(uint32_t mosaicNodeId) {

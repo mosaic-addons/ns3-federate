@@ -116,7 +116,7 @@ namespace ns3 {
          * @param mosaicNodeId id of the node
          * @param position the new node position as a Vector
          */
-        void UpdateNodePosition(uint32_t mosaicNodeId, Vector position);
+        void UpdateNodePosition(uint32_t mosaicNodeId, Vector position, const std::vector<std::string>& roads);
         
         /**
          * @brief Remove the node as good as possible
