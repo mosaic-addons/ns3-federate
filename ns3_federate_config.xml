@@ -78,8 +78,8 @@
     <!-- PROPAGATION SETTINGS -->
     <!-- YansWifiChannelHelper / yans-wifi-helper.cc : can not set the values in this config, this is done in NodeManager costructor -->
     <!-- Pathloss and Fading for more realistic "shaky" reception quality -->
-    <!-- <default name="ns3::LteHelper::PathlossModel" value="ns3::NakagamiPropagationLossModel"/> -->
-    <!-- <default name="ns3::LteHelper::FadingModel" value="ns3::FriisSpectrumPropagationLossModel"/> -->
+    <default name="ns3::LteHelper::PathlossModel" value="ns3::NakagamiPropagationLossModel"/>
+    <default name="ns3::LteHelper::FadingModel" value="ns3::FriisSpectrumPropagationLossModel"/>
     
     <default name="ns3::FriisPropagationLossModel::Frequency" value="5900000000"/>
     <!-- <default name="ns3::FriisPropagationLossModel::SystemLoss" value="1"/> -->
