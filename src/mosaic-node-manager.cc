@@ -64,8 +64,14 @@ namespace ns3 {
         m_wifiChannelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
         Ptr<YansWifiChannel> channel = m_wifiChannelHelper.Create();
         m_wifiPhyHelper.SetChannel(channel);
-        m_waveMacHelper = NqosWaveMacHelper::Default();
-        m_wifi80211pHelper = Wifi80211pHelper::Default();
+        // ns3::WifiPhy::ChannelWidth|ChannelNumber|Frequency are set via ns3_federate_config.xml
+        m_wifiMacHelper.SetType ("ns3::AdhocWifiMac", "QosSupported", BooleanValue (true));
+        m_wifiHelper.SetStandard (WIFI_STANDARD_80211p);
+        m_wifiHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+                                "DataMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+                                "ControlMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+                                "NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"));
+
         // LTE
         m_lteHelper = CreateObject<LteHelper> ();
         // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
@@ -365,7 +371,7 @@ namespace ns3 {
         m_mobilityHelper.Install (node);
 
         /* Install WAVE devices */
-        NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, node);
+        NetDeviceContainer wifiDevices = m_wifiHelper.Install(m_wifiPhyHelper, m_wifiMacHelper, node);
         Ipv4InterfaceContainer wifiIpIfaces = m_wifiAddressHelper.Assign(wifiDevices);
 
         /* Install LTE devices */
