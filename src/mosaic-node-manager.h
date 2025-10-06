@@ -31,8 +31,8 @@
 #include "ns3/yans-wifi-phy.h"
 #include "ns3/yans-wifi-channel.h"
 #include "ns3/yans-wifi-helper.h"
-#include "ns3/wave-mac-helper.h"
-#include "ns3/wifi-80211p-helper.h"
+#include "ns3/wifi-mac-helper.h"
+#include "ns3/wifi-helper.h"
 
 #include "ns3/lte-helper.h"
 #include "ns3/point-to-point-epc-helper.h"
@@ -205,8 +205,8 @@ namespace ns3 {
         // Wifi
         YansWifiChannelHelper m_wifiChannelHelper;
         YansWifiPhyHelper m_wifiPhyHelper;
-        NqosWaveMacHelper m_waveMacHelper;
-        Wifi80211pHelper m_wifi80211pHelper;
+        WifiMacHelper m_wifiMacHelper;
+        WifiHelper m_wifiHelper;
         // LTE
         Ptr<LteHelper> m_lteHelper; // problematic if not stored as pointer
         Ptr<PointToPointEpcHelper> m_epcHelper;

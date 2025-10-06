@@ -36,12 +36,9 @@
         <component name="A3RsrpHandoverAlgorithm"   value="error|warn|prefix_node|logic"/>
         <component name="A2A4RsrqHandoverAlgorithm" value="error|warn|prefix_node"/>
 
-        <component name="OcbWifiMac"           value="error|warn"/>
-
         <component name="PropagationLossModel" value="error"/>
         <component name="WifiPhy"              value="error|warn"/>
         <component name="YansWifiPhy"          value="error|warn"/>
-        <component name="WaveNetDevice"        value="error|warn"/>
         <component name="WifiNetDevice"        value="error|warn"/>
         <component name="YansWifiChannel"      value="error|warn"/>
         <component name="InterferenceHelper"   value="error|warn"/>
@@ -97,18 +94,14 @@
     <default name="ns3::WifiPhy::TxPowerEnd" value="17"/>
     <default name="ns3::WifiPhy::TxPowerStart" value="17"/>
     <default name="ns3::WifiPhy::RxNoiseFigure" value="0"/>
-    <default name="ns3::WifiPhy::ChannelSwitchDelay" value="+250000.0ns"/>
+    <default name="ns3::WifiPhy::ChannelWidth" value="10"/>
     <default name="ns3::WifiPhy::ChannelNumber" value="180"/>
     <default name="ns3::WifiPhy::Frequency" value="5900"/>
-    <default name="ns3::WifiPhy::ChannelWidth" value="10"/>
     <default name="ns3::WifiPhy::Antennas" value="1"/>
     <default name="ns3::WifiPhy::Slot" value="+9000.0ns"/>
     <default name="ns3::WifiPhy::Pifs" value="+25000.0ns"/>
     <default name="ns3::WifiPhy::Sifs" value="+16000.0ns"/>
     <default name="ns3::WifiPhy::ShortPlcpPreambleSupported" value="false"/>
-
-    <default name="ns3::ConstantRateWifiManager::DataMode" value="OfdmRate6Mbps"/>
-    <default name="ns3::ConstantRateWifiManager::ControlMode" value="OfdmRate6Mbps"/>
 
     <default name="ns3::WifiMacQueue::MaxDelay" value="+500000000.0ns"/>
     <default name="ns3::WifiNetDevice::Mtu" value="2296"/>

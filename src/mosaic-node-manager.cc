@@ -64,8 +64,14 @@ namespace ns3 {
         m_wifiChannelHelper.SetPropagationDelay("ns3::ConstantSpeedPropagationDelayModel");
         Ptr<YansWifiChannel> channel = m_wifiChannelHelper.Create();
         m_wifiPhyHelper.SetChannel(channel);
-        m_waveMacHelper = NqosWaveMacHelper::Default();
-        m_wifi80211pHelper = Wifi80211pHelper::Default();
+        // ns3::WifiPhy::ChannelWidth|ChannelNumber|Frequency are set via ns3_federate_config.xml
+        m_wifiMacHelper.SetType ("ns3::AdhocWifiMac", "QosSupported", BooleanValue (true));
+        m_wifiHelper.SetStandard (WIFI_STANDARD_80211p);
+        m_wifiHelper.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+                                "DataMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+                                "ControlMode", StringValue ("OfdmRate6MbpsBW10MHz"),
+                                "NonUnicastMode", StringValue ("OfdmRate6MbpsBW10MHz"));
+
         // LTE
         m_lteHelper = CreateObject<LteHelper> ();
         // This EpcHelper creates point-to-point links between the eNBs and the EPCore (3 nodes)
@@ -364,8 +370,8 @@ namespace ns3 {
         m_mobilityHelper.SetMobilityModel ("ns3::ConstantVelocityMobilityModel");
         m_mobilityHelper.Install (node);
 
-        /* Install WAVE devices */
-        NetDeviceContainer wifiDevices = m_wifi80211pHelper.Install(m_wifiPhyHelper, m_waveMacHelper, node);
+        /* Install WIFI devices */
+        NetDeviceContainer wifiDevices = m_wifiHelper.Install(m_wifiPhyHelper, m_wifiMacHelper, node);
         Ipv4InterfaceContainer wifiIpIfaces = m_wifiAddressHelper.Assign(wifiDevices);
 
         /* Install LTE devices */
@@ -511,12 +517,12 @@ namespace ns3 {
                 NS_LOG_ERROR("Inconsistency: no matching NetDevice found on node while configuring");
                 return;
             }                        
-            Ptr<YansWifiPhy> wavePhy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
-            NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << wavePhy);
-            if (wavePhy != 0) {
+            Ptr<YansWifiPhy> phy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
+            NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << phy);
+            if (phy != 0) {
                 double txDBm = 10 * log10(transmitPower);
-                wavePhy->SetTxPowerStart(txDBm);
-                wavePhy->SetTxPowerEnd(txDBm);
+                phy->SetTxPowerStart(txDBm);
+                phy->SetTxPowerEnd(txDBm);
             }
         }
 
@@ -631,7 +637,11 @@ namespace ns3 {
         if (m_isDeactivated[nodeId]) {
             return;
         }
-        NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " ch=" << channel << " msgID=" << msgID << " len=" << payLength);
+        if (channel != ClientServerChannelSpace::RadioChannel::PROTO_CCH) {
+            NS_LOG_ERROR("Ns3 only supports one pre-configured wifi channel. Expect value CCH.");
+            exit(1);
+        }
+        NS_LOG_DEBUG("[node=" << nodeId << "] dst=" << dstAddr << " msgID=" << msgID << " len=" << payLength);
 
         NS_ASSERT_MSG(m_isRadioNode[nodeId], "Cannot use Wifi communication on wired nodes.");
         Ptr<Node> node = NodeList::GetNode(nodeId);
@@ -640,7 +650,6 @@ namespace ns3 {
             NS_LOG_ERROR("Node " << nodeId << " was not initialized properly, MosaicProxyApp is missing");
             return;
         }
-        // TODO: use channel 
         app->TransmitPacket(dstAddr, msgID, payLength);
     }
 
