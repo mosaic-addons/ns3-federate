@@ -65,7 +65,7 @@
     
     <!-- <default name="ns3::LteEnbPhy::TxPower" value="30"/> -->
 
-    <default name="ns3::LteEnbPhy::TxPower" value="-15"/>
+    <default name="ns3::LteEnbPhy::TxPower" value="-10"/>
 
     <default name="ns3::LteRlcUm::MaxTxBufferSize" value="100000"/>
     <!-- increase from 5MHz to 20MHz -->
