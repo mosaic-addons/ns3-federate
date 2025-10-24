@@ -376,7 +376,7 @@ namespace ns3 {
 
     void MosaicNs3Bridge::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
         NS_LOG_DEBUG("Received a message! " << recvTime << ":" << m_currentAdvanceTime );
-        if (recvTime <= m_currentAdvanceTime) {
+        if (recvTime < m_currentAdvanceTime) {
             NS_LOG_DEBUG("Received a message [smaller than grant]");
             m_didRequestEventInThePast = true;
         } 
@@ -388,7 +388,7 @@ namespace ns3 {
 
     void MosaicNs3Bridge::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
         NS_LOG_DEBUG("Received a message! " << recvTime << ":" << m_currentAdvanceTime );
-        if (recvTime <= m_currentAdvanceTime) {
+        if (recvTime < m_currentAdvanceTime) {
             NS_LOG_DEBUG("Received a message [smaller than grant]");
             m_didRequestEventInThePast = true;
         } 
