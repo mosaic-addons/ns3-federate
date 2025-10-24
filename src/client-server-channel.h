@@ -31,7 +31,7 @@
 typedef int SOCKET;
 constexpr const int SOCKET_ERROR = -1;
 constexpr const int INVALID_SOCKET = -1;
-constexpr const int PROTOCOL_VERSION = 2;
+constexpr const int PROTOCOL_VERSION = 3;
 
 /**
  * Abstraction of socket communication between Ambassador and Federate (e.g. ns-3 or OMNeT++).
