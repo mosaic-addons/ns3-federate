@@ -46,6 +46,7 @@ namespace ns3 {
         
         m_closeConnection = false;
         m_didRunOnStart = false;
+        m_preemptiveExecutionEnabled = false;
         
         if (Time::GetResolution () == Time::NS) {
             NS_LOG_INFO("Have time scale NS - use factor 1.");
@@ -81,6 +82,8 @@ namespace ns3 {
             if (message.simulation_start_time() >= 0 
                     && message.simulation_end_time() >= 0 
                     && message.simulation_end_time() >= message.simulation_start_time()) {
+                m_preemptiveExecutionEnabled = message.preemptive_execution();
+                NS_LOG_INFO("Run with preemption enabled: " << +m_preemptiveExecutionEnabled);
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
             } else {
                 // AbstractNetworkAmbassador.java only checks if (CMD.SUCCESS != ...
@@ -215,16 +218,18 @@ namespace ns3 {
                 //run the simulation while the time of the next event is smaller than the next time step
                 m_didRequestEventInThePast = false;
                 while (!Simulator::IsFinished() 
-                    && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next() 
-                    && !m_didRequestEventInThePast) 
+                    && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next()) 
                 {
+                    if (m_preemptiveExecutionEnabled && m_didRequestEventInThePast) {
+                        break;
+                    }
                     m_sim->RunOneEvent();
                 }
 
                 // write the confirmation at the end of the sequence
                 // this acknowledgement is exceptionally on the other channel (federate->ambassador)
                 federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
-                if (m_didRequestEventInThePast) {
+                if (m_preemptiveExecutionEnabled && m_didRequestEventInThePast) {
                     federateAmbassadorChannel.writeTimeMessage(0); // signal preemption
                 } else {
                     federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
@@ -344,7 +349,9 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
-        return; // DISABLE THIS FUNCTION COMPLETELY
+        if (m_preemptiveExecutionEnabled) {
+            return;
+        }
         nextTime *= m_timeFactor; // convert to nanoseconds
 
         if (m_reportedTimes.find (nextTime) != m_reportedTimes.end()) {

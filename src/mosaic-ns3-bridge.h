@@ -105,6 +105,8 @@ namespace ns3 {
         uint64_t m_countNextEventRequest = 0;
         uint64_t m_timeFactor = 1;
         std::set<uint64_t> m_reportedTimes;
+        
+        bool m_preemptiveExecutionEnabled;
         bool m_didRequestEventInThePast;
     };
 } // namespace ns3
