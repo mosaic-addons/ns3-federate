@@ -217,8 +217,7 @@ namespace ns3 {
                 // NS_LOG_DEBUG("Received ADVANCE_TIME " << m_currentAdvanceTime); // LTE schedules events every 1ms
                 //run the simulation while the time of the next event is smaller than the next time step
                 m_didRequestEventInThePast = false;
-                while (!Simulator::IsFinished() 
-                    && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next()) 
+                while (!Simulator::IsFinished() && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next())
                 {
                     if (m_preemptiveExecutionEnabled && m_didRequestEventInThePast) {
                         break;
