@@ -28,6 +28,7 @@ message CommandMessage {
         NEXT_EVENT = 4;
         ADVANCE_TIME = 5;
         END = 6;                    // used as 'advance time done'
+        PREEMPTED = 7;
 
         /* Entities... */
         ADD_NODE = 10;

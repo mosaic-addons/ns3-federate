@@ -228,12 +228,12 @@ namespace ns3 {
 
                 // write the confirmation at the end of the sequence
                 // this acknowledgement is exceptionally on the other channel (federate->ambassador)
-                federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                 if (m_preemptiveExecutionEnabled && m_didRequestEventInThePast) {
-                    federateAmbassadorChannel.writeTimeMessage(0); // signal preemption
+                    federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_PREEMPTED);
                 } else {
-                    federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
+                    federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                 }
+                federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                 break;
             }
             case CommandMessage_CommandType_CONF_WIFI_RADIO:
