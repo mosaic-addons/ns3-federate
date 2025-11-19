@@ -46,6 +46,21 @@ namespace ns3 {
         
         m_closeConnection = false;
         m_didRunOnStart = false;
+        m_preemptiveExecutionEnabled = false;
+        
+        if (Time::GetResolution () == Time::NS) {
+            NS_LOG_INFO("Have time scale NS - use factor 1.");
+            m_timeFactor = 1;
+        } else if (Time::GetResolution () == Time::US) {
+            NS_LOG_INFO("Have time scale US - use factor 1000.");
+            m_timeFactor = 1000;
+        } else if (Time::GetResolution () == Time::MS) {
+            NS_LOG_INFO("Have time scale MS - use factor 1000000.");
+            m_timeFactor = 1000000;
+        } else {
+            NS_LOG_ERROR("Unknown time scale. " << Time::GetResolution());
+            exit(1);
+        }
 
         /* Initialize federateAmbassadorChannel (mostly for SENDING) */
         NS_LOG_INFO("Initialize federateAmbassadorChannel");
@@ -67,6 +82,8 @@ namespace ns3 {
             if (message.simulation_start_time() >= 0 
                     && message.simulation_end_time() >= 0 
                     && message.simulation_end_time() >= message.simulation_start_time()) {
+                m_preemptiveExecutionEnabled = message.preemptive_execution();
+                NS_LOG_INFO("Run with preemption enabled: " << +m_preemptiveExecutionEnabled);
                 ambassadorFederateChannel.writeCommand(CommandMessage_CommandType_SUCCESS);
             } else {
                 // AbstractNetworkAmbassador.java only checks if (CMD.SUCCESS != ...
@@ -176,36 +193,48 @@ namespace ns3 {
             }
             // advance the next time step and run the simulation read the next time step
             case CommandMessage_CommandType_ADVANCE_TIME:
+            {
+                m_currentAdvanceTime = ambassadorFederateChannel.readTimeMessage();
+                Time tNext = NanoSeconds(m_currentAdvanceTime);
 
-                uint64_t advancedTime;
-                advancedTime = ambassadorFederateChannel.readTimeMessage();
-
-                if (advancedTime == 0) {
+                if (tNext == NanoSeconds(0)) {
                     // We need that TrafficControlLayer::DoInitialize() (triggered by Node::Initialize()) 
                     // is called _after_ LteHelper::AddX2Interface()
-                    NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << advancedTime);
+                    // NS_LOG_DEBUG("Ignoring ADVANCE_TIME " << m_currentAdvanceTime);
+                    this->writeNextTime(1); // compensate for the skipped time zero
                     federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
                     federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                     break;
                 }
 
-                if (advancedTime > 0 && !m_didRunOnStart) {
+                if (tNext > NanoSeconds(0) && !m_didRunOnStart) {
                     m_nodeManager->OnStart();
                     m_didRunOnStart = true;
                 }
 
-                // NS_LOG_DEBUG("Received ADVANCE_TIME " << advancedTime); // LTE schedules events every 1ms
+                m_countTimeAdvanceGrant++;
+
+                // NS_LOG_DEBUG("Received ADVANCE_TIME " << m_currentAdvanceTime); // LTE schedules events every 1ms
                 //run the simulation while the time of the next event is smaller than the next time step
-                while (!Simulator::IsFinished() && NanoSeconds(advancedTime) >= m_sim->Next()) {
+                m_didRequestEventInThePast = false;
+                while (!Simulator::IsFinished() && NanoSeconds(m_currentAdvanceTime) >= m_sim->Next())
+                {
+                    if (m_preemptiveExecutionEnabled && m_didRequestEventInThePast) {
+                        break;
+                    }
                     m_sim->RunOneEvent();
                 }
 
                 // write the confirmation at the end of the sequence
                 // this acknowledgement is exceptionally on the other channel (federate->ambassador)
-                federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
+                if (m_preemptiveExecutionEnabled && m_didRequestEventInThePast) {
+                    federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_PREEMPTED);
+                } else {
+                    federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_END);
+                }
                 federateAmbassadorChannel.writeTimeMessage(Simulator::Now().GetNanoSeconds());
                 break;
-
+            }
             case CommandMessage_CommandType_CONF_WIFI_RADIO:
             {
                 try {
@@ -303,6 +332,8 @@ namespace ns3 {
             case CommandMessage_CommandType_SHUT_DOWN:
                 NS_LOG_INFO("Received CMD_SHUT_DOWN");
                 m_nodeManager->OnShutdown();
+                NS_LOG_INFO("m_countTimeAdvanceGrant=" << m_countTimeAdvanceGrant);
+                NS_LOG_INFO("m_countNextEventRequest=" << m_countNextEventRequest);
                 NS_LOG_INFO("Disable log...");
                 LogComponentDisableAll(LOG_LEVEL_ALL);
                 m_closeConnection = true;
@@ -317,17 +348,50 @@ namespace ns3 {
     }
 
     void MosaicNs3Bridge::writeNextTime(unsigned long long nextTime) {
+        if (m_preemptiveExecutionEnabled) {
+            return;
+        }
+        nextTime *= m_timeFactor; // convert to nanoseconds
+
+        if (m_reportedTimes.find (nextTime) != m_reportedTimes.end()) {
+            return;
+        }
+        m_reportedTimes.insert(nextTime);
+        while (m_reportedTimes.size() > 1000) {
+            m_reportedTimes.erase(m_reportedTimes.begin());
+        }
+
+        if (nextTime < m_currentAdvanceTime) {
+            NS_LOG_DEBUG("nextEvent " << nextTime << " [smaller than grant]");
+            m_didRequestEventInThePast = true;
+        } 
+        else {
+            NS_LOG_DEBUG("nextEvent " << nextTime);
+        }
+        m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_NEXT_EVENT);
         federateAmbassadorChannel.writeTimeMessage(nextTime);
     }
 
     void MosaicNs3Bridge::writeReceiveWifiMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        NS_LOG_DEBUG("Received a message! " << recvTime << ":" << m_currentAdvanceTime );
+        if (recvTime < m_currentAdvanceTime) {
+            NS_LOG_DEBUG("Received a message [smaller than grant]");
+            m_didRequestEventInThePast = true;
+        } 
+        m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_WIFI_MSG);
         federateAmbassadorChannel.writeReceiveWifiMessage(recvTime, nodeID, msgID, RadioChannel::PROTO_CCH, 0);
         // FIXME: RSSI is hardcoded
     }
 
     void MosaicNs3Bridge::writeReceiveCellMessage(unsigned long long recvTime, int nodeID, int msgID) {
+        NS_LOG_DEBUG("Received a message! " << recvTime << ":" << m_currentAdvanceTime );
+        if (recvTime < m_currentAdvanceTime) {
+            NS_LOG_DEBUG("Received a message [smaller than grant]");
+            m_didRequestEventInThePast = true;
+        } 
+        m_countNextEventRequest++;
         federateAmbassadorChannel.writeCommand(CommandMessage_CommandType_RECV_CELL_MSG);
         federateAmbassadorChannel.writeReceiveCellMessage(recvTime, nodeID, msgID);
     }
