@@ -33,7 +33,7 @@ namespace ns3 {
         std::cout << "Starting ns3 federate on OutPort=" << port << " CmdPort=" << cmdPort << std::endl;
 
         m_sim = DynamicCast<MosaicSimulatorImpl> (Simulator::GetImplementation());
-        if (nullptr == m_sim) {
+        if (m_sim == nullptr) {
             NS_LOG_ERROR("Could not find MosaicSimulatorImpl");
             m_closeConnection = true;
             return;
