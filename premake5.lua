@@ -1,7 +1,7 @@
 -- premake5.lua
 
 local tools = require ('tools')
-local ns3version = "3.36.1"
+local ns3version = "3.45"
 local PROTO_PATH    = "."
 local PROTO_CC_PATH = "."
 

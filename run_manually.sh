@@ -11,7 +11,7 @@ if [[ -z $cmdport ]]; then
     cmdport=0
 fi
 
-ns3Version="3.36.1"
+ns3Version="3.45"
 
 make -j1 || exit 1
 
