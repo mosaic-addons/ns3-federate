@@ -13,6 +13,7 @@ fi
 
 ns3Version="3.45"
 
+# recompile protobuf and switch back to fast build: ./premake5 gmake --generate-protobuf && make -j1 && ./premake5 gmake
 make -j1 || exit 1
 
 LD_LIBRARY_PATH=../ns-allinone-$ns3Version/ns-$ns3Version/build/lib\
