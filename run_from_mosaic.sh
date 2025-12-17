@@ -7,7 +7,7 @@ if [[ -z $cmdport ]]; then
     cmdport=0
 fi
 
-ns3Version="3.36.1"
+ns3Version="3.45"
 
 LD_LIBRARY_PATH=./ns-allinone-$ns3Version/ns-$ns3Version/build/lib\
     ./ns3-federate\

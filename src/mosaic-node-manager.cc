@@ -519,7 +519,7 @@ namespace ns3 {
             }                        
             Ptr<YansWifiPhy> phy = DynamicCast<YansWifiPhy> (netDev->GetPhy());
             NS_LOG_INFO("[node=" << nodeId << "] Adjust settings on dev="<< netDev << " phy=" << phy);
-            if (phy != 0) {
+            if (phy != nullptr) {
                 double txDBm = 10 * log10(transmitPower);
                 phy->SetTxPowerStart(txDBm);
                 phy->SetTxPowerEnd(txDBm);

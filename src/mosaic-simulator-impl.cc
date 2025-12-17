@@ -80,7 +80,7 @@ namespace ns3 {
     void MosaicSimulatorImpl::SetScheduler(ObjectFactory schedulerFactory) {
         Ptr<Scheduler> scheduler = schedulerFactory.Create<Scheduler> ();
 
-        if (m_events != 0) {
+        if (m_events != nullptr) {
             while (!m_events->IsEmpty()) {
                 Scheduler::Event next = m_events->RemoveNext();
                 scheduler->Insert(next);
@@ -146,8 +146,8 @@ namespace ns3 {
         m_stop = true;
     }
 
-    void MosaicSimulatorImpl::Stop(Time const &time) {
-        Simulator::Schedule(time, &Simulator::Stop);
+    EventId MosaicSimulatorImpl::Stop(Time const &time) {
+        return Simulator::Schedule(time, &Simulator::Stop);
     }
 
     EventId MosaicSimulatorImpl::Schedule(Time const &time, EventImpl *event) {

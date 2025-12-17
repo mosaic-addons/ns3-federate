@@ -1,7 +1,7 @@
 -- premake5.lua
 
 local tools = require ('tools')
-local ns3version = "3.36.1"
+local ns3version = "3.45"
 local PROTO_PATH    = "."
 local PROTO_CC_PATH = "."
 
@@ -23,7 +23,7 @@ project "ns3-federate"
     kind "ConsoleApp"
     language "C++"
     targetdir "bin/%{cfg.buildcfg}"
-    buildoptions { "-std=c++17" }
+    buildoptions { "-std=c++20" }
 
     files { "src/**.h"
           , "src/**.cc" 
@@ -95,7 +95,6 @@ project "ns3-federate"
             , "ns" .. ns3version .. "-traffic-control-default"
             -- , "ns" .. ns3version .. "-uan-default"
             -- , "ns" .. ns3version .. "-virtual-net-device-default"
-            , "ns" .. ns3version .. "-wave-default"
             , "ns" .. ns3version .. "-wifi-default"
             -- , "ns" .. ns3version .. "-wimax-default"
            }
@@ -140,7 +139,6 @@ project "ns3-federate"
               , "ns3" .. ns3version .. "traffic-control-optimized"
               -- , "ns3" .. ns3version .. "uan-optimized"
               -- , "ns3" .. ns3version .. "virtual-net-device-optimized"
-              , "ns3" .. ns3version .. "wave-optimized"
               , "ns3" .. ns3version .. "wifi-optimized"
               -- , "ns3" .. ns3version .. "wimax-optimized"
               }
